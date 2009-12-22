@@ -1,0 +1,49 @@
+####
+# Ldif file defining users
+####
+
+dn: dc=example,dc=org
+objectClass: domain
+objectClass: extensibleObject
+objectClass: top
+dc: example
+
+dn: ou=users,dc=example,dc=org
+objectClass: organizationalUnit
+objectClass: top
+ou: users
+
+dn: cn=bind,ou=users,dc=example,dc=org
+objectClass: organizationalRole
+objectClass: simpleSecurityObject
+objectClass: top
+cn: bind
+userpassword: {CLEAR}bindpassword
+
+dn: cn=Evgeny Mandrikov,ou=users,dc=example,dc=org
+objectClass: organizationalPerson
+objectClass: person
+objectClass: extensibleObject
+objectClass: uidObject
+objectClass: inetOrgPerson
+objectClass: top
+cn: Evgeny Mandrikov
+givenname: Evgeny
+mail: godin@example.com
+sn: Mandrikov
+uid: godin
+userpassword: {CLEAR}secret1
+
+dn: cn=Tester Testerovich,ou=users,dc=example,dc=org
+objectClass: organizationalPerson
+objectClass: person
+objectClass: extensibleObject
+objectClass: uidObject
+objectClass: inetOrgPerson
+objectClass: top
+cn: Tester Testerovich
+givenname: Tester
+mail: tester@example.com
+sn: Testerovich
+uid: tester
+userpassword: {CLEAR}secret2
