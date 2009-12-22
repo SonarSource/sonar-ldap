@@ -7,7 +7,6 @@
         <version>3</version>
     </parent>
 
-    <groupId>com.teklabs.sonar.plugins</groupId>
     <artifactId>sonar-ldap-plugin</artifactId>
     <version>0.1-SNAPSHOT</version>
     <name>Sonar LDAP Plugin</name>
@@ -26,7 +25,6 @@
                 <artifactId>maven-jar-plugin</artifactId>
                 <configuration>
                     <archive>
-                        <addMavenDescriptor>false</addMavenDescriptor>
                         <manifestEntries>
                             <Plugin-Class>org.sonar.plugins.ldap.LdapPlugin</Plugin-Class>
                         </manifestEntries>
