@@ -131,16 +131,19 @@
         </developer>
     </developers>
 
-    <distributionManagement>
-        <repository>
-            <id>localhost</id>
-            <name>dumping to target</name>
-            <url>file://${basedir}/target/repo/</url>
-        </repository>
-        <snapshotRepository>
-            <id>localhost</id>
-            <name>dumping to target</name>
-            <url>file://${basedir}/target/repo/</url>
-        </snapshotRepository>
-    </distributionManagement>
+    <scm>
+        <connection>scm:svn:http://svn.codehaus.org/sonar-plugins/trunk/ldap</connection>
+        <developerConnection>scm:svn:https://svn.codehaus.org/sonar-plugins/trunk/ldap</developerConnection>
+        <url>http://svn.sonar-plugins.codehaus.org</url>
+    </scm>
+
+    <issueManagement>
+        <system>JIRA</system>
+        <url>http://jira.codehaus.org/browse/SONARPLUGINS/component/14293</url>
+    </issueManagement>
+
+    <ciManagement>
+        <system>Bamboo</system>
+        <url>http://ci.codehaus.org/browse/SONAR-LDAP</url>
+    </ciManagement>
 </project>

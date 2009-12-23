@@ -35,12 +35,12 @@ public class ApacheDSTest {
     @Parameterized.Parameters
     public static Collection data() {
         Object[][] data = new Object[][]{
-                {"/config/simple.properties"},
-                {"/config/bind.properties"},
-                {"/config/CRAM-MD5.properties"},
-                {"/config/DIGEST-MD5.properties"},
-                {"/config/GSSAPI.properties"},
-//                {"/config/sasl_mech.properties"}, // FIXME
+                {"/conf/simple.properties"},
+                {"/conf/bind.properties"},
+                {"/conf/CRAM-MD5.properties"},
+                {"/conf/DIGEST-MD5.properties"},
+                {"/conf/GSSAPI.properties"},
+//                {"/conf/sasl_mech.properties"}, // FIXME
         };
         return Arrays.asList(data);
     }
@@ -59,7 +59,7 @@ public class ApacheDSTest {
         SERVER.start();
         SERVER.initialize("/users-apacheds.ldif");
 
-        String krbConfPath = ApacheDSTest.class.getResource("/config/krb5.conf").getFile();
+        String krbConfPath = ApacheDSTest.class.getResource("/conf/krb5.conf").getFile();
         System.setProperty("java.security.krb5.conf", krbConfPath);
         System.setProperty("sun.security.krb5.debug", "true");
     }

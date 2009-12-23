@@ -9,8 +9,8 @@
     <includeBaseDirectory>false</includeBaseDirectory>
     <fileSets>
         <fileSet>
-            <directory>src/test/resources/config</directory>
-            <outputDirectory>/examples</outputDirectory>
+            <directory>src/test/resources/conf</directory>
+            <outputDirectory>/examples/conf</outputDirectory>
             <fileMode>0644</fileMode>
         </fileSet>
     </fileSets>
