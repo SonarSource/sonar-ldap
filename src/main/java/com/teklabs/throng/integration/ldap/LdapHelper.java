@@ -38,20 +38,26 @@ public final class LdapHelper {
     }
 
     /**
-     * Get the DNS domain (eg: example.org).
+     * Get the DNS domain name (eg: example.org).
      *
      * @return DNS domain
      * @throws java.net.UnknownHostException if unable to determine DNS domain
      */
-    public static String getDnsDomain() throws UnknownHostException {
-        String result = null;
-        String localhost = InetAddress.getLocalHost().getCanonicalHostName();
-        String[] parts = localhost.split("[.]");
-        if (parts.length > 1) {
-            // TODO Godin: is it true for eg "godin.usr.example.org"
-            result = parts[parts.length - 2] + "." + parts[parts.length - 1];
+    public static String getDnsDomainName() throws UnknownHostException {
+        return getDnsDomainName(InetAddress.getLocalHost().getCanonicalHostName());
+    }
+
+    /**
+     * Extracts DNS domain name from Fully Qualified Domain Name.
+     *
+     * @param fqdn Fully Qualified Domain Name
+     * @return DNS domain name or null, if can't be extracted
+     */
+    public static String getDnsDomainName(String fqdn) {
+        if (fqdn.indexOf('.') == -1) {
+            return null;
         }
-        return result;
+        return fqdn.substring(fqdn.indexOf('.') + 1);
     }
 
     /**
@@ -83,7 +89,7 @@ public final class LdapHelper {
             Attributes lSrvAttrs = lDnsCtx.getAttributes("dns:/_ldap._tcp." + domain, new String[]{"srv"});
             Attribute serversAttribute = lSrvAttrs.get("srv");
             NamingEnumeration lEnum = serversAttribute.getAll();
-            // TODO Godin: There is can be more than one srv record
+            // TODO Godin: There is can be more than one SRV record
             while (lEnum.hasMore()) {
                 String srvRecord = (String) lEnum.next();
                 String[] srvData = srvRecord.split(" ");

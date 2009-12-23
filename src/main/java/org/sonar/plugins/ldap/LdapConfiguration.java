@@ -36,7 +36,7 @@ public class LdapConfiguration implements ServerExtension {
         String realm = configuration.getString("ldap.realm", null);
         if (realm == null) {
             try {
-                realm = LdapHelper.getDnsDomain();
+                realm = LdapHelper.getDnsDomainName();
             } catch (UnknownHostException e) {
                 LdapHelper.LOG.error("Unable to determine domain name", e);
             }
