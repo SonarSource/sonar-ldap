@@ -17,7 +17,7 @@ import java.net.UnknownHostException;
  * @author Evgeny Mandrikov
  */
 public final class LdapHelper {
-    public static final Logger LOG = LoggerFactory.getLogger("com.teklabs.sonar.plugins.ldap");
+    public static final Logger LOG = LoggerFactory.getLogger("org.sonar.plugins.ldap");
 
     /**
      * Hide utility-class constructor.
