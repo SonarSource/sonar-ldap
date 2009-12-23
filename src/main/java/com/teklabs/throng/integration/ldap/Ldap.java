@@ -25,6 +25,11 @@ public class Ldap {
     private String loginAttribute = DEFAULT_LOGIN_ATTRIBUTE;
     private String userObjectClass = DEFAULT_USER_OBJECT_CLASS;
 
+    /**
+     * Creates a new instance of Ldap with specified context factory.
+     *
+     * @param ldapContextFactory LDAP context factory
+     */
     public Ldap(LdapContextFactory ldapContextFactory) {
         if (ldapContextFactory == null) {
             throw new IllegalArgumentException("LDAP context factory is not set");
@@ -32,21 +37,28 @@ public class Ldap {
         this.ldapContextFactory = ldapContextFactory;
     }
 
-    private boolean isSasl() {
-        return DIGEST_MD5_METHOD.equals(ldapContextFactory.getAuthentication()) ||
-                CRAM_MD5_METHOD.equals(ldapContextFactory.getAuthentication()) ||
-                GSSAPI_METHOD.equals(ldapContextFactory.getAuthentication());
-    }
-
+    /**
+     * Tests connection.
+     *
+     * @throws NamingException if a naming exception is encountered
+     */
     public void testConnection() throws NamingException {
-        LdapHelper.LOG.debug("Test connection");
-        if (ldapContextFactory.getUsername() == null && isSasl()) {
-            // TODO warn
+        if (StringUtils.isBlank(ldapContextFactory.getUsername()) && isSasl()) {
+            LdapHelper.LOG.warn("Unable to test connection, if using SASL and no username specified");
         } else {
+            LdapHelper.LOG.debug("Test connection");
             ldapContextFactory.getInitialDirContext();
         }
     }
 
+    /**
+     * Tries to authenticate specified user with specified password.
+     *
+     * @param login    login
+     * @param password password
+     * @return true, if user can be authenticated with specified password
+     * @throws NamingException if a naming exception is encountered
+     */
     public boolean authenticate(String login, String password) throws NamingException {
         String principal;
         // if we are authenticating against DIGEST-MD5 or CRAM-MD5 then username is not the DN
@@ -61,6 +73,19 @@ public class Ldap {
         return StringUtils.isNotBlank(principal) && checkPasswordUsingBind(principal, password);
     }
 
+    private boolean isSasl() {
+        return DIGEST_MD5_METHOD.equals(ldapContextFactory.getAuthentication()) ||
+                CRAM_MD5_METHOD.equals(ldapContextFactory.getAuthentication()) ||
+                GSSAPI_METHOD.equals(ldapContextFactory.getAuthentication());
+    }
+
+    /**
+     * Checks password using GSSAPI.
+     *
+     * @param principal principal
+     * @param password  password
+     * @return true, if principal can be authenticated with specified password
+     */
     private boolean checkPasswordUsingGssapi(String principal, String password) {
         // Use our custom configuration to avoid reliance on external config
         Configuration.setConfiguration(new Krb5LoginConfiguration());
@@ -84,6 +109,31 @@ public class Ldap {
         }
         return true;
 
+    }
+
+    /**
+     * Checks password using Bind.
+     *
+     * @param principal principal
+     * @param password  password
+     * @return true, if principal can be authenticated with specified password
+     */
+    private boolean checkPasswordUsingBind(String principal, String password) {
+        InitialDirContext ctx = null;
+        boolean result;
+        try {
+            ctx = ldapContextFactory.getInitialDirContext(principal, password);
+            ctx.getAttributes("");
+            result = true;
+        } catch (NamingException e) {
+            if (LdapHelper.LOG.isDebugEnabled()) {
+                LdapHelper.LOG.debug("Password is not valid for principal: " + principal, e);
+            }
+            result = false;
+        } finally {
+            LdapHelper.closeContext(ctx);
+        }
+        return result;
     }
 
     private String getPrincipal(String login) throws NamingException {
@@ -110,8 +160,8 @@ public class Ldap {
             NamingEnumeration result = context.search(baseDN, request, new String[]{login}, controls);
             String found = null;
             if (result.hasMore()) {
-                SearchResult var7 = (SearchResult) result.next();
-                found = var7.getNameInNamespace();
+                SearchResult obj = (SearchResult) result.next();
+                found = obj.getNameInNamespace();
                 if (found != null && result.hasMore()) {
                     found = null;
                     LdapHelper.LOG.error("Login \'" + login + "\' is not unique in LDAP (see attribute " + loginAttribute + ")");
@@ -126,44 +176,56 @@ public class Ldap {
         return principal;
     }
 
-    private boolean checkPasswordUsingBind(String principal, String password) {
-        InitialDirContext ctx = null;
-        boolean result;
-        try {
-            ctx = ldapContextFactory.getInitialDirContext(principal, password);
-            ctx.getAttributes("");
-            result = true;
-        } catch (NamingException e) {
-            if (LdapHelper.LOG.isDebugEnabled()) {
-                LdapHelper.LOG.debug("Password is not valid for principal: " + principal, e);
-            }
-            result = false;
-        } finally {
-            LdapHelper.closeContext(ctx);
-        }
-        return result;
-    }
-
-    public void setLoginAttribute(String loginAttribute) {
-        this.loginAttribute = loginAttribute;
-    }
-
-    public void setUserObjectClass(String userObjectClass) {
-        this.userObjectClass = userObjectClass;
-    }
-
+    /**
+     * Returns login attribute.
+     *
+     * @return login attribute
+     */
     public String getLoginAttribute() {
         return loginAttribute;
     }
 
+    /**
+     * Sets login attribute.
+     *
+     * @param loginAttribute login attribute
+     */
+    public void setLoginAttribute(String loginAttribute) {
+        this.loginAttribute = loginAttribute;
+    }
+
+    /**
+     * Returns object class of LDAP users.
+     *
+     * @return object class of LDAP users
+     */
     public String getUserObjectClass() {
         return userObjectClass;
     }
 
+    /**
+     * Sets object class of LDAP users.
+     *
+     * @param userObjectClass Object class of LDAP users
+     */
+    public void setUserObjectClass(String userObjectClass) {
+        this.userObjectClass = userObjectClass;
+    }
+
+    /**
+     * Returns Base DN.
+     *
+     * @return Base DN
+     */
     public String getBaseDN() {
         return baseDN;
     }
 
+    /**
+     * Sets Base DN.
+     *
+     * @param baseDN Base DN
+     */
     public void setBaseDN(String baseDN) {
         this.baseDN = baseDN;
     }

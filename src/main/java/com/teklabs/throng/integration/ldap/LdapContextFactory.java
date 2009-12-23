@@ -7,11 +7,14 @@ import javax.naming.ldap.InitialLdapContext;
 import java.util.Hashtable;
 
 /**
+ * LDAP Context Factory.
+ *
  * @author Evgeny Mandrikov
  */
 public class LdapContextFactory {
     public static final String DEFAULT_AUTHENTICATION = "simple";
     public static final String DEFAULT_FACTORY = "com.sun.jndi.ldap.LdapCtxFactory";
+    public static final String DEFAULT_REFERRAL = "follow";
 
     protected static final String GSSAPI_METHOD = "GSSAPI";
     protected static final String DIGEST_MD5_METHOD = "DIGEST-MD5";
@@ -25,14 +28,19 @@ public class LdapContextFactory {
 
     private static final String SASL_REALM_PROPERTY = "java.naming.security.sasl.realm";
 
+    private String providerUrl = null;
     private String authentication = DEFAULT_AUTHENTICATION;
     private String factory = DEFAULT_FACTORY;
-    private String providerUrl = null;
-    private String referral = "follow";
+    private String referral = DEFAULT_REFERRAL;
     private String username = null;
     private String password = null;
     private String realm = null;
 
+    /**
+     * Creates a new instance of LdapContextFactory with specified LDAP url.
+     *
+     * @param providerUrl LDAP url
+     */
     public LdapContextFactory(String providerUrl) {
         if (providerUrl == null) {
             throw new IllegalArgumentException("LDAP URL is not set");
@@ -41,54 +49,37 @@ public class LdapContextFactory {
         }
     }
 
-    public String getProviderUrl() {
-        return providerUrl;
-    }
-
-    public String getFactory() {
-        return factory;
-    }
-
-    public void setFactory(String factory) {
-        this.factory = factory;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getAuthentication() {
-        return authentication;
-    }
-
-    public void setAuthentication(String authentication) {
-        this.authentication = authentication;
-    }
-
-    public String getRealm() {
-        return realm;
-    }
-
-    public void setRealm(String realm) {
-        this.realm = realm;
-    }
-
+    /**
+     * Returns InitialDirContext for Bind.
+     *
+     * @return InitialDirContext for Bind
+     * @throws NamingException if a naming exception is encountered
+     */
     public InitialDirContext getInitialDirContext() throws NamingException {
         return getInitialDirContext(username, password, true);
     }
 
+    /**
+     * Returns InitialDirContext for specified principal.
+     *
+     * @param principal   principal
+     * @param credentials credentials
+     * @return InitialDirContext for specified principal
+     * @throws NamingException if a naming exception is encountered
+     */
     public InitialDirContext getInitialDirContext(String principal, String credentials) throws NamingException {
         return getInitialDirContext(principal, credentials, false);
     }
 
+    /**
+     * Returns InitialDirContext for specified principal with specified pooling property.
+     *
+     * @param principal   principal
+     * @param credentials credentials
+     * @param pooling     true, if pooling should be enabled
+     * @return InitialDirContext for specified principal with specified pooling property
+     * @throws NamingException if a naming exception is encountered
+     */
     public InitialDirContext getInitialDirContext(String principal, String credentials, boolean pooling) throws NamingException {
         if (LdapHelper.LOG.isDebugEnabled()) {
             LdapHelper.LOG.debug(
@@ -98,6 +89,14 @@ public class LdapContextFactory {
         return new InitialLdapContext(getEnvironment(principal, credentials, pooling), null);
     }
 
+    /**
+     * Returns environment properties for specified principal with specified pooling property.
+     *
+     * @param principal   principal
+     * @param credentials credentials
+     * @param pooling     true, if pooling should be enabled
+     * @return environment properties
+     */
     private Hashtable<String, String> getEnvironment(String principal, String credentials, boolean pooling) {
         Hashtable<String, String> env = new Hashtable<String, String>();
 
@@ -124,5 +123,95 @@ public class LdapContextFactory {
         env.put(Context.REFERRAL, referral);
 
         return env;
+    }
+
+    /**
+     * Returns LDAP url (eg: ldap://localhost:10389).
+     *
+     * @return LDAP url
+     */
+    public String getProviderUrl() {
+        return providerUrl;
+    }
+
+    /**
+     * Returns context factory class.
+     *
+     * @return context factory class
+     */
+    public String getFactory() {
+        return factory;
+    }
+
+    /**
+     * Sets context factory class.
+     *
+     * @param factory context factory class
+     */
+    public void setFactory(String factory) {
+        this.factory = factory;
+    }
+
+    /**
+     * Sets Bind DN.
+     *
+     * @param username Bind DN
+     */
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    /**
+     * Returns Bind DN.
+     *
+     * @return Bind DN
+     */
+    public String getUsername() {
+        return username;
+    }
+
+    /**
+     * Sets Bind Password.
+     *
+     * @param password Bind Password
+     */
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    /**
+     * Returns authentication method (eg: simple).
+     *
+     * @return authentication method
+     */
+    public String getAuthentication() {
+        return authentication;
+    }
+
+    /**
+     * Sets authentication method (eg: simple).
+     *
+     * @param authentication authentication method
+     */
+    public void setAuthentication(String authentication) {
+        this.authentication = authentication;
+    }
+
+    /**
+     * Returns LDAP realm (eg: example.org).
+     *
+     * @return LDAP realm
+     */
+    public String getRealm() {
+        return realm;
+    }
+
+    /**
+     * Sets LDAP realm (eg: example.org).
+     *
+     * @param realm LDAP realm
+     */
+    public void setRealm(String realm) {
+        this.realm = realm;
     }
 }

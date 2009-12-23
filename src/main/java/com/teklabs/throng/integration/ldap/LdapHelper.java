@@ -16,8 +16,14 @@ import java.net.UnknownHostException;
 /**
  * @author Evgeny Mandrikov
  */
-public class LdapHelper {
+public final class LdapHelper {
     public static final Logger LOG = LoggerFactory.getLogger("com.teklabs.sonar.plugins.ldap");
+
+    /**
+     * Hide utility-class constructor.
+     */
+    private LdapHelper() {
+    }
 
     public static void closeContext(Context context) {
         try {
@@ -64,7 +70,7 @@ public class LdapHelper {
     }
 
     /**
-     * Get LDAP server (eg: ldap.example.org).
+     * Get LDAP server (eg: ldap.example.org:389).
      *
      * @param domain DNS domain
      * @return LDAP server
@@ -81,9 +87,13 @@ public class LdapHelper {
             while (lEnum.hasMore()) {
                 String srvRecord = (String) lEnum.next();
                 String[] srvData = srvRecord.split(" ");
-                server = (srvData[3].endsWith(".") ?
-                        (srvData[3].substring(0, srvData[3].length() - 1)) :
-                        (srvData[3]) + ":" + srvData[2]);
+
+                String target = srvData[3].endsWith(".") ?
+                        srvData[3].substring(0, srvData[3].length() - 1) :
+                        srvData[3];
+                String port = srvData[2];
+
+                server = "ldap://" + target + ":" + port;
             }
         } catch (NamingException e) {
             LOG.error("Unable to determine ldap server", e);

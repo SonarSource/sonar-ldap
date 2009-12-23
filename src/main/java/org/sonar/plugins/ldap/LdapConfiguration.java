@@ -33,10 +33,10 @@ public class LdapConfiguration implements ServerExtension {
     }
 
     private Ldap newInstance() {
-        String domain = configuration.getString("ldap.domain");
-        if (domain == null) {
+        String realm = configuration.getString("ldap.realm", null);
+        if (realm == null) {
             try {
-                domain = LdapHelper.getDnsDomain();
+                realm = LdapHelper.getDnsDomain();
             } catch (UnknownHostException e) {
                 LdapHelper.LOG.error("Unable to determine domain name", e);
             }
@@ -44,13 +44,12 @@ public class LdapConfiguration implements ServerExtension {
 
         String ldapUrl = configuration.getString("ldap.url", null);
         if (ldapUrl == null) {
-            // TODO Godin: maybe add protocol (ldap or ldaps)?
-            ldapUrl = LdapHelper.getLdapServer(domain);
+            ldapUrl = LdapHelper.getLdapServer(realm);
         }
 
         String baseDN = getComaDelimitedValue(configuration, "ldap.baseDn", null);
-        if (baseDN == null && domain != null) {
-            baseDN = LdapHelper.getDnsDomainDn(domain);
+        if (baseDN == null && realm != null) {
+            baseDN = LdapHelper.getDnsDomainDn(realm);
         }
 
         LdapContextFactory contextFactory = new LdapContextFactory(ldapUrl);
@@ -58,7 +57,7 @@ public class LdapConfiguration implements ServerExtension {
         contextFactory.setFactory(configuration.getString("ldap.contextFactoryClass", DEFAULT_FACTORY));
         contextFactory.setUsername(getComaDelimitedValue(configuration, "ldap.bindDn", null));
         contextFactory.setPassword(configuration.getString("ldap.bindPassword", null));
-        contextFactory.setRealm(configuration.getString("ldap.realm", null));
+        contextFactory.setRealm(realm);
 
         Ldap result = new Ldap(contextFactory);
         result.setBaseDN(baseDN);

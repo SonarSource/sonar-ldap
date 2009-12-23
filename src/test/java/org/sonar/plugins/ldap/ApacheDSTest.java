@@ -25,6 +25,7 @@ public class ApacheDSTest {
     private Ldap ldap;
 
     public ApacheDSTest(String config) throws ConfigurationException {
+        LdapHelper.LOG.info("-------------------");
         LdapHelper.LOG.info("Config: " + config);
         ldap = new LdapConfiguration(
                 new PropertiesConfiguration(getClass().getResource(config))

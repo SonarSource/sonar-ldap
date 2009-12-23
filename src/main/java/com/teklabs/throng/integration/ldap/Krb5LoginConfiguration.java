@@ -14,11 +14,11 @@ public class Krb5LoginConfiguration extends Configuration {
      * Creates a new instance of Krb5LoginConfiguration.
      */
     public Krb5LoginConfiguration() {
+        super();
         String loginModule = "com.sun.security.auth.module.Krb5LoginModule";
         AppConfigurationEntry.LoginModuleControlFlag flag = AppConfigurationEntry.LoginModuleControlFlag.REQUIRED;
         configList[0] = new AppConfigurationEntry(loginModule, flag, new HashMap<String, Object>());
     }
-
 
     /**
      * Interface method requiring us to return all the LoginModules we know about.
@@ -27,7 +27,6 @@ public class Krb5LoginConfiguration extends Configuration {
         // We will ignore the applicationName, since we want all apps to use Kerberos V5
         return configList;
     }
-
 
     /**
      * Interface method for reloading the configuration.  We don't need this.
