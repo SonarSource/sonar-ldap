@@ -1,7 +1,6 @@
 package org.sonar.plugins.ldap;
 
 import com.teklabs.throng.integration.ldap.ApacheDSTestServer;
-import com.teklabs.throng.integration.ldap.Ldap;
 import com.teklabs.throng.integration.ldap.LdapHelper;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
@@ -22,14 +21,15 @@ import java.util.Collection;
 public class ApacheDSTest {
     private static ApacheDSTestServer SERVER = new ApacheDSTestServer();
 
-    private Ldap ldap;
+    private LdapAuthenticator authenticator;
 
     public ApacheDSTest(String config) throws ConfigurationException {
         LdapHelper.LOG.info("-------------------");
         LdapHelper.LOG.info("Config: " + config);
-        ldap = new LdapConfiguration(
+        LdapConfiguration configuration = new LdapConfiguration(
                 new PropertiesConfiguration(getClass().getResource(config))
-        ).getLdap();
+        );
+        authenticator = new LdapAuthenticator(configuration);
     }
 
     @Parameterized.Parameters
@@ -47,10 +47,10 @@ public class ApacheDSTest {
 
     @Test
     public void test() throws Exception {
-        ldap.testConnection();
-        Assert.assertFalse(ldap.authenticate("godin", "incorrect"));
-        Assert.assertTrue(ldap.authenticate("godin", "secret1"));
-        Assert.assertTrue(ldap.authenticate("tester", "secret2"));
+        authenticator.init();
+        Assert.assertFalse(authenticator.authenticate("godin", "incorrect"));
+        Assert.assertTrue(authenticator.authenticate("godin", "secret1"));
+        Assert.assertTrue(authenticator.authenticate("tester", "secret2"));
     }
 
     @BeforeClass
