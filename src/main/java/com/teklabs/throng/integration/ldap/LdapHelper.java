@@ -25,6 +25,11 @@ public final class LdapHelper {
     private LdapHelper() {
     }
 
+    /**
+     * Closes specified context.
+     *
+     * @param context context to close
+     */
     public static void closeContext(Context context) {
         try {
             if (context != null) {

@@ -11,6 +11,11 @@ import javax.naming.NamingException;
 public class LdapAuthenticator implements LoginPasswordAuthenticator {
     private LdapConfiguration configuration;
 
+    /**
+     * Creates a new instance of LdapAuthenticator with specified configuration.
+     *
+     * @param configuration LDAP configuration
+     */
     public LdapAuthenticator(LdapConfiguration configuration) {
         this.configuration = configuration;
     }

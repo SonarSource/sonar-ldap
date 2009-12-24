@@ -21,6 +21,11 @@ public class LdapConfiguration implements ServerExtension {
     private Configuration configuration;
     private Ldap ldap = null;
 
+    /**
+     * Creates new instance of LdapConfiguration.
+     *
+     * @param configuration configuration
+     */
     public LdapConfiguration(Configuration configuration) {
         this.configuration = configuration;
     }
