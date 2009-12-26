@@ -129,6 +129,11 @@
             <name>Evgeny Mandrikov</name>
             <timezone>+3</timezone>
         </developer>
+        <developer>
+            <id>hgomez</id>
+            <name>Henri Gomez</name>
+            <timezone>+1</timezone>
+        </developer>
     </developers>
 
     <scm>
