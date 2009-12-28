@@ -166,4 +166,12 @@
         <system>Bamboo</system>
         <url>http://ci.codehaus.org/browse/SONAR-LDAP</url>
     </ciManagement>
+
+    <licenses>
+        <license>
+            <name>GNU Lesser General Public License (LGPL), v.3</name>
+            <url>http://www.gnu.org/licenses/lgpl.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 </project>
