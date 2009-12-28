@@ -20,7 +20,6 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
         this.configuration = configuration;
     }
 
-    @Override
     public void init() {
         try {
             configuration.getLdap().testConnection();
@@ -29,7 +28,6 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
         }
     }
 
-    @Override
     public boolean authenticate(final String login, final String password) {
         try {
             return configuration.getLdap().authenticate(login, password);
