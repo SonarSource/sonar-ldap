@@ -75,7 +75,8 @@ public class ApacheDSTest {
         SERVER.start();
         SERVER.initialize("/users-apacheds.ldif");
 
-        String krbConfPath = ApacheDSTest.class.getResource("/conf/krb5.conf").getFile();
+        String krbConfPath = ApacheDSTest.class.getResource("/conf/krb5.conf").toURI().getPath();
+        LdapHelper.LOG.info("krbConfPath: " + krbConfPath);
         System.setProperty("java.security.krb5.conf", krbConfPath);
         System.setProperty("sun.security.krb5.debug", "true");
     }
