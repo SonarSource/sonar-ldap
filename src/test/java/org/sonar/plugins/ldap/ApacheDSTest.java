@@ -35,58 +35,58 @@ import java.util.Collection;
  */
 @RunWith(value = Parameterized.class)
 public class ApacheDSTest {
-    private static ApacheDSTestServer SERVER = new ApacheDSTestServer();
+  private static ApacheDSTestServer SERVER = new ApacheDSTestServer();
 
-    private LdapAuthenticator authenticator;
+  private LdapAuthenticator authenticator;
 
-    public ApacheDSTest(String config) throws ConfigurationException {
-        LdapHelper.LOG.info("-------------------");
-        LdapHelper.LOG.info("Config: " + config);
-        LdapConfiguration configuration = new LdapConfiguration(
-                new PropertiesConfiguration(getClass().getResource(config))
-        );
-        authenticator = new LdapAuthenticator(configuration);
-    }
+  public ApacheDSTest(String config) throws ConfigurationException {
+    LdapHelper.LOG.info("-------------------");
+    LdapHelper.LOG.info("Config: " + config);
+    LdapConfiguration configuration = new LdapConfiguration(
+        new PropertiesConfiguration(getClass().getResource(config))
+    );
+    authenticator = new LdapAuthenticator(configuration);
+  }
 
-    @Parameterized.Parameters
-    public static Collection data() {
-        Object[][] data = new Object[][]{
-                {"/conf/simple.properties"},
-                {"/conf/bind.properties"},
-                {"/conf/CRAM-MD5.properties"},
-                {"/conf/DIGEST-MD5.properties"},
-                {"/conf/GSSAPI.properties"},
+  @Parameterized.Parameters
+  public static Collection data() {
+    Object[][] data = new Object[][]{
+        {"/conf/simple.properties"},
+        {"/conf/bind.properties"},
+        {"/conf/CRAM-MD5.properties"},
+        {"/conf/DIGEST-MD5.properties"},
+        {"/conf/GSSAPI.properties"},
 //                {"/conf/sasl_mech.properties"}, // FIXME
-        };
-        return Arrays.asList(data);
-    }
+    };
+    return Arrays.asList(data);
+  }
 
-    @Test
-    public void test() throws Exception {
-        authenticator.init();
-        Assert.assertFalse(authenticator.authenticate("godin", "incorrect"));
-        Assert.assertTrue(authenticator.authenticate("godin", "secret1"));
-        Assert.assertTrue(authenticator.authenticate("tester", "secret2"));
-    }
+  @Test
+  public void test() throws Exception {
+    authenticator.init();
+    Assert.assertFalse(authenticator.authenticate("godin", "incorrect"));
+    Assert.assertTrue(authenticator.authenticate("godin", "secret1"));
+    Assert.assertTrue(authenticator.authenticate("tester", "secret2"));
+  }
 
-    @BeforeClass
-    public static void setUp() throws Exception {
-        SERVER.setServerRoot("target/apacheds-work");
-        SERVER.start();
-        SERVER.initialize("/users-apacheds.ldif");
+  @BeforeClass
+  public static void setUp() throws Exception {
+    SERVER.setServerRoot("target/apacheds-work");
+    SERVER.start();
+    SERVER.initialize("/users-apacheds.ldif");
 
-        String krbConfPath = ApacheDSTest.class.getResource("/conf/krb5.conf").toURI().getPath();
-        LdapHelper.LOG.info("krbConfPath: " + krbConfPath);
-        System.setProperty("java.security.krb5.conf", krbConfPath);
-        System.setProperty("sun.security.krb5.debug", "true");
-    }
+    String krbConfPath = ApacheDSTest.class.getResource("/conf/krb5.conf").toURI().getPath();
+    LdapHelper.LOG.info("krbConfPath: " + krbConfPath);
+    System.setProperty("java.security.krb5.conf", krbConfPath);
+    System.setProperty("sun.security.krb5.debug", "true");
+  }
 
-    @AfterClass
-    public static void tearDown() throws Exception {
-        SERVER.stop();
-    }
+  @AfterClass
+  public static void tearDown() throws Exception {
+    SERVER.stop();
+  }
 
-    public static void main(String[] args) throws Exception {
-        setUp();
-    }
+  public static void main(String[] args) throws Exception {
+    setUp();
+  }
 }

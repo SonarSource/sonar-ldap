@@ -27,22 +27,22 @@ import java.util.List;
  */
 @SuppressWarnings({"UnusedDeclaration"})
 public class LdapPlugin implements Plugin {
-    public String getKey() {
-        return "ldap";
-    }
+  public String getKey() {
+    return "ldap";
+  }
 
-    public String getName() {
-        return "Ldap";
-    }
+  public String getName() {
+    return "Ldap";
+  }
 
-    public String getDescription() {
-        return "Plugs authentication mechanism to a LDAP directory to delegate passwords management.";
-    }
+  public String getDescription() {
+    return "Plugs authentication mechanism to a LDAP directory to delegate passwords management.";
+  }
 
-    public List<Class<? extends Extension>> getExtensions() {
-        List<Class<? extends Extension>> extensions = new ArrayList<Class<? extends Extension>>();
-        extensions.add(LdapAuthenticator.class);
-        extensions.add(LdapConfiguration.class);
-        return extensions;
-    }
+  public List<Class<? extends Extension>> getExtensions() {
+    List<Class<? extends Extension>> extensions = new ArrayList<Class<? extends Extension>>();
+    extensions.add(LdapAuthenticator.class);
+    extensions.add(LdapConfiguration.class);
+    return extensions;
+  }
 }

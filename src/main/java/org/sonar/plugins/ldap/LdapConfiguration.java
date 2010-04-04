@@ -34,75 +34,75 @@ import static com.teklabs.throng.integration.ldap.LdapContextFactory.DEFAULT_FAC
  * @author Evgeny Mandrikov
  */
 public class LdapConfiguration implements ServerExtension {
-    private Configuration configuration;
-    private Ldap ldap = null;
+  private Configuration configuration;
+  private Ldap ldap = null;
 
-    /**
-     * Creates new instance of LdapConfiguration.
-     *
-     * @param configuration configuration
-     */
-    public LdapConfiguration(Configuration configuration) {
-        this.configuration = configuration;
+  /**
+   * Creates new instance of LdapConfiguration.
+   *
+   * @param configuration configuration
+   */
+  public LdapConfiguration(Configuration configuration) {
+    this.configuration = configuration;
+  }
+
+  public Ldap getLdap() {
+    if (ldap == null) {
+      ldap = newInstance();
+    }
+    return ldap;
+  }
+
+  private Ldap newInstance() {
+    String realm = configuration.getString("ldap.realm", null);
+    if (realm == null) {
+      try {
+        realm = LdapHelper.getDnsDomainName();
+      } catch (UnknownHostException e) {
+        LdapHelper.LOG.error("Unable to determine domain name", e);
+      }
     }
 
-    public Ldap getLdap() {
-        if (ldap == null) {
-            ldap = newInstance();
-        }
-        return ldap;
+    String ldapUrl = configuration.getString("ldap.url", null);
+    if (ldapUrl == null) {
+      ldapUrl = LdapHelper.getLdapServer(realm);
     }
 
-    private Ldap newInstance() {
-        String realm = configuration.getString("ldap.realm", null);
-        if (realm == null) {
-            try {
-                realm = LdapHelper.getDnsDomainName();
-            } catch (UnknownHostException e) {
-                LdapHelper.LOG.error("Unable to determine domain name", e);
-            }
-        }
-
-        String ldapUrl = configuration.getString("ldap.url", null);
-        if (ldapUrl == null) {
-            ldapUrl = LdapHelper.getLdapServer(realm);
-        }
-
-        String baseDN = getComaDelimitedValue(configuration, "ldap.baseDn", null);
-        if (baseDN == null && realm != null) {
-            baseDN = LdapHelper.getDnsDomainDn(realm);
-        }
-
-        LdapContextFactory contextFactory = new LdapContextFactory(ldapUrl);
-        contextFactory.setAuthentication(configuration.getString("ldap.authentication", DEFAULT_AUTHENTICATION));
-        contextFactory.setFactory(configuration.getString("ldap.contextFactoryClass", DEFAULT_FACTORY));
-        contextFactory.setUsername(getComaDelimitedValue(configuration, "ldap.bindDn", null));
-        contextFactory.setPassword(configuration.getString("ldap.bindPassword", null));
-        contextFactory.setRealm(realm);
-
-        Ldap result = new Ldap(contextFactory);
-        result.setBaseDN(baseDN);
-        result.setUserObjectClass(getComaDelimitedValue(configuration, "ldap.userObjectClass", DEFAULT_USER_OBJECT_CLASS));
-        result.setLoginAttribute(configuration.getString("ldap.loginAttribute", DEFAULT_LOGIN_ATTRIBUTE));
-
-        if (LdapHelper.LOG.isInfoEnabled()) {
-            LdapHelper.LOG.info("Url: " + contextFactory.getProviderUrl());
-            LdapHelper.LOG.info("Authentication: " + contextFactory.getAuthentication());
-            LdapHelper.LOG.info("ContextFactoryClass: " + contextFactory.getFactory());
-            LdapHelper.LOG.info("BindDn: " + contextFactory.getUsername());
-            LdapHelper.LOG.info("Realm: " + contextFactory.getRealm());
-
-            LdapHelper.LOG.info("BaseDn: " + result.getBaseDN());
-            LdapHelper.LOG.info("UserObjectClass: " + result.getUserObjectClass());
-            LdapHelper.LOG.info("LoginAttribute: " + result.getLoginAttribute());
-        }
-
-        return result;
+    String baseDN = getComaDelimitedValue(configuration, "ldap.baseDn", null);
+    if (baseDN == null && realm != null) {
+      baseDN = LdapHelper.getDnsDomainDn(realm);
     }
 
-    private static String getComaDelimitedValue(Configuration configuration, String key, String defaultValue) {
-        String[] values = configuration.getStringArray(key);
-        return values != null && values.length != 0 ? StringUtils.join(values, ",") : defaultValue;
+    LdapContextFactory contextFactory = new LdapContextFactory(ldapUrl);
+    contextFactory.setAuthentication(configuration.getString("ldap.authentication", DEFAULT_AUTHENTICATION));
+    contextFactory.setFactory(configuration.getString("ldap.contextFactoryClass", DEFAULT_FACTORY));
+    contextFactory.setUsername(getComaDelimitedValue(configuration, "ldap.bindDn", null));
+    contextFactory.setPassword(configuration.getString("ldap.bindPassword", null));
+    contextFactory.setRealm(realm);
+
+    Ldap result = new Ldap(contextFactory);
+    result.setBaseDN(baseDN);
+    result.setUserObjectClass(getComaDelimitedValue(configuration, "ldap.userObjectClass", DEFAULT_USER_OBJECT_CLASS));
+    result.setLoginAttribute(configuration.getString("ldap.loginAttribute", DEFAULT_LOGIN_ATTRIBUTE));
+
+    if (LdapHelper.LOG.isInfoEnabled()) {
+      LdapHelper.LOG.info("Url: " + contextFactory.getProviderUrl());
+      LdapHelper.LOG.info("Authentication: " + contextFactory.getAuthentication());
+      LdapHelper.LOG.info("ContextFactoryClass: " + contextFactory.getFactory());
+      LdapHelper.LOG.info("BindDn: " + contextFactory.getUsername());
+      LdapHelper.LOG.info("Realm: " + contextFactory.getRealm());
+
+      LdapHelper.LOG.info("BaseDn: " + result.getBaseDN());
+      LdapHelper.LOG.info("UserObjectClass: " + result.getUserObjectClass());
+      LdapHelper.LOG.info("LoginAttribute: " + result.getLoginAttribute());
     }
+
+    return result;
+  }
+
+  private static String getComaDelimitedValue(Configuration configuration, String key, String defaultValue) {
+    String[] values = configuration.getStringArray(key);
+    return values != null && values.length != 0 ? StringUtils.join(values, ",") : defaultValue;
+  }
 
 }

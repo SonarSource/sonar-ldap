@@ -33,98 +33,98 @@ import java.net.UnknownHostException;
  * @author Evgeny Mandrikov
  */
 public final class LdapHelper {
-    public static final Logger LOG = LoggerFactory.getLogger("org.sonar.plugins.ldap");
+  public static final Logger LOG = LoggerFactory.getLogger("org.sonar.plugins.ldap");
 
-    /**
-     * Hide utility-class constructor.
-     */
-    private LdapHelper() {
+  /**
+   * Hide utility-class constructor.
+   */
+  private LdapHelper() {
+  }
+
+  /**
+   * Closes specified context.
+   *
+   * @param context context to close
+   */
+  public static void closeContext(Context context) {
+    try {
+      if (context != null) {
+        context.close();
+      }
+    } catch (Exception e) {
+      if (LOG.isErrorEnabled()) {
+        LOG.error("Can not close LDAP context", e);
+      }
     }
+  }
 
-    /**
-     * Closes specified context.
-     *
-     * @param context context to close
-     */
-    public static void closeContext(Context context) {
-        try {
-            if (context != null) {
-                context.close();
-            }
-        } catch (Exception e) {
-            if (LOG.isErrorEnabled()) {
-                LOG.error("Can not close LDAP context", e);
-            }
-        }
+  /**
+   * Get the DNS domain name (eg: example.org).
+   *
+   * @return DNS domain
+   * @throws java.net.UnknownHostException if unable to determine DNS domain
+   */
+  public static String getDnsDomainName() throws UnknownHostException {
+    return getDnsDomainName(InetAddress.getLocalHost().getCanonicalHostName());
+  }
+
+  /**
+   * Extracts DNS domain name from Fully Qualified Domain Name.
+   *
+   * @param fqdn Fully Qualified Domain Name
+   * @return DNS domain name or null, if can't be extracted
+   */
+  public static String getDnsDomainName(String fqdn) {
+    if (fqdn.indexOf('.') == -1) {
+      return null;
     }
+    return fqdn.substring(fqdn.indexOf('.') + 1);
+  }
 
-    /**
-     * Get the DNS domain name (eg: example.org).
-     *
-     * @return DNS domain
-     * @throws java.net.UnknownHostException if unable to determine DNS domain
-     */
-    public static String getDnsDomainName() throws UnknownHostException {
-        return getDnsDomainName(InetAddress.getLocalHost().getCanonicalHostName());
+  /**
+   * Get the DNS DN domain (eg: dc=example,dc=org).
+   *
+   * @param domain DNS domain
+   * @return DNS DN domain
+   */
+  public static String getDnsDomainDn(String domain) {
+    StringBuilder result = new StringBuilder();
+    String[] domainPart = domain.split("[.]");
+    for (int i = 0; i < domainPart.length; i++) {
+      result.append(i > 0 ? "," : "").append("dc=").append(domainPart[i]);
     }
+    return result.toString();
+  }
 
-    /**
-     * Extracts DNS domain name from Fully Qualified Domain Name.
-     *
-     * @param fqdn Fully Qualified Domain Name
-     * @return DNS domain name or null, if can't be extracted
-     */
-    public static String getDnsDomainName(String fqdn) {
-        if (fqdn.indexOf('.') == -1) {
-            return null;
-        }
-        return fqdn.substring(fqdn.indexOf('.') + 1);
+  /**
+   * Get LDAP server (eg: ldap.example.org:389).
+   *
+   * @param domain DNS domain
+   * @return LDAP server
+   */
+  public static String getLdapServer(String domain) {
+    // get Active Directory servers from DNS
+    String server = null;
+    try {
+      DirContext lDnsCtx = new InitialDirContext();
+      Attributes lSrvAttrs = lDnsCtx.getAttributes("dns:/_ldap._tcp." + domain, new String[]{"srv"});
+      Attribute serversAttribute = lSrvAttrs.get("srv");
+      NamingEnumeration lEnum = serversAttribute.getAll();
+      // TODO Godin: There is can be more than one SRV record
+      while (lEnum.hasMore()) {
+        String srvRecord = (String) lEnum.next();
+        String[] srvData = srvRecord.split(" ");
+
+        String target = srvData[3].endsWith(".") ?
+            srvData[3].substring(0, srvData[3].length() - 1) :
+            srvData[3];
+        String port = srvData[2];
+
+        server = "ldap://" + target + ":" + port;
+      }
+    } catch (NamingException e) {
+      LOG.error("Unable to determine ldap server", e);
     }
-
-    /**
-     * Get the DNS DN domain (eg: dc=example,dc=org).
-     *
-     * @param domain DNS domain
-     * @return DNS DN domain
-     */
-    public static String getDnsDomainDn(String domain) {
-        StringBuilder result = new StringBuilder();
-        String[] domainPart = domain.split("[.]");
-        for (int i = 0; i < domainPart.length; i++) {
-            result.append(i > 0 ? "," : "").append("dc=").append(domainPart[i]);
-        }
-        return result.toString();
-    }
-
-    /**
-     * Get LDAP server (eg: ldap.example.org:389).
-     *
-     * @param domain DNS domain
-     * @return LDAP server
-     */
-    public static String getLdapServer(String domain) {
-        // get Active Directory servers from DNS
-        String server = null;
-        try {
-            DirContext lDnsCtx = new InitialDirContext();
-            Attributes lSrvAttrs = lDnsCtx.getAttributes("dns:/_ldap._tcp." + domain, new String[]{"srv"});
-            Attribute serversAttribute = lSrvAttrs.get("srv");
-            NamingEnumeration lEnum = serversAttribute.getAll();
-            // TODO Godin: There is can be more than one SRV record
-            while (lEnum.hasMore()) {
-                String srvRecord = (String) lEnum.next();
-                String[] srvData = srvRecord.split(" ");
-
-                String target = srvData[3].endsWith(".") ?
-                        srvData[3].substring(0, srvData[3].length() - 1) :
-                        srvData[3];
-                String port = srvData[2];
-
-                server = "ldap://" + target + ":" + port;
-            }
-        } catch (NamingException e) {
-            LOG.error("Unable to determine ldap server", e);
-        }
-        return server;
-    }
+    return server;
+  }
 }
