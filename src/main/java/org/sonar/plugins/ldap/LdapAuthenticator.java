@@ -18,6 +18,7 @@ package org.sonar.plugins.ldap;
 
 import com.teklabs.throng.integration.ldap.LdapHelper;
 import org.sonar.api.security.LoginPasswordAuthenticator;
+import org.sonar.api.utils.SonarException;
 
 import javax.naming.NamingException;
 
@@ -40,7 +41,7 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
     try {
       configuration.getLdap().testConnection();
     } catch (NamingException e) {
-      throw new RuntimeException("Unable to open LDAP connection", e);
+      throw new SonarException("Unable to open LDAP connection", e);
     }
   }
 
