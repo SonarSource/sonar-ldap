@@ -11,6 +11,10 @@
   <artifactId>sonar-ldap-plugin</artifactId>
   <version>0.2-SNAPSHOT</version>
   <name>Sonar LDAP Plugin</name>
+  <description>
+    Enables the delegation of Sonar authentication to an external system.
+    The plugin currently supports LDAP and Microsoft Active Directory.
+  </description>
 
   <inceptionYear>2009</inceptionYear>
 
