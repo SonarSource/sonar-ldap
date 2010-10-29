@@ -4,12 +4,13 @@
   <parent>
     <groupId>org.codehaus.sonar-plugins</groupId>
     <artifactId>parent</artifactId>
-    <version>5</version>
+    <version>6</version>
     <relativePath>../parent</relativePath>
   </parent>
 
   <artifactId>sonar-ldap-plugin</artifactId>
   <version>0.2-SNAPSHOT</version>
+  <packaging>sonar-plugin</packaging>
   <name>Sonar LDAP Plugin</name>
   <description>
     Enables the delegation of Sonar authentication to an external system.
@@ -20,6 +21,10 @@
 
   <properties>
     <sonar.version>1.12</sonar.version>
+    <!-- TODO sonar-packaging-maven-plugin because of SONAR-1879 -->
+    <sonar.pluginKey>ldap</sonar.pluginKey>
+    <sonar.pluginName>LDAP</sonar.pluginName>
+    <sonar.pluginClass>org.sonar.plugins.ldap.LdapPlugin</sonar.pluginClass>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <version.org.apache.directory.server>1.5.5</version.org.apache.directory.server>
     <version.org.opends>2.2.0</version.org.opends>
@@ -27,18 +32,6 @@
 
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <configuration>
-          <archive>
-            <manifestEntries>
-              <Plugin-Class>org.sonar.plugins.ldap.LdapPlugin</Plugin-Class>
-            </manifestEntries>
-          </archive>
-        </configuration>
-      </plugin>
-
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
@@ -139,12 +132,13 @@
       <name>Evgeny Mandrikov</name>
       <timezone>+3</timezone>
     </developer>
-    <developer>
-      <id>hgomez</id>
+  </developers>
+  <contributors>
+    <contributor>
       <name>Henri Gomez</name>
       <timezone>+1</timezone>
-    </developer>
-  </developers>
+    </contributor>
+  </contributors>
 
   <scm>
     <connection>scm:svn:http://svn.codehaus.org/sonar-plugins/trunk/ldap</connection>
