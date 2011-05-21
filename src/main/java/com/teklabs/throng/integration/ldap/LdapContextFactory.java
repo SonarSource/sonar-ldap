@@ -24,7 +24,7 @@ import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.ldap.InitialLdapContext;
-import java.util.Hashtable;
+import java.util.Properties;
 
 /**
  * LDAP Context Factory.
@@ -117,8 +117,8 @@ public class LdapContextFactory {
    * @param pooling     true, if pooling should be enabled
    * @return environment properties
    */
-  private Hashtable<String, String> getEnvironment(String principal, String credentials, boolean pooling) {
-    Hashtable<String, String> env = new Hashtable<String, String>();
+  private Properties getEnvironment(String principal, String credentials, boolean pooling) {
+    Properties env = new Properties();
 
     env.put(Context.SECURITY_AUTHENTICATION, authentication);
 
