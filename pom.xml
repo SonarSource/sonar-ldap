@@ -56,7 +56,7 @@
   </ciManagement>
 
   <properties>
-    <sonar.version>1.12</sonar.version>
+    <sonar.version>2.14-SNAPSHOT</sonar.version>
     <sonar.pluginName>LDAP</sonar.pluginName>
     <sonar.pluginClass>org.sonar.plugins.ldap.LdapPlugin</sonar.pluginClass>
 
