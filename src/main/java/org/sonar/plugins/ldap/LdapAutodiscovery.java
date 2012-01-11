@@ -32,6 +32,9 @@ import javax.naming.directory.InitialDirContext;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+/**
+ * @author Evgeny Mandrikov
+ */
 public final class LdapAutodiscovery {
 
   private static final Logger LOG = LoggerFactory.getLogger(LdapAutodiscovery.class);
@@ -78,33 +81,37 @@ public final class LdapAutodiscovery {
   }
 
   /**
-   * Get LDAP server (eg: ldap.example.org:389).
+   * Get LDAP server from DNS.
    *
    * @param domain DNS domain
-   * @return LDAP server
+   * @return LDAP server or null if unable to determine
    */
   public static String getLdapServer(String domain) {
-    // get Active Directory servers from DNS
-    String server = null;
     try {
-      DirContext lDnsCtx = new InitialDirContext();
-      Attributes lSrvAttrs = lDnsCtx.getAttributes("dns:/_ldap._tcp." + domain, new String[] {"srv"});
-      Attribute serversAttribute = lSrvAttrs.get("srv");
-      NamingEnumeration lEnum = serversAttribute.getAll();
-      // TODO Godin: There is can be more than one SRV record
-      while (lEnum.hasMore()) {
-        String srvRecord = (String) lEnum.next();
-        String[] srvData = srvRecord.split(" ");
-
-        String target = srvData[3].endsWith(".") ?
-            srvData[3].substring(0, srvData[3].length() - 1) :
-            srvData[3];
-        String port = srvData[2];
-
-        server = "ldap://" + target + ":" + port;
-      }
+      return getLdapServer(new InitialDirContext(), domain);
     } catch (NamingException e) {
       LOG.error("Unable to determine LDAP server from DNS", e);
+      return null;
+    }
+  }
+
+  static String getLdapServer(DirContext context, String domain) throws NamingException {
+    Attributes lSrvAttrs = context.getAttributes("dns:/_ldap._tcp." + domain, new String[] {"srv"});
+    Attribute serversAttribute = lSrvAttrs.get("srv");
+    NamingEnumeration lEnum = serversAttribute.getAll();
+    // TODO Godin: There is can be more than one SRV record
+    String server = null;
+    while (lEnum.hasMore()) {
+      String srvRecord = (String) lEnum.next();
+      // priority weight port target
+      String[] srvData = srvRecord.split(" ");
+
+      String target = srvData[3].endsWith(".") ?
+          srvData[3].substring(0, srvData[3].length() - 1) :
+          srvData[3];
+      String port = srvData[2];
+
+      server = "ldap://" + target + ":" + port;
     }
     return server;
   }

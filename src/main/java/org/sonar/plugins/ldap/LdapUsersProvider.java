@@ -33,7 +33,7 @@ import javax.naming.directory.SearchResult;
 /**
  * @author Evgeny Mandrikov
  */
-public class LdapUsersProvider implements ExternalUsersProvider {
+public class LdapUsersProvider extends ExternalUsersProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(LdapUsersProvider.class);
 
@@ -52,7 +52,7 @@ public class LdapUsersProvider implements ExternalUsersProvider {
     try {
       LOG.debug("Requesting details for user {}", username);
       SearchResult searchResult = userMapping.createSearch(contextFactory, username)
-          .setReturningAttributes(userMapping.getEmailAttribute(), userMapping.getRealNameAttribute())
+          .returns(userMapping.getEmailAttribute(), userMapping.getRealNameAttribute())
           .findUnique();
       UserDetails details = new UserDetails();
       Attributes attributes = searchResult.getAttributes();
@@ -60,6 +60,8 @@ public class LdapUsersProvider implements ExternalUsersProvider {
       details.setEmail(getAttributeValue(attributes.get(userMapping.getEmailAttribute())));
       return details;
     } catch (NamingException e) {
+      // just in case if Sonar silently swallowed exception
+      LOG.debug(e.getMessage(), e);
       throw new SonarException("Unable to retrieve details for user " + username, e);
     }
   }

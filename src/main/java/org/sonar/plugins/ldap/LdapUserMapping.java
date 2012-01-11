@@ -54,14 +54,14 @@ public class LdapUserMapping {
    */
   public LdapUserMapping(Settings settings) {
     // TODO maybe change legacy properties to be in consistence with Group Mapping
-    String baseDn = settings.getString("ldap.baseDn");
-    if (baseDn == null) {
+    String usersBaseDn = settings.getString("ldap.baseDn");
+    if (usersBaseDn == null) {
       String realm = settings.getString("ldap.realm");
       if (realm != null) {
-        baseDn = LdapAutodiscovery.getDnsDomainDn(realm);
+        usersBaseDn = LdapAutodiscovery.getDnsDomainDn(realm);
       }
     }
-    this.baseDn = baseDn;
+    this.baseDn = usersBaseDn;
     this.userObjectClass = StringUtils.defaultString(settings.getString("ldap.userObjectClass"), DEFAULT_USER_OBJECT_CLASS);
     this.loginAttribute = StringUtils.defaultString(settings.getString("ldap.loginAttribute"), DEFAULT_LOGIN_ATTRIBUTE);
     this.realNameAttribute = StringUtils.defaultString(settings.getString("ldap.user.realNameAttribute"), DEFAULT_NAME_ATTRIBUTE);

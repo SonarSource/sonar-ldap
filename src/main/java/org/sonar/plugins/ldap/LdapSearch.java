@@ -32,6 +32,8 @@ import javax.naming.directory.SearchResult;
 import java.util.Arrays;
 
 /**
+ * Fluent API for building LDAP queries.
+ *
  * @author Evgeny Mandrikov
  */
 public class LdapSearch {
@@ -88,7 +90,7 @@ public class LdapSearch {
   /**
    * Sets attributes, which should be returned by search.
    */
-  public LdapSearch setReturningAttributes(String... attributes) {
+  public LdapSearch returns(String... attributes) {
     this.returningAttributes = attributes;
     return this;
   }

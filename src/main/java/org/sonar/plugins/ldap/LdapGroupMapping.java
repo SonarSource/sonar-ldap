@@ -57,7 +57,7 @@ public class LdapGroupMapping {
         .setBaseDn(getBaseDn())
         .setRequest("(&(objectClass=" + getObjectClass() + ")(" + getMemberAttribute() + "={0}))")
         .setParameters(StringUtils.replace(getMemberFormat(), "$username", username))
-        .setReturningAttributes(getIdAttribute());
+        .returns(getIdAttribute());
   }
 
   /**

@@ -20,12 +20,21 @@
 package org.sonar.plugins.ldap;
 
 import org.junit.Test;
+import org.mockito.Mockito;
+
+import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
 
 import java.net.UnknownHostException;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class LdapAutodiscoveryTest {
 
@@ -39,6 +48,25 @@ public class LdapAutodiscoveryTest {
   @Test
   public void testGetDnsDomainDn() {
     assertThat(LdapAutodiscovery.getDnsDomainDn("example.org"), is("dc=example,dc=org"));
+  }
+
+  @Test
+  public void testGetLdapServer() throws NamingException {
+    DirContext context = mock(DirContext.class);
+    Attributes attributes = mock(Attributes.class);
+    Attribute attribute = mock(Attribute.class);
+    NamingEnumeration namingEnumeration = mock(NamingEnumeration.class);
+
+    when(context.getAttributes(Mockito.anyString(), Mockito.<String[]> anyObject())).thenReturn(attributes);
+    when(attributes.get(Mockito.argThat(is("srv")))).thenReturn(attribute);
+    when(attribute.getAll()).thenReturn(namingEnumeration);
+    when(namingEnumeration.hasMore()).thenReturn(true, true, false);
+    when(namingEnumeration.next())
+        .thenReturn("0 5 389 ldap1.example.org")
+        .thenReturn("10 5 389 ldap2.example.org.");
+
+    // TODO Priority not taken into account as well as weight, whereas in fact result should be "ldap://ldap1.example.org:389"
+    assertThat(LdapAutodiscovery.getLdapServer(context, "example.org."), is("ldap://ldap2.example.org:389"));
   }
 
 }

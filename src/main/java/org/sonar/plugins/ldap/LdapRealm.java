@@ -25,13 +25,13 @@ import org.sonar.api.config.Settings;
 import org.sonar.api.security.ExternalGroupsProvider;
 import org.sonar.api.security.ExternalUsersProvider;
 import org.sonar.api.security.LoginPasswordAuthenticator;
-import org.sonar.api.security.Realm;
+import org.sonar.api.security.SecurityRealm;
 import org.sonar.api.utils.SonarException;
 
 /**
  * @author Evgeny Mandrikov
  */
-public class LdapRealm extends Realm {
+public class LdapRealm extends SecurityRealm {
 
   private static final Logger LOG = LoggerFactory.getLogger(LdapRealm.class);
 
@@ -70,7 +70,7 @@ public class LdapRealm extends Realm {
   }
 
   @Override
-  public LoginPasswordAuthenticator getAuthenticator() {
+  public LoginPasswordAuthenticator getLoginPasswordAuthenticator() {
     return authenticator;
   }
 

@@ -44,9 +44,12 @@ public class LdapRealmTest {
     LdapRealm realm = new LdapRealm(settings);
     assertThat(realm.getName(), equalTo("LDAP"));
     realm.init();
-    assertThat(realm.getAuthenticator(), allOf(instanceOf(LoginPasswordAuthenticator.class), instanceOf(LdapAuthenticator.class)));
-    assertThat(realm.getUsersProvider(), allOf(instanceOf(ExternalUsersProvider.class), instanceOf(LdapUsersProvider.class)));
-    assertThat(realm.getGroupsProvider(), allOf(instanceOf(ExternalGroupsProvider.class), instanceOf(LdapGroupsProvider.class)));
+    assertThat(realm.getLoginPasswordAuthenticator(),
+        allOf(instanceOf(LoginPasswordAuthenticator.class), instanceOf(LdapAuthenticator.class)));
+    assertThat(realm.getUsersProvider(),
+        allOf(instanceOf(ExternalUsersProvider.class), instanceOf(LdapUsersProvider.class)));
+    assertThat(realm.getGroupsProvider(),
+        allOf(instanceOf(ExternalGroupsProvider.class), instanceOf(LdapGroupsProvider.class)));
   }
 
   @Test
@@ -61,9 +64,12 @@ public class LdapRealmTest {
     } catch (SonarException e) {
       assertThat(e.getMessage(), containsString("Unable to open LDAP connection"));
     }
-    assertThat(realm.getAuthenticator(), allOf(instanceOf(LoginPasswordAuthenticator.class), instanceOf(LdapAuthenticator.class)));
-    assertThat(realm.getUsersProvider(), allOf(instanceOf(ExternalUsersProvider.class), instanceOf(LdapUsersProvider.class)));
-    assertThat(realm.getGroupsProvider(), allOf(instanceOf(ExternalGroupsProvider.class), instanceOf(LdapGroupsProvider.class)));
+    assertThat(realm.getLoginPasswordAuthenticator(),
+        allOf(instanceOf(LoginPasswordAuthenticator.class), instanceOf(LdapAuthenticator.class)));
+    assertThat(realm.getUsersProvider(),
+        allOf(instanceOf(ExternalUsersProvider.class), instanceOf(LdapUsersProvider.class)));
+    assertThat(realm.getGroupsProvider(),
+        allOf(instanceOf(ExternalGroupsProvider.class), instanceOf(LdapGroupsProvider.class)));
 
     try {
       realm.getUsersProvider().doGetUserDetails("tester");

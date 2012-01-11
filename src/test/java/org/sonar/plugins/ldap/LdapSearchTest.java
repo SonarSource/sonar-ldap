@@ -32,7 +32,7 @@ public class LdapSearchTest {
         .setBaseDn("cn=users")
         .setRequest("(objectClass={0})")
         .setParameters("user")
-        .setReturningAttributes("uid")
+        .returns("uid")
         .toString();
     assertThat(result, is("LdapSearch{baseDn=cn=users, request=(objectClass={0}), parameters=[user], attributes=[uid]}"));
   }

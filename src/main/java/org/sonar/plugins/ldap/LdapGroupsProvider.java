@@ -36,7 +36,7 @@ import java.util.HashSet;
 /**
  * @author Evgeny Mandrikov
  */
-public class LdapGroupsProvider implements ExternalGroupsProvider {
+public class LdapGroupsProvider extends ExternalGroupsProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(LdapGroupsProvider.class);
 
@@ -66,6 +66,8 @@ public class LdapGroupsProvider implements ExternalGroupsProvider {
       }
       return groups;
     } catch (NamingException e) {
+      // just in case if Sonar silently swallowed exception
+      LOG.debug(e.getMessage(), e);
       throw new SonarException("Unable to retrieve groups for user " + username, e);
     }
   }

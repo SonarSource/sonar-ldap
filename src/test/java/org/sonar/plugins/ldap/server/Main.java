@@ -22,7 +22,7 @@ package org.sonar.plugins.ldap.server;
 public class Main {
 
   public static void main(String[] args) throws Exception {
-    ApacheDS.start().importLdif(Main.class.getResourceAsStream("/users.ldif"));
+    ApacheDS.start().importLdif(Main.class.getResourceAsStream("/static-groups.ldif"));
   }
 
 }
