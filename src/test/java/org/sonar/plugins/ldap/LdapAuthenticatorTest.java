@@ -19,42 +19,47 @@
  */
 package org.sonar.plugins.ldap;
 
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import com.teklabs.throng.integration.ldap.Ldap;
-import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
-import org.sonar.api.utils.SonarException;
+import org.sonar.plugins.ldap.server.LdapServer;
 
-import javax.naming.NamingException;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 
 public class LdapAuthenticatorTest {
 
-  private LdapAuthenticator authenticator;
+  @ClassRule
+  public static LdapServer server = new LdapServer("/users.ldif");
 
-  @Before
-  public void setUp() throws Exception {
-    Ldap ldap = mock(Ldap.class);
-    doThrow(new NamingException()).when(ldap).testConnection();
-    doThrow(new NamingException()).when(ldap).authenticate(anyString(), anyString());
-    LdapConfiguration configuration = mock(LdapConfiguration.class);
-    when(configuration.getLdap()).thenReturn(ldap);
-    authenticator = new LdapAuthenticator(configuration);
-  }
+  @Test
+  public void testSimple() {
+    LdapContextFactory contextFactory = new LdapContextFactory(server.getUrl());
+    LdapUserMapping userMapping = new LdapUserMapping();
+    LdapAuthenticator authenticator = new LdapAuthenticator(contextFactory, userMapping);
 
-  @Test(expected = SonarException.class)
-  public void shouldFailWhenUnableToTestConnection() throws Exception {
-    authenticator.init();
+    assertThat(authenticator.authenticate("godin", "secret1"), is(true));
+    assertThat(authenticator.authenticate("godin", "wrong"), is(false));
+
+    assertThat(authenticator.authenticate("tester", "secret2"), is(true));
+    assertThat(authenticator.authenticate("tester", "wrong"), is(false));
+
+    assertThat(authenticator.authenticate("notfound", "wrong"), is(false));
   }
 
   @Test
-  public void shouldNotFailWhenUnableToAuthenticate() throws Exception {
-    assertThat(authenticator.authenticate("", ""), is(false));
+  public void testSasl() {
+    LdapContextFactory contextFactory =
+        new LdapContextFactory(server.getUrl(), LdapContextFactory.CRAM_MD5_METHOD, "example.org", "bind", "bindpassword");
+    LdapUserMapping userMapping = new LdapUserMapping();
+    LdapAuthenticator authenticator = new LdapAuthenticator(contextFactory, userMapping);
+
+    assertThat(authenticator.authenticate("godin", "secret1"), is(true));
+    assertThat(authenticator.authenticate("godin", "wrong"), is(false));
+
+    assertThat(authenticator.authenticate("tester", "secret2"), is(true));
+    assertThat(authenticator.authenticate("tester", "wrong"), is(false));
+
+    assertThat(authenticator.authenticate("notfound", "wrong"), is(false));
   }
 
 }

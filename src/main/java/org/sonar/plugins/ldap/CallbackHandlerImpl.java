@@ -18,9 +18,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
  */
 
-package com.teklabs.throng.integration.ldap;
+package org.sonar.plugins.ldap;
 
 import javax.security.auth.callback.*;
+
 import java.io.IOException;
 
 /**

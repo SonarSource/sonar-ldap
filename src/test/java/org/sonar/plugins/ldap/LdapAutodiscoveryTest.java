@@ -17,47 +17,28 @@
  * License along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
  */
+package org.sonar.plugins.ldap;
 
-package com.teklabs.throng.integration.ldap;
-
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.net.UnknownHostException;
 
-/**
- * @author Evgeny Mandrikov
- */
-public final class LdapHelperTest {
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertThat;
+
+public class LdapAutodiscoveryTest {
+
   @Test
   public void testGetDnsDomain() throws UnknownHostException {
-    Assert.assertEquals(
-        null,
-        LdapHelper.getDnsDomainName("localhost")
-    );
-    Assert.assertEquals(
-        "example.org",
-        LdapHelper.getDnsDomainName("godin.example.org")
-    );
-    Assert.assertEquals(
-        "usr.example.org",
-        LdapHelper.getDnsDomainName("godin.usr.example.org")
-    );
+    assertThat(LdapAutodiscovery.getDnsDomainName("localhost"), nullValue());
+    assertThat(LdapAutodiscovery.getDnsDomainName("godin.example.org"), is("example.org"));
+    assertThat(LdapAutodiscovery.getDnsDomainName("godin.usr.example.org"), is("usr.example.org"));
   }
 
   @Test
   public void testGetDnsDomainDn() {
-    Assert.assertEquals(
-        "dc=example,dc=org",
-        LdapHelper.getDnsDomainDn("example.org")
-    );
+    assertThat(LdapAutodiscovery.getDnsDomainDn("example.org"), is("dc=example,dc=org"));
   }
 
-  @Test
-  public void testGetLdapServer() {
-    Assert.assertEquals(
-        "ldap://ldap.teklabs.com:389",
-        LdapHelper.getLdapServer("teklabs.com")
-    );
-  }
 }

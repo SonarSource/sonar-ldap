@@ -18,12 +18,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
  */
 
-package com.teklabs.throng.integration.ldap;
-
-import java.util.HashMap;
+package org.sonar.plugins.ldap;
 
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
+
+import java.util.HashMap;
 
 /**
  * @author Evgeny Mandrikov

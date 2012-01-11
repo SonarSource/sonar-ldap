@@ -110,13 +110,6 @@
       <version>${version.org.apache.directory.server}</version>
       <scope>test</scope>
     </dependency>
-    <!-- TODO to be removed after removal of com.teklabs.throng.integration.ldap.ApacheDSTestServer -->
-    <dependency>
-      <groupId>org.apache.directory.server</groupId>
-      <artifactId>apacheds-server-unit</artifactId>
-      <version>${version.org.apache.directory.server}</version>
-      <scope>test</scope>
-    </dependency>
     <dependency>
       <groupId>org.apache.directory.server</groupId>
       <artifactId>apacheds-protocol-kerberos</artifactId>

@@ -31,9 +31,7 @@ import java.util.List;
 public class LdapPlugin extends SonarPlugin {
 
   public List getExtensions() {
-    return Arrays.asList(
-        LdapAuthenticator.class,
-        LdapConfiguration.class);
+    return Arrays.asList(LdapRealm.class);
   }
 
 }

@@ -17,46 +17,92 @@
  * License along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
  */
-
 package org.sonar.plugins.ldap;
 
-import com.teklabs.throng.integration.ldap.LdapHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sonar.api.security.LoginPasswordAuthenticator;
-import org.sonar.api.utils.SonarException;
 
 import javax.naming.NamingException;
+import javax.naming.directory.InitialDirContext;
+import javax.security.auth.login.Configuration;
+import javax.security.auth.login.LoginContext;
+import javax.security.auth.login.LoginException;
 
 /**
  * @author Evgeny Mandrikov
- * @deprecated replaced by {@link org.sonar.plugins.ldap.ng.LdapAuthenticator}
  */
-@Deprecated
 public class LdapAuthenticator implements LoginPasswordAuthenticator {
-  private LdapConfiguration configuration;
 
-  /**
-   * Creates a new instance of LdapAuthenticator with specified configuration.
-   *
-   * @param configuration LDAP configuration
-   */
-  public LdapAuthenticator(LdapConfiguration configuration) {
-    this.configuration = configuration;
+  private static final Logger LOG = LoggerFactory.getLogger(LdapAuthenticator.class);
+
+  private final LdapContextFactory contextFactory;
+  private final LdapUserMapping userMapping;
+
+  public LdapAuthenticator(LdapContextFactory contextFactory, LdapUserMapping userMapping) {
+    this.contextFactory = contextFactory;
+    this.userMapping = userMapping;
   }
 
   public void init() {
+    // nothing to do
+  }
+
+  /**
+   * @return false if specified user cannot be authenticated with specified password
+   */
+  public boolean authenticate(String login, String password) {
+    final String principal;
+    if (contextFactory.isSasl()) {
+      principal = login;
+    } else {
+      try {
+        principal = userMapping.createSearch(contextFactory, login)
+          .findUnique()
+          .getNameInNamespace();
+      } catch (NamingException e) {
+        LOG.debug("User {} not found: {}", login, e.getMessage());
+        return false;
+      }
+    }
+    if (contextFactory.isGssapi()) {
+      return checkPasswordUsingGssapi(principal, password);
+    }
+    return checkPasswordUsingBind(principal, password);
+  }
+
+  private boolean checkPasswordUsingBind(String principal, String password) {
+    InitialDirContext context = null;
     try {
-      configuration.getLdap().testConnection();
+      context = contextFactory.createUserContext(principal, password);
+      return true;
     } catch (NamingException e) {
-      throw new SonarException("Unable to open LDAP connection", e);
+      LOG.debug("Password not valid for user {}: {}", principal, e.getMessage());
+      return false;
+    } finally {
+      ContextHelper.closeQuetly(context);
     }
   }
 
-  public boolean authenticate(final String login, final String password) {
+  private boolean checkPasswordUsingGssapi(String principal, String password) {
+    // Use our custom configuration to avoid reliance on external config
+    Configuration.setConfiguration(new Krb5LoginConfiguration());
+    LoginContext lc;
     try {
-      return configuration.getLdap().authenticate(login, password);
-    } catch (NamingException e) {
-      LdapHelper.LOG.error("Unable to authenticate: " + login, e);
+      lc = new LoginContext(getClass().getName(), new CallbackHandlerImpl(principal, password));
+      lc.login();
+    } catch (LoginException e) {
+      // Bad username: Client not found in Kerberos database
+      // Bad password: Integrity check on decrypted field failed
+      LOG.debug("Password not valid for {}: {}", principal, e.getMessage());
       return false;
     }
+    try {
+      lc.logout();
+    } catch (LoginException e) {
+      LOG.warn("Logout fails", e);
+    }
+    return true;
   }
+
 }
