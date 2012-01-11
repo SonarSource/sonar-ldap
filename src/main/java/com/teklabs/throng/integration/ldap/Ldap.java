@@ -33,9 +33,7 @@ import javax.security.auth.login.LoginException;
 
 import static com.teklabs.throng.integration.ldap.LdapContextFactory.*;
 
-/**
- * @author Evgeny Mandrikov
- */
+@Deprecated
 public class Ldap {
   public static final String DEFAULT_USER_OBJECT_CLASS = "inetOrgPerson";
   public static final String DEFAULT_LOGIN_ATTRIBUTE = "uid";

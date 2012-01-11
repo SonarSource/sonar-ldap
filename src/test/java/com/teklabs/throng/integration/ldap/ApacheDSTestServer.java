@@ -34,6 +34,7 @@ import org.apache.directory.server.xdbm.Index;
 
 import javax.naming.NamingException;
 import javax.naming.directory.*;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,7 +47,9 @@ import java.util.Set;
  * Create and set up an LDAP test server which is used for tests.
  *
  * @author Evgeny Mandrikov
+ * @deprecated use {@link org.sonar.plugins.ldap.server.ApacheDS}
  */
+@Deprecated
 public class ApacheDSTestServer extends AbstractTestServer {
 
   private InternalLdapServer wrappedService = new InternalLdapServer();

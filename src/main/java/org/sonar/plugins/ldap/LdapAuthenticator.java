@@ -28,7 +28,9 @@ import javax.naming.NamingException;
 
 /**
  * @author Evgeny Mandrikov
+ * @deprecated replaced by {@link org.sonar.plugins.ldap.ng.LdapAuthenticator}
  */
+@Deprecated
 public class LdapAuthenticator implements LoginPasswordAuthenticator {
   private LdapConfiguration configuration;
 

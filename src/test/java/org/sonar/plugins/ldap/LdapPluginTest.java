@@ -20,28 +20,19 @@
 
 package org.sonar.plugins.ldap;
 
-import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.junit.Assert.assertThat;
 
 /**
  * @author Evgeny Mandrikov
  */
 public class LdapPluginTest {
-  private LdapPlugin plugin;
-
-  @Before
-  public void setUp() throws Exception {
-    plugin = new LdapPlugin();
-  }
 
   @Test
   public void testGetExtensions() throws Exception {
-    assertNotNull(plugin.getKey());
-    assertNotNull(plugin.getName());
-    assertNotNull(plugin.getDescription());
-    assertEquals(2, plugin.getExtensions().size());
+    assertThat(new LdapPlugin().getExtensions().size(), greaterThan(0));
   }
+
 }

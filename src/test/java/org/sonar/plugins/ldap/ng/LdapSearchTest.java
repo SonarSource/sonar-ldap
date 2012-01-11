@@ -17,23 +17,24 @@
  * License along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
  */
+package org.sonar.plugins.ldap.ng;
 
-package org.sonar.plugins.ldap;
+import org.junit.Test;
 
-import org.sonar.api.SonarPlugin;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 
-import java.util.Arrays;
-import java.util.List;
+public class LdapSearchTest {
 
-/**
- * @author Evgeny Mandrikov
- */
-public class LdapPlugin extends SonarPlugin {
-
-  public List getExtensions() {
-    return Arrays.asList(
-        LdapAuthenticator.class,
-        LdapConfiguration.class);
+  @Test
+  public void test() {
+    String result = new LdapSearch(null)
+        .setBaseDn("cn=users")
+        .setRequest("(objectClass={0})")
+        .setParameters("user")
+        .setReturningAttributes("uid")
+        .toString();
+    assertThat(result, is("LdapSearch{baseDn=cn=users, request=(objectClass={0}), parameters=[user], attributes=[uid]}"));
   }
 
 }

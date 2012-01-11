@@ -24,13 +24,16 @@ import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.ldap.InitialLdapContext;
+
 import java.util.Properties;
 
 /**
  * LDAP Context Factory.
  *
  * @author Evgeny Mandrikov
+ * @deprecated replaced by {@link org.sonar.plugins.ldap.ng.LdapContextFactory}
  */
+@Deprecated
 public class LdapContextFactory {
   public static final String DEFAULT_AUTHENTICATION = "simple";
   public static final String DEFAULT_FACTORY = "com.sun.jndi.ldap.LdapCtxFactory";
@@ -104,7 +107,7 @@ public class LdapContextFactory {
     if (LdapHelper.LOG.isDebugEnabled()) {
       LdapHelper.LOG.debug(
           "Initializing LDAP context using URL [" + providerUrl + "] and username [" + principal + "] " +
-              "with pooling [" + (pooling ? "enabled" : "disabled") + "]");
+            "with pooling [" + (pooling ? "enabled" : "disabled") + "]");
     }
     return new InitialLdapContext(getEnvironment(principal, credentials, pooling), null);
   }
@@ -143,6 +146,12 @@ public class LdapContextFactory {
     env.put(Context.REFERRAL, referral);
 
     return env;
+  }
+
+  public boolean isSasl() {
+    return DIGEST_MD5_METHOD.equals(authentication) ||
+      CRAM_MD5_METHOD.equals(authentication) ||
+      GSSAPI_METHOD.equals(authentication);
   }
 
   /**

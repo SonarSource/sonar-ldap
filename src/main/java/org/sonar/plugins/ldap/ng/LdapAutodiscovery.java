@@ -17,13 +17,11 @@
  * License along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
  */
-
-package com.teklabs.throng.integration.ldap;
+package org.sonar.plugins.ldap.ng;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.naming.Context;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
@@ -34,38 +32,11 @@ import javax.naming.directory.InitialDirContext;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-/**
- * @author Evgeny Mandrikov
- * @deprecated replaced by {@link org.sonar.plugins.ldap.ng.LdapAutodiscovery}
- */
-@Deprecated
-public final class LdapHelper {
-  @Deprecated
-  public static final Logger LOG = LoggerFactory.getLogger("org.sonar.plugins.ldap");
+public final class LdapAutodiscovery {
 
-  /**
-   * Hide utility-class constructor.
-   */
-  private LdapHelper() {
-  }
+  private static final Logger LOG = LoggerFactory.getLogger(LdapAutodiscovery.class);
 
-  /**
-   * Closes specified context.
-   *
-   * @param context context to close
-   * @deprecated use {@link org.sonar.plugins.ldap.ng.ContextHelper#closeQuetly(Context)}
-   */
-  @Deprecated
-  public static void closeContext(Context context) {
-    try {
-      if (context != null) {
-        context.close();
-      }
-    } catch (Exception e) {
-      if (LOG.isErrorEnabled()) {
-        LOG.error("Can not close LDAP context", e);
-      }
-    }
+  private LdapAutodiscovery() {
   }
 
   /**
@@ -117,7 +88,7 @@ public final class LdapHelper {
     String server = null;
     try {
       DirContext lDnsCtx = new InitialDirContext();
-      Attributes lSrvAttrs = lDnsCtx.getAttributes("dns:/_ldap._tcp." + domain, new String[]{"srv"});
+      Attributes lSrvAttrs = lDnsCtx.getAttributes("dns:/_ldap._tcp." + domain, new String[] {"srv"});
       Attribute serversAttribute = lSrvAttrs.get("srv");
       NamingEnumeration lEnum = serversAttribute.getAll();
       // TODO Godin: There is can be more than one SRV record
@@ -133,8 +104,9 @@ public final class LdapHelper {
         server = "ldap://" + target + ":" + port;
       }
     } catch (NamingException e) {
-      LOG.error("Unable to determine ldap server", e);
+      LOG.error("Unable to determine LDAP server from DNS", e);
     }
     return server;
   }
+
 }

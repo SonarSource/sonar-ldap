@@ -36,7 +36,10 @@ import static com.teklabs.throng.integration.ldap.LdapContextFactory.DEFAULT_FAC
 
 /**
  * @author Evgeny Mandrikov
+ * @deprecated replaced by {@link org.sonar.plugins.ldap.ng.LdapContextFactory},
+ * {@link org.sonar.plugins.ldap.ng.LdapUserMapping} and {@link org.sonar.plugins.ldap.ng.LdapGroupMapping}
  */
+@Deprecated
 public class LdapConfiguration implements ServerExtension {
   private Configuration configuration;
   private Ldap ldap = null;

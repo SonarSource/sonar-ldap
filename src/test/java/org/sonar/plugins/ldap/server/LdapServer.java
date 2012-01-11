@@ -17,23 +17,40 @@
  * License along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
  */
+package org.sonar.plugins.ldap.server;
 
-package org.sonar.plugins.ldap;
+import org.junit.rules.ExternalResource;
 
-import org.sonar.api.SonarPlugin;
+public class LdapServer extends ExternalResource {
 
-import java.util.Arrays;
-import java.util.List;
+  private ApacheDS server;
+  private String ldif;
 
-/**
- * @author Evgeny Mandrikov
- */
-public class LdapPlugin extends SonarPlugin {
+  public LdapServer(String ldifResourceName) {
+    this.ldif = ldifResourceName;
+  }
 
-  public List getExtensions() {
-    return Arrays.asList(
-        LdapAuthenticator.class,
-        LdapConfiguration.class);
+  @Override
+  protected void before() throws Throwable {
+    server = ApacheDS.start();
+    server.importLdif(LdapServer.class.getResourceAsStream(ldif));
+  }
+
+  @Override
+  protected void after() {
+    try {
+      server.stop();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public String getUrl() {
+    return server.getUrl();
+  }
+
+  public void disableAnonymousAccess() {
+    server.disableAnonymousAccess();
   }
 
 }

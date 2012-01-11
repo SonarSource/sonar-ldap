@@ -23,6 +23,7 @@ package com.teklabs.throng.integration.ldap;
 /**
  * @author Evgeny Mandrikov
  */
+@Deprecated
 public abstract class AbstractTestServer {
   private String serverRoot = null;
 

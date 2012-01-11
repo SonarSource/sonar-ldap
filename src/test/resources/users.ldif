@@ -13,6 +13,7 @@ objectClass: organizationalUnit
 objectClass: top
 ou: users
 
+# Bind user
 dn: cn=bind,ou=users,dc=example,dc=org
 objectClass: organizationalRole
 objectClass: uidObject
@@ -22,6 +23,7 @@ cn: bind
 uid: sonar
 userpassword: bindpassword
 
+# Typical user
 dn: cn=Evgeny Mandrikov,ou=users,dc=example,dc=org
 objectClass: organizationalPerson
 objectClass: person
@@ -29,17 +31,14 @@ objectClass: extensibleObject
 objectClass: uidObject
 objectClass: inetOrgPerson
 objectClass: top
-objectClass: krb5principal
-objectClass: krb5kdcentry
 cn: Evgeny Mandrikov
 givenname: Evgeny
-mail: godin@example.org
 sn: Mandrikov
+mail: godin@example.org
 uid: godin
 userpassword: secret1
-krb5PrincipalName: godin@EXAMPLE.ORG
-krb5KeyVersionNumber: 0
 
+# Just one more user
 dn: cn=Tester Testerovich,ou=users,dc=example,dc=org
 objectClass: organizationalPerson
 objectClass: person
@@ -47,42 +46,23 @@ objectClass: extensibleObject
 objectClass: uidObject
 objectClass: inetOrgPerson
 objectClass: top
-objectClass: krb5principal
-objectClass: krb5kdcentry
 cn: Tester Testerovich
 givenname: Tester
-mail: tester@example.org
 sn: Testerovich
+mail: tester@example.org
 uid: tester
 userpassword: secret2
-krb5PrincipalName: tester@EXAMPLE.ORG
-krb5KeyVersionNumber: 0
 
-####
-# For Krb5
-####
-dn: uid=krbtgt,ou=users,dc=example,dc=org
+# Special case which can cause NPE
+dn: cn=Without Email,ou=users,dc=example,dc=org
+objectClass: organizationalPerson
 objectClass: person
+objectClass: extensibleObject
+objectClass: uidObject
 objectClass: inetOrgPerson
 objectClass: top
-objectClass: krb5principal
-objectClass: krb5kdcentry
-sn: Service
-cn: KDC Service
-uid: krbtgt
-userPassword: secret
-krb5PrincipalName: krbtgt/EXAMPLE.ORG@EXAMPLE.ORG
-krb5KeyVersionNumber: 0
-
-dn: uid=ldap,ou=users,dc=example,dc=org
-objectClass: person
-objectClass: inetOrgPerson
-objectClass: top
-objectClass: krb5principal
-objectClass: krb5kdcentry
-sn: Service
-cn: LDAP Service
-uid: ldap
-userPassword: randall
-krb5PrincipalName: ldap/localhost@EXAMPLE.COM
-krb5KeyVersionNumber: 0
+cn: Without Email
+givenname: Without
+sn: Email
+uid: without_email
+userpassword: secret3

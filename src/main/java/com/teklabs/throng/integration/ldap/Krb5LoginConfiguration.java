@@ -29,12 +29,12 @@ import javax.security.auth.login.Configuration;
  * @author Evgeny Mandrikov
  */
 public class Krb5LoginConfiguration extends Configuration {
-  private static final AppConfigurationEntry[] configList = new AppConfigurationEntry[1];
+  private static final AppConfigurationEntry[] CONFIG_LIST = new AppConfigurationEntry[1];
 
   static {
     String loginModule = "com.sun.security.auth.module.Krb5LoginModule";
     AppConfigurationEntry.LoginModuleControlFlag flag = AppConfigurationEntry.LoginModuleControlFlag.REQUIRED;
-    configList[0] = new AppConfigurationEntry(loginModule, flag, new HashMap<String, Object>());
+    CONFIG_LIST[0] = new AppConfigurationEntry(loginModule, flag, new HashMap<String, Object>());
   }
 
   /**
@@ -49,7 +49,7 @@ public class Krb5LoginConfiguration extends Configuration {
    */
   public AppConfigurationEntry[] getAppConfigurationEntry(String applicationName) {
     // We will ignore the applicationName, since we want all apps to use Kerberos V5
-    return configList.clone();
+    return CONFIG_LIST.clone();
   }
 
   /**

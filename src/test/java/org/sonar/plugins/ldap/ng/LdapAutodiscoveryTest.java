@@ -17,23 +17,28 @@
  * License along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
  */
+package org.sonar.plugins.ldap.ng;
 
-package org.sonar.plugins.ldap;
+import org.junit.Test;
 
-import org.sonar.api.SonarPlugin;
+import java.net.UnknownHostException;
 
-import java.util.Arrays;
-import java.util.List;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertThat;
 
-/**
- * @author Evgeny Mandrikov
- */
-public class LdapPlugin extends SonarPlugin {
+public class LdapAutodiscoveryTest {
 
-  public List getExtensions() {
-    return Arrays.asList(
-        LdapAuthenticator.class,
-        LdapConfiguration.class);
+  @Test
+  public void testGetDnsDomain() throws UnknownHostException {
+    assertThat(LdapAutodiscovery.getDnsDomainName("localhost"), nullValue());
+    assertThat(LdapAutodiscovery.getDnsDomainName("godin.example.org"), is("example.org"));
+    assertThat(LdapAutodiscovery.getDnsDomainName("godin.usr.example.org"), is("usr.example.org"));
+  }
+
+  @Test
+  public void testGetDnsDomainDn() {
+    assertThat(LdapAutodiscovery.getDnsDomainDn("example.org"), is("dc=example,dc=org"));
   }
 
 }
