@@ -56,7 +56,7 @@ public class LdapGroupMapping {
     return new LdapSearch(contextFactory)
         .setBaseDn(getBaseDn())
         .setRequest("(&(objectClass=" + getObjectClass() + ")(" + getMemberAttribute() + "={0}))")
-        .setParameters(getMemberFormat().replace("$username", username))
+        .setParameters(StringUtils.replace(getMemberFormat(), "$username", username))
         .setReturningAttributes(getIdAttribute());
   }
 

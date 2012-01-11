@@ -19,12 +19,14 @@
  */
 package org.sonar.plugins.ldap;
 
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.sonar.api.config.Settings;
 import org.sonar.api.security.ExternalGroupsProvider;
 import org.sonar.api.security.ExternalUsersProvider;
 import org.sonar.api.security.LoginPasswordAuthenticator;
 import org.sonar.api.utils.SonarException;
+import org.sonar.plugins.ldap.server.LdapServer;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
@@ -32,10 +34,25 @@ import static org.junit.Assert.fail;
 
 public class LdapRealmTest {
 
+  @ClassRule
+  public static LdapServer server = new LdapServer("/users.ldif");
+
   @Test
-  public void test() {
+  public void normal() {
     Settings settings = new Settings()
-        .setProperty("ldap.url", "ldap://localhost");
+        .setProperty("ldap.url", server.getUrl());
+    LdapRealm realm = new LdapRealm(settings);
+    assertThat(realm.getName(), equalTo("LDAP"));
+    realm.init();
+    assertThat(realm.getAuthenticator(), allOf(instanceOf(LoginPasswordAuthenticator.class), instanceOf(LdapAuthenticator.class)));
+    assertThat(realm.getUsersProvider(), allOf(instanceOf(ExternalUsersProvider.class), instanceOf(LdapUsersProvider.class)));
+    assertThat(realm.getGroupsProvider(), allOf(instanceOf(ExternalGroupsProvider.class), instanceOf(LdapGroupsProvider.class)));
+  }
+
+  @Test
+  public void noConnection() {
+    Settings settings = new Settings()
+        .setProperty("ldap.url", "ldap://no-such-host");
     LdapRealm realm = new LdapRealm(settings);
     assertThat(realm.getName(), equalTo("LDAP"));
     try {
@@ -47,6 +64,19 @@ public class LdapRealmTest {
     assertThat(realm.getAuthenticator(), allOf(instanceOf(LoginPasswordAuthenticator.class), instanceOf(LdapAuthenticator.class)));
     assertThat(realm.getUsersProvider(), allOf(instanceOf(ExternalUsersProvider.class), instanceOf(LdapUsersProvider.class)));
     assertThat(realm.getGroupsProvider(), allOf(instanceOf(ExternalGroupsProvider.class), instanceOf(LdapGroupsProvider.class)));
+
+    try {
+      realm.getUsersProvider().doGetUserDetails("tester");
+      fail();
+    } catch (SonarException e) {
+      assertThat(e.getMessage(), containsString("Unable to retrieve details for user tester"));
+    }
+    try {
+      realm.getGroupsProvider().doGetGroups("tester");
+      fail();
+    } catch (SonarException e) {
+      assertThat(e.getMessage(), containsString("Unable to retrieve groups for user tester"));
+    }
   }
 
 }

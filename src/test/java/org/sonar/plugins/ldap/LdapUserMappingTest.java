@@ -66,4 +66,15 @@ public class LdapUserMappingTest {
       " emailAttribute=mail}"));
   }
 
+  @Test
+  public void realm() {
+    Settings settings = new Settings()
+        .setProperty("ldap.realm", "example.org")
+        .setProperty("ldap.userObjectClass", "user")
+        .setProperty("ldap.loginAttribute", "sAMAccountName");
+
+    LdapUserMapping userMapping = new LdapUserMapping(settings);
+    assertThat(userMapping.getBaseDn(), equalTo("dc=example,dc=org"));
+  }
+
 }
