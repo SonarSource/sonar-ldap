@@ -79,6 +79,9 @@ public class ApacheDS {
     return "ldap://localhost:" + ldapServer.getPort();
   }
 
+  /**
+   * Stream will be closed automatically.
+   */
   public void importLdif(InputStream is) throws Exception {
     Preconditions.checkState(directoryService.isStarted(), "Directory service not started");
     try {
