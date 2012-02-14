@@ -19,10 +19,22 @@
  */
 package org.sonar.plugins.ldap.server;
 
+/**
+ * Settings for Sonar:
+ * <pre>
+ * sonar.security.realm: LDAP
+ * ldap.url: ldap://localhost:1024
+ * ldap.baseDn: dc=example,dc=org
+ * ldap.group.baseDn: dc=example,dc=org
+ * ldap.group.memberFormat: uid=$username,ou=users,dc=example,dc=org
+ * </pre>
+ */
 public class Main {
 
   public static void main(String[] args) throws Exception {
-    ApacheDS.start().importLdif(Main.class.getResourceAsStream("/static-groups.ldif"));
+    ApacheDS server = ApacheDS.start();
+    server.importLdif(Main.class.getResourceAsStream("/static-groups.ldif"));
+    System.out.println(server.getUrl());
   }
 
 }
