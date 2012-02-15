@@ -22,11 +22,10 @@ package org.sonar.plugins.ldap;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.sonar.api.security.UserDetails;
-import org.sonar.api.utils.SonarException;
 import org.sonar.plugins.ldap.server.LdapServer;
 
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 
 public class LdapUsersProviderTest {
@@ -54,11 +53,8 @@ public class LdapUsersProviderTest {
     assertThat(details.getName(), is("Without Email"));
     assertThat(details.getEmail(), is(""));
 
-    try {
-      usersProvider.doGetUserDetails("notfound");
-    } catch (SonarException e) {
-      assertThat(e.getMessage(), containsString("Unable to retrieve details for user notfound"));
-    }
+    details = usersProvider.doGetUserDetails("notfound");
+    assertThat(details, is(nullValue()));
   }
 
 }

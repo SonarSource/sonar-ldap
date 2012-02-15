@@ -25,6 +25,7 @@ import org.sonar.api.security.LoginPasswordAuthenticator;
 
 import javax.naming.NamingException;
 import javax.naming.directory.InitialDirContext;
+import javax.naming.directory.SearchResult;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
@@ -56,14 +57,18 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
     if (contextFactory.isSasl()) {
       principal = login;
     } else {
+      final SearchResult result;
       try {
-        principal = userMapping.createSearch(contextFactory, login)
-          .findUnique()
-          .getNameInNamespace();
+        result = userMapping.createSearch(contextFactory, login).findUnique();
       } catch (NamingException e) {
         LOG.debug("User {} not found: {}", login, e.getMessage());
         return false;
       }
+      if (result == null) {
+        LOG.debug("User {} not found", login);
+        return false;
+      }
+      principal = result.getNameInNamespace();
     }
     if (contextFactory.isGssapi()) {
       return checkPasswordUsingGssapi(principal, password);

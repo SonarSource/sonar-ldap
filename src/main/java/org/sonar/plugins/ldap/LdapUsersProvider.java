@@ -46,14 +46,20 @@ public class LdapUsersProvider extends ExternalUsersProvider {
   }
 
   /**
+   * @return details for specified user, or null if such user doesn't exist
    * @throws SonarException if unable to retrieve details
    */
   public UserDetails doGetUserDetails(String username) {
+    LOG.debug("Requesting details for user {}", username);
     try {
-      LOG.debug("Requesting details for user {}", username);
       SearchResult searchResult = userMapping.createSearch(contextFactory, username)
           .returns(userMapping.getEmailAttribute(), userMapping.getRealNameAttribute())
           .findUnique();
+      if (searchResult == null) {
+        // user not found
+        LOG.debug("User {} not found", username);
+        return null;
+      }
       UserDetails details = new UserDetails();
       Attributes attributes = searchResult.getAttributes();
       details.setName(getAttributeValue(attributes.get(userMapping.getRealNameAttribute())));

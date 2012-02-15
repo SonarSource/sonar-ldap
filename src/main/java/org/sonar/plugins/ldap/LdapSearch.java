@@ -122,7 +122,8 @@ public class LdapSearch {
   }
 
   /**
-   * @throws NamingException if unable to perform search, or no results, or non unique result
+   * @return result, or null if not found
+   * @throws NamingException if unable to perform search, or non unique result
    */
   public SearchResult findUnique() throws NamingException {
     NamingEnumeration<SearchResult> result = find();
@@ -133,7 +134,7 @@ public class LdapSearch {
       }
       throw new NamingException("Non unique result for " + toString());
     }
-    throw new NamingException("No results for " + toString());
+    return null;
   }
 
   @Override

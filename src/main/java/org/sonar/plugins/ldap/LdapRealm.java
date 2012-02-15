@@ -26,7 +26,6 @@ import org.sonar.api.security.ExternalGroupsProvider;
 import org.sonar.api.security.ExternalUsersProvider;
 import org.sonar.api.security.LoginPasswordAuthenticator;
 import org.sonar.api.security.SecurityRealm;
-import org.sonar.api.utils.SonarException;
 
 /**
  * @author Evgeny Mandrikov
@@ -53,7 +52,7 @@ public class LdapRealm extends SecurityRealm {
   /**
    * Initializes LDAP realm and tests connection.
    *
-   * @throws SonarException if a NamingException was thrown during test
+   * @throws org.sonar.api.utils.SonarException if a NamingException was thrown during test
    */
   @Override
   public void init() {
