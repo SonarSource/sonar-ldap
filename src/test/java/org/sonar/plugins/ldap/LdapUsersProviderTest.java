@@ -35,7 +35,7 @@ public class LdapUsersProviderTest {
 
   @Test
   public void test() throws Exception {
-    LdapContextFactory contextFactory = new LdapContextFactory(server.getUrl());
+    LdapContextFactory contextFactory = LdapContextFactories.createForAnonymousAccess(server.getUrl());
     LdapUserMapping userMapping = new LdapUserMapping();
     LdapUsersProvider usersProvider = new LdapUsersProvider(contextFactory, userMapping);
 

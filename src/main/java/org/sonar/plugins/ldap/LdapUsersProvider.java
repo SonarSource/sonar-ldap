@@ -25,6 +25,7 @@ import org.sonar.api.security.ExternalUsersProvider;
 import org.sonar.api.security.UserDetails;
 import org.sonar.api.utils.SonarException;
 
+import javax.annotation.Nullable;
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
@@ -72,7 +73,7 @@ public class LdapUsersProvider extends ExternalUsersProvider {
     }
   }
 
-  private static String getAttributeValue(Attribute attribute) throws NamingException {
+  private static String getAttributeValue(@Nullable Attribute attribute) throws NamingException {
     if (attribute == null) {
       return "";
     }

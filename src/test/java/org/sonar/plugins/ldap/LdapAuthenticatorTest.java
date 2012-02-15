@@ -33,7 +33,7 @@ public class LdapAuthenticatorTest {
 
   @Test
   public void testSimple() {
-    LdapContextFactory contextFactory = new LdapContextFactory(server.getUrl());
+    LdapContextFactory contextFactory = LdapContextFactories.createForAnonymousAccess(server.getUrl());
     LdapUserMapping userMapping = new LdapUserMapping();
     LdapAuthenticator authenticator = new LdapAuthenticator(contextFactory, userMapping);
 
@@ -49,7 +49,7 @@ public class LdapAuthenticatorTest {
   @Test
   public void testSasl() {
     LdapContextFactory contextFactory =
-        new LdapContextFactory(server.getUrl(), LdapContextFactory.CRAM_MD5_METHOD, "example.org", "bind", "bindpassword");
+        LdapContextFactories.createForAuthenticationMethod(server.getUrl(), LdapContextFactory.CRAM_MD5_METHOD, "example.org", "bind", "bindpassword");
     LdapUserMapping userMapping = new LdapUserMapping();
     LdapAuthenticator authenticator = new LdapAuthenticator(contextFactory, userMapping);
 

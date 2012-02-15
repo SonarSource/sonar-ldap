@@ -70,32 +70,6 @@ public class LdapContextFactory {
   private final String password;
   private final String realm;
 
-  /**
-   * For Anonymous Access.
-   */
-  @VisibleForTesting
-  LdapContextFactory(String url) {
-    this(url, null, null);
-  }
-
-  /**
-   * For simple bind.
-   */
-  @VisibleForTesting
-  LdapContextFactory(String url, String username, String password) {
-    this(url, DEFAULT_AUTHENTICATION, null, username, password);
-  }
-
-  @VisibleForTesting
-  LdapContextFactory(String url, String authentication, String realm, String username, String password) {
-    this.providerUrl = url;
-    this.authentication = authentication;
-    this.realm = realm;
-    this.username = username;
-    this.password = password;
-    this.factory = DEFAULT_FACTORY;
-  }
-
   public LdapContextFactory(Settings settings) {
     this.authentication = StringUtils.defaultString(settings.getString("ldap.authentication"), DEFAULT_AUTHENTICATION);
     this.factory = StringUtils.defaultString(settings.getString("ldap.contextFactoryClass"), DEFAULT_FACTORY);

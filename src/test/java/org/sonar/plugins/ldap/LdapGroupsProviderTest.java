@@ -37,7 +37,7 @@ public class LdapGroupsProviderTest {
 
   @Test
   public void test() throws Exception {
-    LdapContextFactory contextFactory = new LdapContextFactory(server.getUrl());
+    LdapContextFactory contextFactory = LdapContextFactories.createForAnonymousAccess(server.getUrl());
     Settings settings = new Settings()
         .setProperty("ldap.group.baseDn", "ou=groups,dc=example,dc=org")
         .setProperty("ldap.group.memberFormat", "uid=$username,ou=users,dc=example,dc=org");

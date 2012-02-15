@@ -42,10 +42,10 @@ public class LdapSearch {
 
   private final LdapContextFactory contextFactory;
 
-  private String[] returningAttributes;
   private String baseDn;
   private String request;
   private String[] parameters;
+  private String[] returningAttributes;
 
   public LdapSearch(LdapContextFactory contextFactory) {
     this.contextFactory = contextFactory;
