@@ -35,10 +35,10 @@ public class LdapAuthenticatorTest {
   public void testNoConnection() {
     server.disableAnonymousAccess();
     try {
-    LdapContextFactory contextFactory = LdapContextFactories.createForAnonymousAccess(server.getUrl());
-    LdapUserMapping userMapping = new LdapUserMapping();
-    LdapAuthenticator authenticator = new LdapAuthenticator(contextFactory, userMapping);
-    authenticator.authenticate("godin", "secret1");
+      LdapContextFactory contextFactory = LdapContextFactories.createForAnonymousAccess(server.getUrl());
+      LdapUserMapping userMapping = new LdapUserMapping();
+      LdapAuthenticator authenticator = new LdapAuthenticator(contextFactory, userMapping);
+      authenticator.authenticate("godin", "secret1");
     } finally {
       server.enableAnonymousAccess();
     }
