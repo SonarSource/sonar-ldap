@@ -43,6 +43,7 @@ public class LdapSearch {
   private final LdapContextFactory contextFactory;
 
   private String baseDn;
+  private int scope = SearchControls.SUBTREE_SCOPE;
   private String request;
   private String[] parameters;
   private String[] returningAttributes;
@@ -61,6 +62,22 @@ public class LdapSearch {
 
   public String getBaseDn() {
     return baseDn;
+  }
+
+  /**
+   * Sets the search scope.
+   *
+   * @see SearchControls#ONELEVEL_SCOPE
+   * @see SearchControls#SUBTREE_SCOPE
+   * @see SearchControls#OBJECT_SCOPE
+   */
+  public LdapSearch setScope(int scope) {
+    this.scope = scope;
+    return this;
+  }
+
+  public int getScope() {
+    return scope;
   }
 
   /**
@@ -110,8 +127,7 @@ public class LdapSearch {
     try {
       context = contextFactory.createBindContext();
       SearchControls controls = new SearchControls();
-      // TODO maybe make configurable?
-      controls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+      controls.setSearchScope(scope);
       controls.setReturningAttributes(returningAttributes);
       result = context.search(baseDn, request, parameters, controls);
       threw = true;
@@ -141,10 +157,23 @@ public class LdapSearch {
   public String toString() {
     return Objects.toStringHelper(this)
         .add("baseDn", baseDn)
+        .add("scope", scopeToString())
         .add("request", request)
         .add("parameters", Arrays.toString(parameters))
         .add("attributes", Arrays.toString(returningAttributes))
         .toString();
+  }
+
+  private String scopeToString() {
+    switch (scope) {
+      case SearchControls.ONELEVEL_SCOPE:
+        return "onelevel";
+      case SearchControls.OBJECT_SCOPE:
+        return "object";
+      case SearchControls.SUBTREE_SCOPE:
+      default:
+        return "subtree";
+    }
   }
 
 }

@@ -21,6 +21,8 @@ package org.sonar.plugins.ldap;
 
 import org.junit.Test;
 
+import javax.naming.directory.SearchControls;
+
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -28,13 +30,13 @@ public class LdapSearchTest {
 
   @Test
   public void test() {
-    String result = new LdapSearch(null)
+    LdapSearch search = new LdapSearch(null)
         .setBaseDn("cn=users")
         .setRequest("(objectClass={0})")
         .setParameters("user")
-        .returns("uid")
-        .toString();
-    assertThat(result, is("LdapSearch{baseDn=cn=users, request=(objectClass={0}), parameters=[user], attributes=[uid]}"));
+        .returns("uid");
+    assertThat("default scope", search.getScope(), is(SearchControls.SUBTREE_SCOPE));
+    assertThat(search.toString(), is("LdapSearch{baseDn=cn=users, scope=subtree, request=(objectClass={0}), parameters=[user], attributes=[uid]}"));
   }
 
 }

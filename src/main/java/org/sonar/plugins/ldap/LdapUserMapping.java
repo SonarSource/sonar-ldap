@@ -53,8 +53,7 @@ public class LdapUserMapping {
    * Constructs mapping from Sonar settings.
    */
   public LdapUserMapping(Settings settings) {
-    // TODO maybe change legacy properties to be in consistence with Group Mapping
-    String usersBaseDn = settings.getString("ldap.baseDn");
+    String usersBaseDn = settings.getString("ldap.user.baseDn");
     if (usersBaseDn == null) {
       String realm = settings.getString("ldap.realm");
       if (realm != null) {
@@ -62,8 +61,8 @@ public class LdapUserMapping {
       }
     }
     this.baseDn = usersBaseDn;
-    this.userObjectClass = StringUtils.defaultString(settings.getString("ldap.userObjectClass"), DEFAULT_USER_OBJECT_CLASS);
-    this.loginAttribute = StringUtils.defaultString(settings.getString("ldap.loginAttribute"), DEFAULT_LOGIN_ATTRIBUTE);
+    this.userObjectClass = StringUtils.defaultString(settings.getString("ldap.user.objectClass"), DEFAULT_USER_OBJECT_CLASS);
+    this.loginAttribute = StringUtils.defaultString(settings.getString("ldap.user.loginAttribute"), DEFAULT_LOGIN_ATTRIBUTE);
     this.realNameAttribute = StringUtils.defaultString(settings.getString("ldap.user.realNameAttribute"), DEFAULT_NAME_ATTRIBUTE);
     this.emailAttribute = StringUtils.defaultString(settings.getString("ldap.user.emailAttribute"), DEFAULT_EMAIL_ATTRIBUTE);
   }
