@@ -53,4 +53,8 @@ public class LdapServer extends ExternalResource {
     server.disableAnonymousAccess();
   }
 
+  public void enableAnonymousAccess() {
+    server.enableAnonymousAccess();
+  }
+
 }

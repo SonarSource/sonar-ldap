@@ -32,6 +32,19 @@ public class LdapAuthenticatorTest {
   public static LdapServer server = new LdapServer("/users.ldif");
 
   @Test
+  public void testNoConnection() {
+    server.disableAnonymousAccess();
+    try {
+    LdapContextFactory contextFactory = LdapContextFactories.createForAnonymousAccess(server.getUrl());
+    LdapUserMapping userMapping = new LdapUserMapping();
+    LdapAuthenticator authenticator = new LdapAuthenticator(contextFactory, userMapping);
+    authenticator.authenticate("godin", "secret1");
+    } finally {
+      server.enableAnonymousAccess();
+    }
+  }
+
+  @Test
   public void testSimple() {
     LdapContextFactory contextFactory = LdapContextFactories.createForAnonymousAccess(server.getUrl());
     LdapUserMapping userMapping = new LdapUserMapping();
