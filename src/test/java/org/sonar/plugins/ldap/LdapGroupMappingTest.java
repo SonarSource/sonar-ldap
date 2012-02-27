@@ -35,14 +35,12 @@ public class LdapGroupMappingTest {
     assertThat(groupMapping.getObjectClass(), equalTo("groupOfUniqueNames"));
     assertThat(groupMapping.getIdAttribute(), equalTo("cn"));
     assertThat(groupMapping.getMemberAttribute(), equalTo("uniqueMember"));
-    assertThat(groupMapping.getMemberFormat(), equalTo(null));
 
     assertThat(groupMapping.toString(), equalTo("LdapGroupMapping{" +
       "baseDn=null," +
       " objectClass=groupOfUniqueNames," +
       " idAttribute=cn," +
-      " memberAttribute=uniqueMember," +
-      " memberFormat=null}"));
+      " memberAttribute=uniqueMember}"));
   }
 
   @Test
@@ -51,21 +49,19 @@ public class LdapGroupMappingTest {
         .setProperty("ldap.group.baseDn", "ou=groups,o=mycompany")
         .setProperty("ldap.group.objectClass", "groupOfUniqueNames")
         .setProperty("ldap.group.idAttribute", "cn")
-        .setProperty("ldap.group.memberAttribute", "uniqueMember")
-        .setProperty("ldap.group.memberFormat", "uid=$username,ou=users,o=mycompany");
+        .setProperty("ldap.group.memberAttribute", "uniqueMember");
 
     LdapGroupMapping groupMapping = new LdapGroupMapping(settings);
     LdapSearch search = groupMapping.createSearch(null, "tester");
     assertThat(search.getBaseDn(), equalTo("ou=groups,o=mycompany"));
     assertThat(search.getRequest(), equalTo("(&(objectClass=groupOfUniqueNames)(uniqueMember={0}))"));
-    assertThat(search.getParameters(), equalTo(new String[] {"uid=tester,ou=users,o=mycompany"}));
+    assertThat(search.getParameters(), equalTo(new String[] {"tester"}));
     assertThat(search.getReturningAttributes(), equalTo(new String[] {"cn"}));
 
     assertThat(groupMapping.toString(), equalTo("LdapGroupMapping{" +
       "baseDn=ou=groups,o=mycompany," +
       " objectClass=groupOfUniqueNames," +
       " idAttribute=cn," +
-      " memberAttribute=uniqueMember," +
-      " memberFormat=uid=$username,ou=users,o=mycompany}"));
+      " memberAttribute=uniqueMember}"));
   }
 }

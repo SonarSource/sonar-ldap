@@ -26,7 +26,6 @@ package org.sonar.plugins.ldap.server;
  * ldap.url: ldap://localhost:1024
  * ldap.baseDn: dc=example,dc=org
  * ldap.group.baseDn: dc=example,dc=org
- * ldap.group.memberFormat: uid=$username,ou=users,dc=example,dc=org
  * </pre>
  */
 public class Main {

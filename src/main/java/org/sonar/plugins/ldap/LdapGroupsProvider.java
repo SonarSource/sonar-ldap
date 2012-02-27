@@ -31,6 +31,7 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.SearchResult;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 
 /**
@@ -41,25 +42,35 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
   private static final Logger LOG = LoggerFactory.getLogger(LdapGroupsProvider.class);
 
   private final LdapContextFactory contextFactory;
+  private final LdapUserMapping userMapping;
   private final LdapGroupMapping groupMapping;
 
-  public LdapGroupsProvider(LdapContextFactory contextFactory, LdapGroupMapping groupMapping) {
+  public LdapGroupsProvider(LdapContextFactory contextFactory, LdapUserMapping userMapping, LdapGroupMapping groupMapping) {
     this.contextFactory = contextFactory;
+    this.userMapping = userMapping;
     this.groupMapping = groupMapping;
   }
 
   /**
-   * TODO Dynamic: user entry contains attribute with list of groups.
-   *
    * @throws SonarException if unable to retrieve groups
    */
   public Collection<String> doGetGroups(String username) {
     try {
       LOG.debug("Requesting groups for user {}", username);
-      NamingEnumeration result = groupMapping.createSearch(contextFactory, username).find();
+
+      SearchResult searchResult = userMapping.createSearch(contextFactory, username)
+          .findUnique();
+      if (searchResult == null) {
+        // user not found
+        return Collections.emptyList();
+      }
+      String fq = searchResult.getNameInNamespace();
+
+      NamingEnumeration result = groupMapping.createSearch(contextFactory, fq)
+          .find();
       HashSet<String> groups = Sets.newHashSet();
-      while (result.hasMore()) {
-        SearchResult obj = (SearchResult) result.next();
+      while (result.hasMoreElements()) {
+        SearchResult obj = (SearchResult) result.nextElement();
         Attributes attributes = obj.getAttributes();
         String groupId = (String) attributes.get(groupMapping.getIdAttribute()).get();
         groups.add(groupId);

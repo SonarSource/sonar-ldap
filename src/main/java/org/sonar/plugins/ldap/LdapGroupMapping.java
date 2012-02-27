@@ -31,12 +31,10 @@ public class LdapGroupMapping {
   private static final String DEFAULT_OBJECT_CLASS = "groupOfUniqueNames";
   private static final String DEFAULT_ID_ATTRIBUTE = "cn";
   private static final String DEFAULT_MEMBER_ATTRIBUTE = "uniqueMember";
-  private static final String DEFAULT_MEMBER_FORMAT = null;
   private final String baseDn;
   private final String objectClass;
   private final String idAttribute;
   private final String memberAttribute;
-  private final String memberFormat;
 
   /**
    * Constructs mapping from Sonar settings.
@@ -46,7 +44,6 @@ public class LdapGroupMapping {
     this.objectClass = StringUtils.defaultString(settings.getString("ldap.group.objectClass"), DEFAULT_OBJECT_CLASS);
     this.idAttribute = StringUtils.defaultString(settings.getString("ldap.group.idAttribute"), DEFAULT_ID_ATTRIBUTE);
     this.memberAttribute = StringUtils.defaultString(settings.getString("ldap.group.memberAttribute"), DEFAULT_MEMBER_ATTRIBUTE);
-    this.memberFormat = StringUtils.defaultString(settings.getString("ldap.group.memberFormat"), DEFAULT_MEMBER_FORMAT);
   }
 
   /**
@@ -56,7 +53,7 @@ public class LdapGroupMapping {
     return new LdapSearch(contextFactory)
         .setBaseDn(getBaseDn())
         .setRequest("(&(objectClass=" + getObjectClass() + ")(" + getMemberAttribute() + "={0}))")
-        .setParameters(StringUtils.replace(getMemberFormat(), "$username", username))
+        .setParameters(username)
         .returns(getIdAttribute());
   }
 
@@ -88,13 +85,6 @@ public class LdapGroupMapping {
     return memberAttribute;
   }
 
-  /**
-   * Group Member Format. For example "uid=$username,ou=users,o=mycompany".
-   */
-  public String getMemberFormat() {
-    return memberFormat;
-  }
-
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
@@ -102,7 +92,6 @@ public class LdapGroupMapping {
         .add("objectClass", getObjectClass())
         .add("idAttribute", getIdAttribute())
         .add("memberAttribute", getMemberAttribute())
-        .add("memberFormat", getMemberFormat())
         .toString();
   }
 

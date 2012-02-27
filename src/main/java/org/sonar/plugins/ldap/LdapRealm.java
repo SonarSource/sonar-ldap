@@ -63,7 +63,7 @@ public class LdapRealm extends SecurityRealm {
     LOG.info("{}", userMapping);
     LOG.info("{}", groupMapping);
     usersProvider = new LdapUsersProvider(contextFactory, userMapping);
-    groupsProvider = new LdapGroupsProvider(contextFactory, groupMapping);
+    groupsProvider = new LdapGroupsProvider(contextFactory, userMapping, groupMapping);
     authenticator = new LdapAuthenticator(contextFactory, userMapping);
     contextFactory.testConnection();
   }

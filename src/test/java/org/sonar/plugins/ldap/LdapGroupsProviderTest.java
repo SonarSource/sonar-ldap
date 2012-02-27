@@ -39,10 +39,11 @@ public class LdapGroupsProviderTest {
   public void test() throws Exception {
     LdapContextFactory contextFactory = LdapContextFactories.createForAnonymousAccess(server.getUrl());
     Settings settings = new Settings()
-        .setProperty("ldap.group.baseDn", "ou=groups,dc=example,dc=org")
-        .setProperty("ldap.group.memberFormat", "uid=$username,ou=users,dc=example,dc=org");
+        .setProperty("ldap.user.baseDn", "ou=users,dc=example,dc=org")
+        .setProperty("ldap.group.baseDn", "ou=groups,dc=example,dc=org");
+    LdapUserMapping userMapping = new LdapUserMapping(settings);
     LdapGroupMapping groupMapping = new LdapGroupMapping(settings);
-    LdapGroupsProvider groupsProvider = new LdapGroupsProvider(contextFactory, groupMapping);
+    LdapGroupsProvider groupsProvider = new LdapGroupsProvider(contextFactory, userMapping, groupMapping);
 
     Collection<String> groups;
 

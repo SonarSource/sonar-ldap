@@ -63,11 +63,11 @@ ou: groups
 dn: cn=sonar-users,ou=groups,dc=example,dc=org
 objectclass: groupOfUniqueNames
 cn: sonar-users
-uniqueMember: uid=tester,ou=users,dc=example,dc=org
-uniqueMember: uid=godin,ou=users,dc=example,dc=org
+uniqueMember: cn=Tester Testerovich,ou=users,dc=example,dc=org
+uniqueMember: cn=Evgeny Mandrikov,ou=users,dc=example,dc=org
 
 # sonar-developers
 dn: cn=sonar-developers,ou=groups,dc=example,dc=org
 objectclass: groupOfUniqueNames
 cn: sonar-developers
-uniqueMember: uid=godin,ou=users,dc=example,dc=org
+uniqueMember: cn=Evgeny Mandrikov,ou=users,dc=example,dc=org
