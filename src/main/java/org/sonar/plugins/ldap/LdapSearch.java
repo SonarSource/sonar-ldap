@@ -129,7 +129,6 @@ public class LdapSearch {
       SearchControls controls = new SearchControls();
       controls.setSearchScope(scope);
       controls.setReturningAttributes(returningAttributes);
-      controls.setTimeLimit(1000);
       result = context.search(baseDn, request, parameters, controls);
       threw = true;
     } finally {
