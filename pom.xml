@@ -8,7 +8,7 @@
   </parent>
 
   <artifactId>sonar-ldap-plugin</artifactId>
-  <version>1.2-SNAPSHOT</version>
+  <version>1.1.1</version>
   <packaging>sonar-plugin</packaging>
 
   <name>Sonar LDAP Plugin</name>
@@ -42,9 +42,9 @@
   </contributors>
 
   <scm>
-    <connection>scm:svn:http://svn.codehaus.org/sonar-plugins/trunk/ldap</connection>
-    <developerConnection>scm:svn:https://svn.codehaus.org/sonar-plugins/trunk/ldap</developerConnection>
-    <url>http://svn.sonar-plugins.codehaus.org</url>
+    <connection>scm:svn:http://svn.codehaus.org/sonar-plugins/tags/sonar-ldap-plugin-1.1.1</connection>
+    <developerConnection>scm:svn:https://svn.codehaus.org/sonar-plugins/tags/sonar-ldap-plugin-1.1.1</developerConnection>
+    <url>scm:svn:https://svn.codehaus.org/sonar-plugins/tags/sonar-ldap-plugin-1.1.1</url>
   </scm>
   <issueManagement>
     <system>JIRA</system>
