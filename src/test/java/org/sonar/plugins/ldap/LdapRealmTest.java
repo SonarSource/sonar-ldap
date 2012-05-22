@@ -28,7 +28,11 @@ import org.sonar.api.security.LoginPasswordAuthenticator;
 import org.sonar.api.utils.SonarException;
 import org.sonar.plugins.ldap.server.LdapServer;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
@@ -48,14 +52,14 @@ public class LdapRealmTest {
         allOf(instanceOf(LoginPasswordAuthenticator.class), instanceOf(LdapAuthenticator.class)));
     assertThat(realm.getUsersProvider(),
         allOf(instanceOf(ExternalUsersProvider.class), instanceOf(LdapUsersProvider.class)));
-    assertThat(realm.getGroupsProvider(),
-        allOf(instanceOf(ExternalGroupsProvider.class), instanceOf(LdapGroupsProvider.class)));
+    assertThat(realm.getGroupsProvider(), nullValue());
   }
 
   @Test
   public void noConnection() {
     Settings settings = new Settings()
-        .setProperty("ldap.url", "ldap://no-such-host");
+        .setProperty("ldap.url", "ldap://no-such-host")
+        .setProperty("ldap.group.baseDn", "cn=groups,dc=example,dc=org");
     LdapRealm realm = new LdapRealm(settings);
     assertThat(realm.getName(), equalTo("LDAP"));
     try {

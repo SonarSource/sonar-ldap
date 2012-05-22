@@ -19,6 +19,7 @@
  */
 package org.sonar.plugins.ldap;
 
+import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.config.Settings;
@@ -59,12 +60,16 @@ public class LdapRealm extends SecurityRealm {
     LdapContextFactory contextFactory = new LdapContextFactory(settings);
     LOG.info("{}", contextFactory);
     LdapUserMapping userMapping = new LdapUserMapping(settings);
-    LdapGroupMapping groupMapping = new LdapGroupMapping(settings);
     LOG.info("{}", userMapping);
-    LOG.info("{}", groupMapping);
     usersProvider = new LdapUsersProvider(contextFactory, userMapping);
-    groupsProvider = new LdapGroupsProvider(contextFactory, userMapping, groupMapping);
     authenticator = new LdapAuthenticator(contextFactory, userMapping);
+    LdapGroupMapping groupMapping = new LdapGroupMapping(settings);
+    if (Strings.isNullOrEmpty(groupMapping.getBaseDn())) {
+      LOG.info("Groups will not be syncronized, because property 'ldap.group.baseDn' is empty.");
+    } else {
+      LOG.info("{}", groupMapping);
+      groupsProvider = new LdapGroupsProvider(contextFactory, userMapping, groupMapping);
+    }
     contextFactory.testConnection();
   }
 
