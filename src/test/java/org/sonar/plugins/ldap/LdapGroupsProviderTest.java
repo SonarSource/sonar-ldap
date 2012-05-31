@@ -36,7 +36,7 @@ public class LdapGroupsProviderTest {
   public static LdapServer server = new LdapServer("/static-groups.ldif");
 
   @Test
-  public void test() throws Exception {
+  public void defaults() throws Exception {
     LdapContextFactory contextFactory = LdapContextFactories.createForAnonymousAccess(server.getUrl());
     Settings settings = new Settings()
         .setProperty("ldap.user.baseDn", "ou=users,dc=example,dc=org")
@@ -56,6 +56,46 @@ public class LdapGroupsProviderTest {
     assertThat(groups, hasItem("sonar-users"));
     assertThat(groups, hasItem("sonar-developers"));
 
-    groupsProvider.doGetGroups("notfound");
+    groups = groupsProvider.doGetGroups("notfound");
+    assertThat(groups.size(), is(0));
   }
+
+  @Test
+  public void posix() {
+    LdapContextFactory contextFactory = LdapContextFactories.createForAnonymousAccess(server.getUrl());
+    Settings settings = new Settings()
+        .setProperty("ldap.user.baseDn", "ou=users,dc=example,dc=org")
+        .setProperty("ldap.group.baseDn", "ou=groups,dc=example,dc=org")
+        .setProperty("ldap.group.request", "(&(objectClass=posixGroup)(memberUid={uid}))");
+    LdapUserMapping userMapping = new LdapUserMapping(settings);
+    LdapGroupMapping groupMapping = new LdapGroupMapping(settings);
+    LdapGroupsProvider groupsProvider = new LdapGroupsProvider(contextFactory, userMapping, groupMapping);
+
+    Collection<String> groups;
+
+    groups = groupsProvider.doGetGroups("godin");
+    assertThat(groups.size(), is(1));
+    assertThat(groups, hasItem("linux-users"));
+  }
+
+  @Test
+  public void mixed() {
+    LdapContextFactory contextFactory = LdapContextFactories.createForAnonymousAccess(server.getUrl());
+    Settings settings = new Settings()
+        .setProperty("ldap.user.baseDn", "ou=users,dc=example,dc=org")
+        .setProperty("ldap.group.baseDn", "ou=groups,dc=example,dc=org")
+        .setProperty("ldap.group.request", "(&(|(objectClass=groupOfUniqueNames)(objectClass=posixGroup))(|(uniqueMember={dn})(memberUid={uid})))");
+    LdapUserMapping userMapping = new LdapUserMapping(settings);
+    LdapGroupMapping groupMapping = new LdapGroupMapping(settings);
+    LdapGroupsProvider groupsProvider = new LdapGroupsProvider(contextFactory, userMapping, groupMapping);
+
+    Collection<String> groups;
+
+    groups = groupsProvider.doGetGroups("godin");
+    assertThat(groups.size(), is(3));
+    assertThat(groups, hasItem("sonar-users"));
+    assertThat(groups, hasItem("sonar-developers"));
+    assertThat(groups, hasItem("linux-users"));
+  }
+
 }

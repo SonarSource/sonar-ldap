@@ -20,9 +20,9 @@
 
 package org.sonar.plugins.ldap;
 
+import com.google.common.collect.ImmutableList;
 import org.sonar.api.SonarPlugin;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -31,7 +31,7 @@ import java.util.List;
 public class LdapPlugin extends SonarPlugin {
 
   public List getExtensions() {
-    return Arrays.asList(LdapRealm.class);
+    return ImmutableList.of(LdapRealm.class);
   }
 
 }

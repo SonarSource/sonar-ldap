@@ -71,3 +71,11 @@ dn: cn=sonar-developers,ou=groups,dc=example,dc=org
 objectclass: groupOfUniqueNames
 cn: sonar-developers
 uniqueMember: cn=Evgeny Mandrikov,ou=users,dc=example,dc=org
+
+# linux-users
+dn: cn=linux-users,ou=groups,dc=example,dc=org
+objectclass: posixGroup
+objectclass: top
+cn: linux-users
+gidNumber: 10000
+memberUid: godin

@@ -32,36 +32,35 @@ public class LdapGroupMappingTest {
     LdapGroupMapping groupMapping = new LdapGroupMapping(new Settings());
 
     assertThat(groupMapping.getBaseDn(), equalTo(null));
-    assertThat(groupMapping.getObjectClass(), equalTo("groupOfUniqueNames"));
     assertThat(groupMapping.getIdAttribute(), equalTo("cn"));
-    assertThat(groupMapping.getMemberAttribute(), equalTo("uniqueMember"));
+    assertThat(groupMapping.getRequest(), equalTo("(&(objectClass=groupOfUniqueNames)(uniqueMember={0}))"));
+    assertThat(groupMapping.getRequiredUserAttributes(), equalTo(new String[] {"dn"}));
 
     assertThat(groupMapping.toString(), equalTo("LdapGroupMapping{" +
-      "baseDn=null," +
-      " objectClass=groupOfUniqueNames," +
-      " idAttribute=cn," +
-      " memberAttribute=uniqueMember}"));
+        "baseDn=null," +
+        " idAttribute=cn," +
+        " requiredUserAttributes=[dn]," +
+        " request=(&(objectClass=groupOfUniqueNames)(uniqueMember={0}))}"));
   }
 
   @Test
-  public void test() {
+  public void backward_compatibility() {
     Settings settings = new Settings()
-        .setProperty("ldap.group.baseDn", "ou=groups,o=mycompany")
-        .setProperty("ldap.group.objectClass", "groupOfUniqueNames")
-        .setProperty("ldap.group.idAttribute", "cn")
-        .setProperty("ldap.group.memberAttribute", "uniqueMember");
-
+        .setProperty("ldap.group.objectClass", "group")
+        .setProperty("ldap.group.memberAttribute", "member");
     LdapGroupMapping groupMapping = new LdapGroupMapping(settings);
-    LdapSearch search = groupMapping.createSearch(null, "tester");
-    assertThat(search.getBaseDn(), equalTo("ou=groups,o=mycompany"));
-    assertThat(search.getRequest(), equalTo("(&(objectClass=groupOfUniqueNames)(uniqueMember={0}))"));
-    assertThat(search.getParameters(), equalTo(new String[] {"tester"}));
-    assertThat(search.getReturningAttributes(), equalTo(new String[] {"cn"}));
 
-    assertThat(groupMapping.toString(), equalTo("LdapGroupMapping{" +
-      "baseDn=ou=groups,o=mycompany," +
-      " objectClass=groupOfUniqueNames," +
-      " idAttribute=cn," +
-      " memberAttribute=uniqueMember}"));
+    assertThat(groupMapping.getRequest(), equalTo("(&(objectClass=group)(member={0}))"));
   }
+
+  @Test
+  public void custom_request() {
+    Settings settings = new Settings()
+        .setProperty("ldap.group.request", "(&(|(objectClass=posixGroup)(objectClass=groupOfUniqueNames))(|(memberUid={uid})(uniqueMember={dn})))");
+    LdapGroupMapping groupMapping = new LdapGroupMapping(settings);
+
+    assertThat(groupMapping.getRequest(), equalTo("(&(|(objectClass=posixGroup)(objectClass=groupOfUniqueNames))(|(memberUid={0})(uniqueMember={1})))"));
+    assertThat(groupMapping.getRequiredUserAttributes(), equalTo(new String[] {"uid", "dn"}));
+  }
+
 }

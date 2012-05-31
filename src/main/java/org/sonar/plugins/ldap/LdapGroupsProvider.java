@@ -59,14 +59,14 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
       LOG.debug("Requesting groups for user {}", username);
 
       SearchResult searchResult = userMapping.createSearch(contextFactory, username)
+          .returns(groupMapping.getRequiredUserAttributes())
           .findUnique();
       if (searchResult == null) {
         // user not found
         return Collections.emptyList();
       }
-      String fq = searchResult.getNameInNamespace();
 
-      NamingEnumeration result = groupMapping.createSearch(contextFactory, fq)
+      NamingEnumeration result = groupMapping.createSearch(contextFactory, searchResult)
           .find();
       HashSet<String> groups = Sets.newHashSet();
       while (result.hasMoreElements()) {

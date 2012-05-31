@@ -48,6 +48,7 @@ import org.apache.directory.shared.ldap.ldif.LdifEntry;
 import org.apache.directory.shared.ldap.ldif.LdifReader;
 import org.apache.mina.util.AvailablePortFinder;
 
+import javax.annotation.WillClose;
 import javax.naming.Context;
 import javax.naming.directory.*;
 import javax.naming.ldap.InitialLdapContext;
@@ -66,7 +67,8 @@ public class ApacheDS {
   public static ApacheDS start() throws Exception {
     return new ApacheDS()
         .startDirectoryService()
-        .startLdapServer();
+        .startLdapServer()
+        .activateNis();
   }
 
   public void stop() throws Exception {
@@ -82,7 +84,7 @@ public class ApacheDS {
   /**
    * Stream will be closed automatically.
    */
-  public void importLdif(InputStream is) throws Exception {
+  public void importLdif(@WillClose InputStream is) throws Exception {
     Preconditions.checkState(directoryService.isStarted(), "Directory service not started");
     try {
       LdifReader entries = new LdifReader(is);
@@ -202,6 +204,29 @@ public class ApacheDS {
       ModificationItem[] mods = new ModificationItem[] {new ModificationItem(DirContext.REMOVE_ATTRIBUTE, disabled)};
       schemaRoot.modifyAttributes("cn=Krb5kdc", mods);
     }
+    return this;
+  }
+
+  /**
+   * This seems to be required for objectClass posixGroup.
+   */
+  private ApacheDS activateNis() throws Exception {
+    Preconditions.checkState(ldapServer.isStarted());
+
+    Attribute disabled = new BasicAttribute("m-disabled", "TRUE");
+    Attribute disabled2 = new BasicAttribute("m-disabled", "FALSE");
+    ModificationItem[] mods = new ModificationItem[] {
+      new ModificationItem(DirContext.REMOVE_ATTRIBUTE, disabled),
+      new ModificationItem(DirContext.ADD_ATTRIBUTE, disabled2)
+    };
+
+    Hashtable env = new Hashtable();
+    env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
+    env.put(Context.PROVIDER_URL, getUrl());
+
+    DirContext ctx = new InitialDirContext(env);
+    ctx.modifyAttributes("cn=nis,ou=schema", mods);
+
     return this;
   }
 
