@@ -19,6 +19,7 @@
  */
 package org.sonar.plugins.ldap;
 
+import org.apache.commons.lang.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,19 +100,31 @@ public final class LdapAutodiscovery {
     Attributes lSrvAttrs = context.getAttributes("dns:/_ldap._tcp." + domain, new String[] {"srv"});
     Attribute serversAttribute = lSrvAttrs.get("srv");
     NamingEnumeration lEnum = serversAttribute.getAll();
-    // TODO Godin: There is can be more than one SRV record
     String server = null;
+    int currentPriority = 0;
+    int currentWeight = 0;
     while (lEnum.hasMore()) {
       String srvRecord = (String) lEnum.next();
       // priority weight port target
       String[] srvData = srvRecord.split(" ");
 
-      String target = srvData[3].endsWith(".") ?
-          srvData[3].substring(0, srvData[3].length() - 1) :
-          srvData[3];
+      int priority = NumberUtils.toInt(srvData[0]);
+      int weight = NumberUtils.toInt(srvData[1]);
       String port = srvData[2];
+      String target = srvData[3];
 
-      server = "ldap://" + target + ":" + port;
+      if (target.endsWith(".")) {
+        target = target.substring(0, target.length() - 1);
+      }
+
+      if ((server == null) || (priority < currentPriority)) {
+        server = "ldap://" + target + ":" + port;
+        currentPriority = priority;
+        currentWeight = weight;
+      } else if ((priority == currentPriority) && (weight > currentWeight)) {
+        server = "ldap://" + target + ":" + port;
+        currentWeight = weight;
+      }
     }
     return server;
   }

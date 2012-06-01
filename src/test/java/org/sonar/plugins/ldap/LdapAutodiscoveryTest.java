@@ -60,13 +60,15 @@ public class LdapAutodiscoveryTest {
     when(context.getAttributes(Mockito.anyString(), Mockito.<String[]> anyObject())).thenReturn(attributes);
     when(attributes.get(Mockito.argThat(is("srv")))).thenReturn(attribute);
     when(attribute.getAll()).thenReturn(namingEnumeration);
-    when(namingEnumeration.hasMore()).thenReturn(true, true, false);
+    when(namingEnumeration.hasMore()).thenReturn(true, true, true, true, true, false);
     when(namingEnumeration.next())
-        .thenReturn("0 5 389 ldap1.example.org")
-        .thenReturn("10 5 389 ldap2.example.org.");
+        .thenReturn("10 40 389 ldap5.example.org.")
+        .thenReturn("0 10 389 ldap3.example.org")
+        .thenReturn("0 60 389 ldap1.example.org")
+        .thenReturn("0 30 389 ldap2.example.org")
+        .thenReturn("10 60 389 ldap4.example.org");
 
-    // TODO Priority not taken into account as well as weight, whereas in fact result should be "ldap://ldap1.example.org:389"
-    assertThat(LdapAutodiscovery.getLdapServer(context, "example.org."), is("ldap://ldap2.example.org:389"));
+    assertThat(LdapAutodiscovery.getLdapServer(context, "example.org."), is("ldap://ldap1.example.org:389"));
   }
 
 }
