@@ -19,9 +19,9 @@
  */
 package org.sonar.plugins.ldap;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.LoggerFactory;
 import org.sonar.api.config.Settings;
 
 /**
@@ -29,25 +29,16 @@ import org.sonar.api.config.Settings;
  */
 public class LdapUserMapping {
 
-  private static final String DEFAULT_USER_OBJECT_CLASS = "inetOrgPerson";
+  private static final String DEFAULT_OBJECT_CLASS = "inetOrgPerson";
   private static final String DEFAULT_LOGIN_ATTRIBUTE = "uid";
   private static final String DEFAULT_NAME_ATTRIBUTE = "cn";
   private static final String DEFAULT_EMAIL_ATTRIBUTE = "mail";
+  private static final String DEFAULT_REQUEST = "(&(objectClass=inetOrgPerson)(uid={login}))";
 
   private final String baseDn;
-  private final String userObjectClass;
-  private final String loginAttribute;
+  private final String request;
   private final String realNameAttribute;
   private final String emailAttribute;
-
-  @VisibleForTesting
-  LdapUserMapping() {
-    this.baseDn = "ou=users,dc=example,dc=org";
-    this.userObjectClass = "inetOrgPerson";
-    this.loginAttribute = "uid";
-    this.realNameAttribute = "cn";
-    this.emailAttribute = "mail";
-  }
 
   /**
    * Constructs mapping from Sonar settings.
@@ -60,21 +51,37 @@ public class LdapUserMapping {
         usersBaseDn = LdapAutodiscovery.getDnsDomainDn(realm);
       }
     }
+
+    String objectClass = settings.getString("ldap.user.objectClass");
+    String loginAttribute = settings.getString("ldap.user.loginAttribute");
+
     this.baseDn = usersBaseDn;
-    this.userObjectClass = StringUtils.defaultString(settings.getString("ldap.user.objectClass"), DEFAULT_USER_OBJECT_CLASS);
-    this.loginAttribute = StringUtils.defaultString(settings.getString("ldap.user.loginAttribute"), DEFAULT_LOGIN_ATTRIBUTE);
     this.realNameAttribute = StringUtils.defaultString(settings.getString("ldap.user.realNameAttribute"), DEFAULT_NAME_ATTRIBUTE);
     this.emailAttribute = StringUtils.defaultString(settings.getString("ldap.user.emailAttribute"), DEFAULT_EMAIL_ATTRIBUTE);
+
+    String req;
+    if (StringUtils.isNotBlank(objectClass) || StringUtils.isNotBlank(loginAttribute)) {
+      objectClass = StringUtils.defaultString(objectClass, DEFAULT_OBJECT_CLASS);
+      loginAttribute = StringUtils.defaultString(loginAttribute, DEFAULT_LOGIN_ATTRIBUTE);
+      req = "(&(objectClass=" + objectClass + ")(" + loginAttribute + "={login}))";
+      // For backward compatibility with plugin versions lower than 1.2
+      LoggerFactory.getLogger(LdapGroupMapping.class)
+          .warn("Properties 'ldap.user.objectClass' and 'ldap.user.loginAttribute' are deprecated" +
+              " and should be replaced by single property 'ldap.user.request' with value: " + req);
+    } else {
+      req = StringUtils.defaultString(settings.getString("ldap.user.request"), DEFAULT_REQUEST);
+    }
+    req = StringUtils.replace(req, "{login}", "{0}");
+    this.request = req;
   }
 
   /**
    * Search for this mapping.
    */
   public LdapSearch createSearch(LdapContextFactory contextFactory, String username) {
-    String request = "(&(objectClass=" + getObjectClass() + ")(" + getLoginAttribute() + "={0}))";
     return new LdapSearch(contextFactory)
         .setBaseDn(getBaseDn())
-        .setRequest(request)
+        .setRequest(getRequest())
         .setParameters(username);
   }
 
@@ -86,17 +93,14 @@ public class LdapUserMapping {
   }
 
   /**
-   * Object Class. For example "inetOrgPerson" or "user" (Active Directory Server).
+   * Request. For example:
+   * <pre>
+   * (&(objectClass=inetOrgPerson)(uid={0}))
+   * (&(objectClass=user)(sAMAccountName={0}))
+   * </pre>
    */
-  public String getObjectClass() {
-    return userObjectClass;
-  }
-
-  /**
-   * User ID Attribute. For example "uid" or "sAMAccountName" (Active Directory Server).
-   */
-  public String getLoginAttribute() {
-    return loginAttribute;
+  public String getRequest() {
+    return request;
   }
 
   /**
@@ -117,8 +121,7 @@ public class LdapUserMapping {
   public String toString() {
     return Objects.toStringHelper(this)
         .add("baseDn", getBaseDn())
-        .add("objectClass", getObjectClass())
-        .add("loginAttribute", getLoginAttribute())
+        .add("request", getRequest())
         .add("realNameAttribute", getRealNameAttribute())
         .add("emailAttribute", getEmailAttribute())
         .toString();

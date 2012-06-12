@@ -31,17 +31,15 @@ public class LdapUserMappingTest {
   public void defaults() {
     LdapUserMapping userMapping = new LdapUserMapping(new Settings());
     assertThat(userMapping.getBaseDn(), equalTo(null));
-    assertThat(userMapping.getObjectClass(), equalTo("inetOrgPerson"));
-    assertThat(userMapping.getLoginAttribute(), equalTo("uid"));
+    assertThat(userMapping.getRequest(), equalTo("(&(objectClass=inetOrgPerson)(uid={0}))"));
     assertThat(userMapping.getRealNameAttribute(), equalTo("cn"));
     assertThat(userMapping.getEmailAttribute(), equalTo("mail"));
 
     assertThat(userMapping.toString(), equalTo("LdapUserMapping{" +
-      "baseDn=null," +
-      " objectClass=inetOrgPerson," +
-      " loginAttribute=uid," +
-      " realNameAttribute=cn," +
-      " emailAttribute=mail}"));
+        "baseDn=null," +
+        " request=(&(objectClass=inetOrgPerson)(uid={0}))," +
+        " realNameAttribute=cn," +
+        " emailAttribute=mail}"));
   }
 
   @Test
@@ -59,11 +57,10 @@ public class LdapUserMappingTest {
     assertThat(search.getReturningAttributes(), equalTo(null));
 
     assertThat(userMapping.toString(), equalTo("LdapUserMapping{" +
-      "baseDn=cn=users," +
-      " objectClass=user," +
-      " loginAttribute=sAMAccountName," +
-      " realNameAttribute=cn," +
-      " emailAttribute=mail}"));
+        "baseDn=cn=users," +
+        " request=(&(objectClass=user)(sAMAccountName={0}))," +
+        " realNameAttribute=cn," +
+        " emailAttribute=mail}"));
   }
 
   @Test

@@ -21,6 +21,7 @@ package org.sonar.plugins.ldap;
 
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.sonar.api.config.Settings;
 import org.sonar.plugins.ldap.server.LdapServer;
 
 import static org.hamcrest.Matchers.is;
@@ -36,7 +37,7 @@ public class LdapAuthenticatorTest {
     server.disableAnonymousAccess();
     try {
       LdapContextFactory contextFactory = LdapContextFactories.createForAnonymousAccess(server.getUrl());
-      LdapUserMapping userMapping = new LdapUserMapping();
+      LdapUserMapping userMapping = createMapping();
       LdapAuthenticator authenticator = new LdapAuthenticator(contextFactory, userMapping);
       authenticator.authenticate("godin", "secret1");
     } finally {
@@ -47,7 +48,7 @@ public class LdapAuthenticatorTest {
   @Test
   public void testSimple() {
     LdapContextFactory contextFactory = LdapContextFactories.createForAnonymousAccess(server.getUrl());
-    LdapUserMapping userMapping = new LdapUserMapping();
+    LdapUserMapping userMapping = createMapping();
     LdapAuthenticator authenticator = new LdapAuthenticator(contextFactory, userMapping);
 
     assertThat(authenticator.authenticate("godin", "secret1"), is(true));
@@ -63,7 +64,7 @@ public class LdapAuthenticatorTest {
   public void testSasl() {
     LdapContextFactory contextFactory =
         LdapContextFactories.createForAuthenticationMethod(server.getUrl(), LdapContextFactory.CRAM_MD5_METHOD, "example.org", "bind", "bindpassword");
-    LdapUserMapping userMapping = new LdapUserMapping();
+    LdapUserMapping userMapping = createMapping();
     LdapAuthenticator authenticator = new LdapAuthenticator(contextFactory, userMapping);
 
     assertThat(authenticator.authenticate("godin", "secret1"), is(true));
@@ -73,6 +74,12 @@ public class LdapAuthenticatorTest {
     assertThat(authenticator.authenticate("tester", "wrong"), is(false));
 
     assertThat(authenticator.authenticate("notfound", "wrong"), is(false));
+  }
+
+  private static LdapUserMapping createMapping() {
+    Settings settings = new Settings()
+        .setProperty("ldap.user.baseDn", "ou=users,dc=example,dc=org");
+    return new LdapUserMapping(settings);
   }
 
 }
