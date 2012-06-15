@@ -42,9 +42,9 @@
   </contributors>
 
   <scm>
-    <connection>scm:svn:http://svn.codehaus.org/sonar-plugins/trunk/ldap</connection>
-    <developerConnection>scm:svn:https://svn.codehaus.org/sonar-plugins/trunk/ldap</developerConnection>
-    <url>http://svn.sonar-plugins.codehaus.org</url>
+    <connection>scm:git:git@github.com:SonarCommunity/sonar-ldap.git</connection>
+    <developerConnection>scm:git:git@github.com:SonarCommunity/sonar-ldap.git</developerConnection>
+    <url>https://github.com/SonarCommunity/sonar-ldap</url>
   </scm>
   <issueManagement>
     <system>JIRA</system>
