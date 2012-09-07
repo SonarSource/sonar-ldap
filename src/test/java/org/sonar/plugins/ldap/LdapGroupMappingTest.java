@@ -22,8 +22,7 @@ package org.sonar.plugins.ldap;
 import org.junit.Test;
 import org.sonar.api.config.Settings;
 
-import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.fest.assertions.Assertions.assertThat;
 
 public class LdapGroupMappingTest {
 
@@ -31,16 +30,16 @@ public class LdapGroupMappingTest {
   public void defaults() {
     LdapGroupMapping groupMapping = new LdapGroupMapping(new Settings());
 
-    assertThat(groupMapping.getBaseDn(), equalTo(null));
-    assertThat(groupMapping.getIdAttribute(), equalTo("cn"));
-    assertThat(groupMapping.getRequest(), equalTo("(&(objectClass=groupOfUniqueNames)(uniqueMember={0}))"));
-    assertThat(groupMapping.getRequiredUserAttributes(), equalTo(new String[] {"dn"}));
+    assertThat(groupMapping.getBaseDn()).isNull();
+    assertThat(groupMapping.getIdAttribute()).isEqualTo("cn");
+    assertThat(groupMapping.getRequest()).isEqualTo("(&(objectClass=groupOfUniqueNames)(uniqueMember={0}))");
+    assertThat(groupMapping.getRequiredUserAttributes()).isEqualTo(new String[] {"dn"});
 
-    assertThat(groupMapping.toString(), equalTo("LdapGroupMapping{" +
+    assertThat(groupMapping.toString()).isEqualTo("LdapGroupMapping{" +
         "baseDn=null," +
         " idAttribute=cn," +
         " requiredUserAttributes=[dn]," +
-        " request=(&(objectClass=groupOfUniqueNames)(uniqueMember={0}))}"));
+        " request=(&(objectClass=groupOfUniqueNames)(uniqueMember={0}))}");
   }
 
   @Test
@@ -50,7 +49,7 @@ public class LdapGroupMappingTest {
         .setProperty("ldap.group.memberAttribute", "member");
     LdapGroupMapping groupMapping = new LdapGroupMapping(settings);
 
-    assertThat(groupMapping.getRequest(), equalTo("(&(objectClass=group)(member={0}))"));
+    assertThat(groupMapping.getRequest()).isEqualTo("(&(objectClass=group)(member={0}))");
   }
 
   @Test
@@ -59,8 +58,8 @@ public class LdapGroupMappingTest {
         .setProperty("ldap.group.request", "(&(|(objectClass=posixGroup)(objectClass=groupOfUniqueNames))(|(memberUid={uid})(uniqueMember={dn})))");
     LdapGroupMapping groupMapping = new LdapGroupMapping(settings);
 
-    assertThat(groupMapping.getRequest(), equalTo("(&(|(objectClass=posixGroup)(objectClass=groupOfUniqueNames))(|(memberUid={0})(uniqueMember={1})))"));
-    assertThat(groupMapping.getRequiredUserAttributes(), equalTo(new String[] {"uid", "dn"}));
+    assertThat(groupMapping.getRequest()).isEqualTo("(&(|(objectClass=posixGroup)(objectClass=groupOfUniqueNames))(|(memberUid={0})(uniqueMember={1})))");
+    assertThat(groupMapping.getRequiredUserAttributes()).isEqualTo(new String[] {"uid", "dn"});
   }
 
 }

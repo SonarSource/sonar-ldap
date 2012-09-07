@@ -30,8 +30,7 @@ import org.sonar.plugins.ldap.server.LdapServer;
 import javax.naming.NamingException;
 import javax.naming.directory.SearchControls;
 
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.assertThat;
+import static org.fest.assertions.Assertions.assertThat;
 
 public class LdapSearchTest {
 
@@ -56,13 +55,13 @@ public class LdapSearchTest {
         .setParameters("inetOrgPerson")
         .returns("objectClass");
 
-    assertThat(search.getBaseDn(), is("dc=example,dc=org"));
-    assertThat(search.getScope(), is(SearchControls.SUBTREE_SCOPE));
-    assertThat(search.getRequest(), is("(objectClass={0})"));
-    assertThat(search.getParameters(), is(new String[] {"inetOrgPerson"}));
-    assertThat(search.getReturningAttributes(), is(new String[] {"objectClass"}));
-    assertThat(search.toString(), is("LdapSearch{baseDn=dc=example,dc=org, scope=subtree, request=(objectClass={0}), parameters=[inetOrgPerson], attributes=[objectClass]}"));
-    assertThat(Iterators.size(Iterators.forEnumeration(search.find())), is(3));
+    assertThat(search.getBaseDn()).isEqualTo("dc=example,dc=org");
+    assertThat(search.getScope()).isEqualTo(SearchControls.SUBTREE_SCOPE);
+    assertThat(search.getRequest()).isEqualTo("(objectClass={0})");
+    assertThat(search.getParameters()).isEqualTo(new String[] {"inetOrgPerson"});
+    assertThat(search.getReturningAttributes()).isEqualTo(new String[] {"objectClass"});
+    assertThat(search.toString()).isEqualTo("LdapSearch{baseDn=dc=example,dc=org, scope=subtree, request=(objectClass={0}), parameters=[inetOrgPerson], attributes=[objectClass]}");
+    assertThat(Iterators.size(Iterators.forEnumeration(search.find()))).isEqualTo(3);
     thrown.expect(NamingException.class);
     thrown.expectMessage("Non unique result for " + search.toString());
     search.findUnique();
@@ -77,14 +76,14 @@ public class LdapSearchTest {
         .setParameters("inetOrgPerson")
         .returns("cn");
 
-    assertThat(search.getBaseDn(), is("dc=example,dc=org"));
-    assertThat(search.getScope(), is(SearchControls.ONELEVEL_SCOPE));
-    assertThat(search.getRequest(), is("(objectClass={0})"));
-    assertThat(search.getParameters(), is(new String[] {"inetOrgPerson"}));
-    assertThat(search.getReturningAttributes(), is(new String[] {"cn"}));
-    assertThat(search.toString(), is("LdapSearch{baseDn=dc=example,dc=org, scope=onelevel, request=(objectClass={0}), parameters=[inetOrgPerson], attributes=[cn]}"));
-    assertThat(Iterators.size(Iterators.forEnumeration(search.find())), is(0));
-    assertThat(search.findUnique(), nullValue());
+    assertThat(search.getBaseDn()).isEqualTo("dc=example,dc=org");
+    assertThat(search.getScope()).isEqualTo(SearchControls.ONELEVEL_SCOPE);
+    assertThat(search.getRequest()).isEqualTo("(objectClass={0})");
+    assertThat(search.getParameters()).isEqualTo(new String[] {"inetOrgPerson"});
+    assertThat(search.getReturningAttributes()).isEqualTo(new String[] {"cn"});
+    assertThat(search.toString()).isEqualTo("LdapSearch{baseDn=dc=example,dc=org, scope=onelevel, request=(objectClass={0}), parameters=[inetOrgPerson], attributes=[cn]}");
+    assertThat(Iterators.size(Iterators.forEnumeration(search.find()))).isEqualTo(0);
+    assertThat(search.findUnique()).isNull();
   }
 
   @Test
@@ -96,14 +95,15 @@ public class LdapSearchTest {
         .setParameters("uidObject")
         .returns("uid");
 
-    assertThat(search.getBaseDn(), is("cn=bind,ou=users,dc=example,dc=org"));
-    assertThat(search.getScope(), is(SearchControls.OBJECT_SCOPE));
-    assertThat(search.getRequest(), is("(objectClass={0})"));
-    assertThat(search.getParameters(), is(new String[] {"uidObject"}));
-    assertThat(search.getReturningAttributes(), is(new String[] {"uid"}));
-    assertThat(search.toString(), is("LdapSearch{baseDn=cn=bind,ou=users,dc=example,dc=org, scope=object, request=(objectClass={0}), parameters=[uidObject], attributes=[uid]}"));
-    assertThat(Iterators.size(Iterators.forEnumeration(search.find())), is(1));
-    assertThat(search.findUnique(), not(nullValue()));
+    assertThat(search.getBaseDn()).isEqualTo("cn=bind,ou=users,dc=example,dc=org");
+    assertThat(search.getScope()).isEqualTo(SearchControls.OBJECT_SCOPE);
+    assertThat(search.getRequest()).isEqualTo("(objectClass={0})");
+    assertThat(search.getParameters()).isEqualTo(new String[] {"uidObject"});
+    assertThat(search.getReturningAttributes()).isEqualTo(new String[] {"uid"});
+    assertThat(search.toString()).isEqualTo(
+        "LdapSearch{baseDn=cn=bind,ou=users,dc=example,dc=org, scope=object, request=(objectClass={0}), parameters=[uidObject], attributes=[uid]}");
+    assertThat(Iterators.size(Iterators.forEnumeration(search.find()))).isEqualTo(1);
+    assertThat(search.findUnique()).isNotNull();
   }
 
 }

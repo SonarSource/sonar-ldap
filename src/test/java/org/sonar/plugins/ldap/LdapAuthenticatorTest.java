@@ -24,8 +24,7 @@ import org.junit.Test;
 import org.sonar.api.config.Settings;
 import org.sonar.plugins.ldap.server.LdapServer;
 
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import static org.fest.assertions.Assertions.assertThat;
 
 public class LdapAuthenticatorTest {
 
@@ -51,13 +50,13 @@ public class LdapAuthenticatorTest {
     LdapUserMapping userMapping = createMapping();
     LdapAuthenticator authenticator = new LdapAuthenticator(contextFactory, userMapping);
 
-    assertThat(authenticator.authenticate("godin", "secret1"), is(true));
-    assertThat(authenticator.authenticate("godin", "wrong"), is(false));
+    assertThat(authenticator.authenticate("godin", "secret1")).isTrue();
+    assertThat(authenticator.authenticate("godin", "wrong")).isFalse();
 
-    assertThat(authenticator.authenticate("tester", "secret2"), is(true));
-    assertThat(authenticator.authenticate("tester", "wrong"), is(false));
+    assertThat(authenticator.authenticate("tester", "secret2")).isTrue();
+    assertThat(authenticator.authenticate("tester", "wrong")).isFalse();
 
-    assertThat(authenticator.authenticate("notfound", "wrong"), is(false));
+    assertThat(authenticator.authenticate("notfound", "wrong")).isFalse();
   }
 
   @Test
@@ -67,13 +66,13 @@ public class LdapAuthenticatorTest {
     LdapUserMapping userMapping = createMapping();
     LdapAuthenticator authenticator = new LdapAuthenticator(contextFactory, userMapping);
 
-    assertThat(authenticator.authenticate("godin", "secret1"), is(true));
-    assertThat(authenticator.authenticate("godin", "wrong"), is(false));
+    assertThat(authenticator.authenticate("godin", "secret1")).isTrue();
+    assertThat(authenticator.authenticate("godin", "wrong")).isFalse();
 
-    assertThat(authenticator.authenticate("tester", "secret2"), is(true));
-    assertThat(authenticator.authenticate("tester", "wrong"), is(false));
+    assertThat(authenticator.authenticate("tester", "secret2")).isTrue();
+    assertThat(authenticator.authenticate("tester", "wrong")).isFalse();
 
-    assertThat(authenticator.authenticate("notfound", "wrong"), is(false));
+    assertThat(authenticator.authenticate("notfound", "wrong")).isFalse();
   }
 
   private static LdapUserMapping createMapping() {

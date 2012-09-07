@@ -30,9 +30,7 @@ import javax.naming.directory.DirContext;
 
 import java.net.UnknownHostException;
 
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertThat;
+import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -40,14 +38,14 @@ public class LdapAutodiscoveryTest {
 
   @Test
   public void testGetDnsDomain() throws UnknownHostException {
-    assertThat(LdapAutodiscovery.getDnsDomainName("localhost"), nullValue());
-    assertThat(LdapAutodiscovery.getDnsDomainName("godin.example.org"), is("example.org"));
-    assertThat(LdapAutodiscovery.getDnsDomainName("godin.usr.example.org"), is("usr.example.org"));
+    assertThat(LdapAutodiscovery.getDnsDomainName("localhost")).isNull();
+    assertThat(LdapAutodiscovery.getDnsDomainName("godin.example.org")).isEqualTo("example.org");
+    assertThat(LdapAutodiscovery.getDnsDomainName("godin.usr.example.org")).isEqualTo("usr.example.org");
   }
 
   @Test
   public void testGetDnsDomainDn() {
-    assertThat(LdapAutodiscovery.getDnsDomainDn("example.org"), is("dc=example,dc=org"));
+    assertThat(LdapAutodiscovery.getDnsDomainDn("example.org")).isEqualTo("dc=example,dc=org");
   }
 
   @Test
@@ -58,7 +56,7 @@ public class LdapAutodiscoveryTest {
     NamingEnumeration namingEnumeration = mock(NamingEnumeration.class);
 
     when(context.getAttributes(Mockito.anyString(), Mockito.<String[]> anyObject())).thenReturn(attributes);
-    when(attributes.get(Mockito.argThat(is("srv")))).thenReturn(attribute);
+    when(attributes.get(Mockito.eq("srv"))).thenReturn(attribute);
     when(attribute.getAll()).thenReturn(namingEnumeration);
     when(namingEnumeration.hasMore()).thenReturn(true, true, true, true, true, false);
     when(namingEnumeration.next())
@@ -68,7 +66,7 @@ public class LdapAutodiscoveryTest {
         .thenReturn("0 30 389 ldap2.example.org")
         .thenReturn("10 60 389 ldap4.example.org");
 
-    assertThat(LdapAutodiscovery.getLdapServer(context, "example.org."), is("ldap://ldap1.example.org:389"));
+    assertThat(LdapAutodiscovery.getLdapServer(context, "example.org.")).isEqualTo("ldap://ldap1.example.org:389");
   }
 
 }

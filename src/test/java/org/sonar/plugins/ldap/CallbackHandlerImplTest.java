@@ -26,8 +26,7 @@ import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 public class CallbackHandlerImplTest {
@@ -38,8 +37,8 @@ public class CallbackHandlerImplTest {
     PasswordCallback passwordCallback = new PasswordCallback("password", false);
     new CallbackHandlerImpl("tester", "secret").handle(new Callback[] {nameCallback, passwordCallback});
 
-    assertThat(nameCallback.getName(), is("tester"));
-    assertThat(passwordCallback.getPassword(), is("secret".toCharArray()));
+    assertThat(nameCallback.getName()).isEqualTo("tester");
+    assertThat(passwordCallback.getPassword()).isEqualTo("secret".toCharArray());
   }
 
   @Test(expected = UnsupportedCallbackException.class)

@@ -26,9 +26,7 @@ import org.sonar.plugins.ldap.server.LdapServer;
 
 import java.util.Collection;
 
-import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import static org.fest.assertions.Assertions.assertThat;
 
 public class LdapGroupsProviderTest {
 
@@ -48,16 +46,13 @@ public class LdapGroupsProviderTest {
     Collection<String> groups;
 
     groups = groupsProvider.doGetGroups("tester");
-    assertThat(groups.size(), is(1));
-    assertThat(groups, hasItem("sonar-users"));
+    assertThat(groups).containsOnly("sonar-users");
 
     groups = groupsProvider.doGetGroups("godin");
-    assertThat(groups.size(), is(2));
-    assertThat(groups, hasItem("sonar-users"));
-    assertThat(groups, hasItem("sonar-developers"));
+    assertThat(groups).containsOnly("sonar-users", "sonar-developers");
 
     groups = groupsProvider.doGetGroups("notfound");
-    assertThat(groups.size(), is(0));
+    assertThat(groups).isEmpty();
   }
 
   @Test
@@ -74,8 +69,7 @@ public class LdapGroupsProviderTest {
     Collection<String> groups;
 
     groups = groupsProvider.doGetGroups("godin");
-    assertThat(groups.size(), is(1));
-    assertThat(groups, hasItem("linux-users"));
+    assertThat(groups).containsOnly("linux-users");
   }
 
   @Test
@@ -92,10 +86,7 @@ public class LdapGroupsProviderTest {
     Collection<String> groups;
 
     groups = groupsProvider.doGetGroups("godin");
-    assertThat(groups.size(), is(3));
-    assertThat(groups, hasItem("sonar-users"));
-    assertThat(groups, hasItem("sonar-developers"));
-    assertThat(groups, hasItem("linux-users"));
+    assertThat(groups).containsOnly("sonar-users", "sonar-developers", "linux-users");
   }
 
 }

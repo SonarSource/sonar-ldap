@@ -27,10 +27,11 @@ import javax.naming.AuthenticationException;
 import javax.naming.NamingException;
 import javax.security.sasl.SaslException;
 
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.assertThat;
+import static org.fest.assertions.Assertions.assertThat;
 import static org.junit.Assert.fail;
-import static org.sonar.plugins.ldap.LdapContextFactory.*;
+import static org.sonar.plugins.ldap.LdapContextFactory.CRAM_MD5_METHOD;
+import static org.sonar.plugins.ldap.LdapContextFactory.DIGEST_MD5_METHOD;
+import static org.sonar.plugins.ldap.LdapContextFactory.GSSAPI_METHOD;
 
 public class LdapContextFactoryTest {
 
@@ -56,14 +57,14 @@ public class LdapContextFactoryTest {
     LdapContextFactory contextFactory = LdapContextFactories.createForAnonymousAccess(server.getUrl());
     contextFactory.testConnection();
     contextFactory.createBindContext();
-    assertThat(contextFactory.isSasl(), is(false));
-    assertThat(contextFactory.isGssapi(), is(false));
-    assertThat(contextFactory.toString(), is("LdapContextFactory{" +
-      "url=ldap://localhost:1024," +
-      " authentication=simple," +
-      " factory=com.sun.jndi.ldap.LdapCtxFactory," +
-      " bindDn=null," +
-      " realm=null}"));
+    assertThat(contextFactory.isSasl()).isFalse();
+    assertThat(contextFactory.isGssapi()).isFalse();
+    assertThat(contextFactory.toString()).isEqualTo("LdapContextFactory{" +
+        "url=ldap://localhost:1024," +
+        " authentication=simple," +
+        " factory=com.sun.jndi.ldap.LdapCtxFactory," +
+        " bindDn=null," +
+        " realm=null}");
 
     server.disableAnonymousAccess();
     try {
@@ -72,8 +73,8 @@ public class LdapContextFactoryTest {
       fail();
     } catch (NamingException e) {
       // ok - anonymous access disabled
-      assertThat(e, instanceOf(AuthenticationException.class));
-      assertThat(e.getMessage(), containsString("INVALID_CREDENTIALS"));
+      assertThat(e).isInstanceOf(AuthenticationException.class);
+      assertThat(e.getMessage()).contains("INVALID_CREDENTIALS");
     }
     LdapContextFactories.createForSimpleBind(server.getUrl(), BIND_DN, PASSWORD)
         .createBindContext();
@@ -84,14 +85,14 @@ public class LdapContextFactoryTest {
     LdapContextFactory contextFactory = LdapContextFactories.createForAuthenticationMethod(server.getUrl(), CRAM_MD5_METHOD, REALM, USERNAME, PASSWORD);
     contextFactory.testConnection();
     contextFactory.createBindContext();
-    assertThat(contextFactory.isSasl(), is(true));
-    assertThat(contextFactory.isGssapi(), is(false));
-    assertThat(contextFactory.toString(), is("LdapContextFactory{" +
-      "url=ldap://localhost:1024," +
-      " authentication=CRAM-MD5," +
-      " factory=com.sun.jndi.ldap.LdapCtxFactory," +
-      " bindDn=sonar," +
-      " realm=example.org}"));
+    assertThat(contextFactory.isSasl()).isTrue();
+    assertThat(contextFactory.isGssapi()).isFalse();
+    assertThat(contextFactory.toString()).isEqualTo("LdapContextFactory{" +
+        "url=ldap://localhost:1024," +
+        " authentication=CRAM-MD5," +
+        " factory=com.sun.jndi.ldap.LdapCtxFactory," +
+        " bindDn=sonar," +
+        " realm=example.org}");
 
     try {
       LdapContextFactories.createForAuthenticationMethod(server.getUrl(), LdapContextFactory.CRAM_MD5_METHOD, REALM, USERNAME, "wrong")
@@ -99,8 +100,8 @@ public class LdapContextFactoryTest {
       fail();
     } catch (NamingException e) {
       // ok
-      assertThat(e, instanceOf(AuthenticationException.class));
-      assertThat(e.getMessage(), containsString("INVALID_CREDENTIALS"));
+      assertThat(e).isInstanceOf(AuthenticationException.class);
+      assertThat(e.getMessage()).contains("INVALID_CREDENTIALS");
     }
     try {
       LdapContextFactories.createForAuthenticationMethod(server.getUrl(), LdapContextFactory.CRAM_MD5_METHOD, REALM, null, null)
@@ -108,9 +109,9 @@ public class LdapContextFactoryTest {
       fail();
     } catch (NamingException e) {
       // ok, but just to be sure that we used CRAM-MD5:
-      assertThat(e, instanceOf(AuthenticationException.class));
-      assertThat(e.getRootCause(), instanceOf(SaslException.class));
-      assertThat(e.getRootCause().getMessage(), containsString("CRAM-MD5: authentication ID and password must be specified"));
+      assertThat(e).isInstanceOf(AuthenticationException.class);
+      assertThat(e.getRootCause()).isInstanceOf(SaslException.class);
+      assertThat(e.getRootCause().getMessage()).contains("CRAM-MD5: authentication ID and password must be specified");
     }
   }
 
@@ -119,14 +120,14 @@ public class LdapContextFactoryTest {
     LdapContextFactory contextFactory = LdapContextFactories.createForAuthenticationMethod(server.getUrl(), DIGEST_MD5_METHOD, REALM, USERNAME, PASSWORD);
     contextFactory.testConnection();
     contextFactory.createBindContext();
-    assertThat(contextFactory.isSasl(), is(true));
-    assertThat(contextFactory.isGssapi(), is(false));
-    assertThat(contextFactory.toString(), is("LdapContextFactory{" +
-      "url=ldap://localhost:1024," +
-      " authentication=DIGEST-MD5," +
-      " factory=com.sun.jndi.ldap.LdapCtxFactory," +
-      " bindDn=sonar," +
-      " realm=example.org}"));
+    assertThat(contextFactory.isSasl()).isTrue();
+    assertThat(contextFactory.isGssapi()).isFalse();
+    assertThat(contextFactory.toString()).isEqualTo("LdapContextFactory{" +
+        "url=ldap://localhost:1024," +
+        " authentication=DIGEST-MD5," +
+        " factory=com.sun.jndi.ldap.LdapCtxFactory," +
+        " bindDn=sonar," +
+        " realm=example.org}");
 
     try {
       LdapContextFactories.createForAuthenticationMethod(server.getUrl(), DIGEST_MD5_METHOD, REALM, USERNAME, "wrongpassword")
@@ -134,8 +135,8 @@ public class LdapContextFactoryTest {
       fail();
     } catch (NamingException e) {
       // ok
-      assertThat(e, instanceOf(AuthenticationException.class));
-      assertThat(e.getMessage(), containsString("INVALID_CREDENTIALS"));
+      assertThat(e).isInstanceOf(AuthenticationException.class);
+      assertThat(e.getMessage()).contains("INVALID_CREDENTIALS");
     }
     try {
       LdapContextFactories.createForAuthenticationMethod(server.getUrl(), DIGEST_MD5_METHOD, "wrong", USERNAME, PASSWORD)
@@ -143,8 +144,8 @@ public class LdapContextFactoryTest {
       fail();
     } catch (NamingException e) {
       // ok
-      assertThat(e, instanceOf(AuthenticationException.class));
-      assertThat(e.getMessage(), containsString("Nonexistent realm: wrong"));
+      assertThat(e).isInstanceOf(AuthenticationException.class);
+      assertThat(e.getMessage()).contains("Nonexistent realm: wrong");
     }
     try {
       LdapContextFactories.createForAuthenticationMethod(server.getUrl(), DIGEST_MD5_METHOD, REALM, null, null)
@@ -152,23 +153,23 @@ public class LdapContextFactoryTest {
       fail();
     } catch (NamingException e) {
       // ok, but just to be sure that we used DIGEST-MD5:
-      assertThat(e, instanceOf(AuthenticationException.class));
-      assertThat(e.getRootCause(), instanceOf(SaslException.class));
-      assertThat(e.getRootCause().getMessage(), containsString("DIGEST-MD5: authentication ID and password must be specified"));
+      assertThat(e).isInstanceOf(AuthenticationException.class);
+      assertThat(e.getRootCause()).isInstanceOf(SaslException.class);
+      assertThat(e.getRootCause().getMessage()).contains("DIGEST-MD5: authentication ID and password must be specified");
     }
   }
 
   @Test
   public void gssApi() throws Exception {
     LdapContextFactory contextFactory = LdapContextFactories.createForAuthenticationMethod(server.getUrl(), GSSAPI_METHOD, REALM, USERNAME, PASSWORD);
-    assertThat(contextFactory.isSasl(), is(true));
-    assertThat(contextFactory.isGssapi(), is(true));
-    assertThat(contextFactory.toString(), is("LdapContextFactory{" +
-      "url=ldap://localhost:1024," +
-      " authentication=GSSAPI," +
-      " factory=com.sun.jndi.ldap.LdapCtxFactory," +
-      " bindDn=sonar," +
-      " realm=example.org}"));
+    assertThat(contextFactory.isSasl()).isTrue();
+    assertThat(contextFactory.isGssapi()).isTrue();
+    assertThat(contextFactory.toString()).isEqualTo("LdapContextFactory{" +
+        "url=ldap://localhost:1024," +
+        " authentication=GSSAPI," +
+        " factory=com.sun.jndi.ldap.LdapCtxFactory," +
+        " bindDn=sonar," +
+        " realm=example.org}");
   }
 
 }

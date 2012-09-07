@@ -25,9 +25,7 @@ import org.sonar.api.config.Settings;
 import org.sonar.api.security.UserDetails;
 import org.sonar.plugins.ldap.server.LdapServer;
 
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertThat;
+import static org.fest.assertions.Assertions.assertThat;
 
 public class LdapUsersProviderTest {
 
@@ -45,19 +43,19 @@ public class LdapUsersProviderTest {
     UserDetails details;
 
     details = usersProvider.doGetUserDetails("godin");
-    assertThat(details.getName(), is("Evgeny Mandrikov"));
-    assertThat(details.getEmail(), is("godin@example.org"));
+    assertThat(details.getName()).isEqualTo("Evgeny Mandrikov");
+    assertThat(details.getEmail()).isEqualTo("godin@example.org");
 
     details = usersProvider.doGetUserDetails("tester");
-    assertThat(details.getName(), is("Tester Testerovich"));
-    assertThat(details.getEmail(), is("tester@example.org"));
+    assertThat(details.getName()).isEqualTo("Tester Testerovich");
+    assertThat(details.getEmail()).isEqualTo("tester@example.org");
 
     details = usersProvider.doGetUserDetails("without_email");
-    assertThat(details.getName(), is("Without Email"));
-    assertThat(details.getEmail(), is(""));
+    assertThat(details.getName()).isEqualTo("Without Email");
+    assertThat(details.getEmail()).isEqualTo("");
 
     details = usersProvider.doGetUserDetails("notfound");
-    assertThat(details, is(nullValue()));
+    assertThat(details).isNull();
   }
 
 }
