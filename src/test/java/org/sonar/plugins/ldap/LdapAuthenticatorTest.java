@@ -57,6 +57,9 @@ public class LdapAuthenticatorTest {
     assertThat(authenticator.authenticate("tester", "wrong")).isFalse();
 
     assertThat(authenticator.authenticate("notfound", "wrong")).isFalse();
+    // SONARPLUGINS-2493
+    assertThat(authenticator.authenticate("godin", "")).isFalse();
+    assertThat(authenticator.authenticate("godin", null)).isFalse();
   }
 
   @Test

@@ -19,6 +19,7 @@
  */
 package org.sonar.plugins.ldap;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.security.LoginPasswordAuthenticator;
@@ -77,6 +78,10 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
   }
 
   private boolean checkPasswordUsingBind(String principal, String password) {
+    if (StringUtils.isEmpty(password)) {
+      LOG.debug("Password is blank.");
+      return false;
+    }
     InitialDirContext context = null;
     try {
       context = contextFactory.createUserContext(principal, password);
