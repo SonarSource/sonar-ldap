@@ -8,7 +8,7 @@
   </parent>
 
   <artifactId>sonar-ldap-plugin</artifactId>
-  <version>1.3-SNAPSHOT</version>
+  <version>1.2.1-SNAPSHOT</version>
   <packaging>sonar-plugin</packaging>
 
   <name>Sonar LDAP Plugin</name>
