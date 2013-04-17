@@ -43,21 +43,21 @@ public class LdapUserMapping {
   /**
    * Constructs mapping from Sonar settings.
    */
-  public LdapUserMapping(Settings settings) {
-    String usersBaseDn = settings.getString("ldap.user.baseDn");
+  public LdapUserMapping(Settings settings, String ldapIndex) {
+    String usersBaseDn = settings.getString(ldapIndex + ".user.baseDn");
     if (usersBaseDn == null) {
-      String realm = settings.getString("ldap.realm");
+      String realm = settings.getString(ldapIndex + ".realm");
       if (realm != null) {
         usersBaseDn = LdapAutodiscovery.getDnsDomainDn(realm);
       }
     }
 
-    String objectClass = settings.getString("ldap.user.objectClass");
-    String loginAttribute = settings.getString("ldap.user.loginAttribute");
+    String objectClass = settings.getString(ldapIndex + ".user.objectClass");
+    String loginAttribute = settings.getString(ldapIndex + ".user.loginAttribute");
 
     this.baseDn = usersBaseDn;
-    this.realNameAttribute = StringUtils.defaultString(settings.getString("ldap.user.realNameAttribute"), DEFAULT_NAME_ATTRIBUTE);
-    this.emailAttribute = StringUtils.defaultString(settings.getString("ldap.user.emailAttribute"), DEFAULT_EMAIL_ATTRIBUTE);
+    this.realNameAttribute = StringUtils.defaultString(settings.getString(ldapIndex + ".user.realNameAttribute"), DEFAULT_NAME_ATTRIBUTE);
+    this.emailAttribute = StringUtils.defaultString(settings.getString(ldapIndex + ".user.emailAttribute"), DEFAULT_EMAIL_ATTRIBUTE);
 
     String req;
     if (StringUtils.isNotBlank(objectClass) || StringUtils.isNotBlank(loginAttribute)) {
@@ -69,7 +69,7 @@ public class LdapUserMapping {
           .warn("Properties 'ldap.user.objectClass' and 'ldap.user.loginAttribute' are deprecated" +
               " and should be replaced by single property 'ldap.user.request' with value: " + req);
     } else {
-      req = StringUtils.defaultString(settings.getString("ldap.user.request"), DEFAULT_REQUEST);
+      req = StringUtils.defaultString(settings.getString(ldapIndex + ".user.request"), DEFAULT_REQUEST);
     }
     req = StringUtils.replace(req, "{login}", "{0}");
     this.request = req;

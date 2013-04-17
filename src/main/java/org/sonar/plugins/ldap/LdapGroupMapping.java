@@ -49,12 +49,12 @@ public class LdapGroupMapping {
   /**
    * Constructs mapping from Sonar settings.
    */
-  public LdapGroupMapping(Settings settings) {
-    this.baseDn = settings.getString("ldap.group.baseDn");
-    this.idAttribute = StringUtils.defaultString(settings.getString("ldap.group.idAttribute"), DEFAULT_ID_ATTRIBUTE);
+  public LdapGroupMapping(Settings settings, String ldapIndex) {
+    this.baseDn = settings.getString(ldapIndex + ".group.baseDn");
+    this.idAttribute = StringUtils.defaultString(settings.getString(ldapIndex + ".group.idAttribute"), DEFAULT_ID_ATTRIBUTE);
 
-    String objectClass = settings.getString("ldap.group.objectClass");
-    String memberAttribute = settings.getString("ldap.group.memberAttribute");
+    String objectClass = settings.getString(ldapIndex + ".group.objectClass");
+    String memberAttribute = settings.getString(ldapIndex + ".group.memberAttribute");
 
     String req;
     if (StringUtils.isNotBlank(objectClass) || StringUtils.isNotBlank(memberAttribute)) {
@@ -66,7 +66,7 @@ public class LdapGroupMapping {
           .warn("Properties 'ldap.group.objectClass' and 'ldap.group.memberAttribute' are deprecated" +
               " and should be replaced by single property 'ldap.group.request' with value: " + req);
     } else {
-      req = StringUtils.defaultString(settings.getString("ldap.group.request"), DEFAULT_REQUEST);
+      req = StringUtils.defaultString(settings.getString(ldapIndex + ".group.request"), DEFAULT_REQUEST);
     }
     this.requiredUserAttributes = StringUtils.substringsBetween(req, "{", "}");
     for (int i = 0; i < requiredUserAttributes.length; i++) {

@@ -27,6 +27,8 @@ import javax.naming.AuthenticationException;
 import javax.naming.NamingException;
 import javax.security.sasl.SaslException;
 
+import java.util.Map;
+
 import static org.fest.assertions.Assertions.assertThat;
 import static org.junit.Assert.fail;
 import static org.sonar.plugins.ldap.LdapContextFactory.CRAM_MD5_METHOD;
@@ -40,21 +42,22 @@ public class LdapContextFactoryTest {
   private static String BIND_DN = "cn=bind,ou=users,dc=example,dc=org";
 
   /**
-   * This value must match value of attribute "uid" for {@link #BIND_DN} in "users.ldif"
+   * This value must match value of attribute "uid" for {@link #BIND_DN} in "users.example.org.ldif"
    */
   private static String USERNAME = "sonar";
 
   /**
-   * This value must match value of attribute "userpassword" for {@link #BIND_DN} in "users.ldif"
+   * This value must match value of attribute "userpassword" for {@link #BIND_DN} in "users.example.org.ldif"
    */
   private static String PASSWORD = "bindpassword";
 
   @ClassRule
-  public static LdapServer server = new LdapServer("/users.ldif");
+  public static LdapServer server = new LdapServer("/users.example.org.ldif");
 
   @Test
   public void simpleBind() throws Exception {
-    LdapContextFactory contextFactory = LdapContextFactories.createForAnonymousAccess(server.getUrl());
+    Map<String, LdapContextFactory> contextFactories = LdapContextFactories.createForAnonymousAccess(server.getUrl());
+      LdapContextFactory contextFactory = contextFactories.get(LdapContextFactories.LDAP);
     contextFactory.testConnection();
     contextFactory.createBindContext();
     assertThat(contextFactory.isSasl()).isFalse();
@@ -68,7 +71,7 @@ public class LdapContextFactoryTest {
 
     server.disableAnonymousAccess();
     try {
-      LdapContextFactories.createForAnonymousAccess(server.getUrl())
+      LdapContextFactories.createForAnonymousAccess(server.getUrl()).get(LdapContextFactories.LDAP)
           .createBindContext();
       fail();
     } catch (NamingException e) {
@@ -76,13 +79,14 @@ public class LdapContextFactoryTest {
       assertThat(e).isInstanceOf(AuthenticationException.class);
       assertThat(e.getMessage()).contains("INVALID_CREDENTIALS");
     }
-    LdapContextFactories.createForSimpleBind(server.getUrl(), BIND_DN, PASSWORD)
+    LdapContextFactories.createForSimpleBind(server.getUrl(), BIND_DN, PASSWORD).get(LdapContextFactories.LDAP)
         .createBindContext();
   }
 
   @Test
   public void cram_md5() throws Exception {
-    LdapContextFactory contextFactory = LdapContextFactories.createForAuthenticationMethod(server.getUrl(), CRAM_MD5_METHOD, REALM, USERNAME, PASSWORD);
+    Map<String, LdapContextFactory> contextFactories = LdapContextFactories.createForAuthenticationMethod(server.getUrl(), CRAM_MD5_METHOD, REALM, USERNAME, PASSWORD);
+      LdapContextFactory contextFactory = contextFactories.get(LdapContextFactories.LDAP);
     contextFactory.testConnection();
     contextFactory.createBindContext();
     assertThat(contextFactory.isSasl()).isTrue();
@@ -95,7 +99,7 @@ public class LdapContextFactoryTest {
         " realm=example.org}");
 
     try {
-      LdapContextFactories.createForAuthenticationMethod(server.getUrl(), LdapContextFactory.CRAM_MD5_METHOD, REALM, USERNAME, "wrong")
+      LdapContextFactories.createForAuthenticationMethod(server.getUrl(), LdapContextFactory.CRAM_MD5_METHOD, REALM, USERNAME, "wrong").get(LdapContextFactories.LDAP)
           .createBindContext();
       fail();
     } catch (NamingException e) {
@@ -104,7 +108,7 @@ public class LdapContextFactoryTest {
       assertThat(e.getMessage()).contains("INVALID_CREDENTIALS");
     }
     try {
-      LdapContextFactories.createForAuthenticationMethod(server.getUrl(), LdapContextFactory.CRAM_MD5_METHOD, REALM, null, null)
+      LdapContextFactories.createForAuthenticationMethod(server.getUrl(), LdapContextFactory.CRAM_MD5_METHOD, REALM, null, null).get(LdapContextFactories.LDAP)
           .createBindContext();
       fail();
     } catch (NamingException e) {
@@ -117,7 +121,8 @@ public class LdapContextFactoryTest {
 
   @Test
   public void digest_md5() throws Exception {
-    LdapContextFactory contextFactory = LdapContextFactories.createForAuthenticationMethod(server.getUrl(), DIGEST_MD5_METHOD, REALM, USERNAME, PASSWORD);
+    Map<String, LdapContextFactory> contextFactories = LdapContextFactories.createForAuthenticationMethod(server.getUrl(), DIGEST_MD5_METHOD, REALM, USERNAME, PASSWORD);
+      LdapContextFactory contextFactory = contextFactories.get(LdapContextFactories.LDAP);
     contextFactory.testConnection();
     contextFactory.createBindContext();
     assertThat(contextFactory.isSasl()).isTrue();
@@ -130,7 +135,7 @@ public class LdapContextFactoryTest {
         " realm=example.org}");
 
     try {
-      LdapContextFactories.createForAuthenticationMethod(server.getUrl(), DIGEST_MD5_METHOD, REALM, USERNAME, "wrongpassword")
+      LdapContextFactories.createForAuthenticationMethod(server.getUrl(), DIGEST_MD5_METHOD, REALM, USERNAME, "wrongpassword").get(LdapContextFactories.LDAP)
           .createBindContext();
       fail();
     } catch (NamingException e) {
@@ -139,7 +144,7 @@ public class LdapContextFactoryTest {
       assertThat(e.getMessage()).contains("INVALID_CREDENTIALS");
     }
     try {
-      LdapContextFactories.createForAuthenticationMethod(server.getUrl(), DIGEST_MD5_METHOD, "wrong", USERNAME, PASSWORD)
+      LdapContextFactories.createForAuthenticationMethod(server.getUrl(), DIGEST_MD5_METHOD, "wrong", USERNAME, PASSWORD).get(LdapContextFactories.LDAP)
           .createBindContext();
       fail();
     } catch (NamingException e) {
@@ -148,7 +153,7 @@ public class LdapContextFactoryTest {
       assertThat(e.getMessage()).contains("Nonexistent realm: wrong");
     }
     try {
-      LdapContextFactories.createForAuthenticationMethod(server.getUrl(), DIGEST_MD5_METHOD, REALM, null, null)
+      LdapContextFactories.createForAuthenticationMethod(server.getUrl(), DIGEST_MD5_METHOD, REALM, null, null).get(LdapContextFactories.LDAP)
           .createBindContext();
       fail();
     } catch (NamingException e) {
@@ -161,7 +166,7 @@ public class LdapContextFactoryTest {
 
   @Test
   public void gssApi() throws Exception {
-    LdapContextFactory contextFactory = LdapContextFactories.createForAuthenticationMethod(server.getUrl(), GSSAPI_METHOD, REALM, USERNAME, PASSWORD);
+    LdapContextFactory contextFactory = LdapContextFactories.createForAuthenticationMethod(server.getUrl(), GSSAPI_METHOD, REALM, USERNAME, PASSWORD).get(LdapContextFactories.LDAP);
     assertThat(contextFactory.isSasl()).isTrue();
     assertThat(contextFactory.isGssapi()).isTrue();
     assertThat(contextFactory.toString()).isEqualTo("LdapContextFactory{" +

@@ -25,20 +25,23 @@ import org.sonar.api.config.Settings;
 import org.sonar.api.security.UserDetails;
 import org.sonar.plugins.ldap.server.LdapServer;
 
+import java.util.Map;
+
 import static org.fest.assertions.Assertions.assertThat;
 
 public class LdapUsersProviderTest {
 
   @ClassRule
-  public static LdapServer server = new LdapServer("/users.ldif");
+  public static LdapServer server = new LdapServer("/users.example.org.ldif");
 
   @Test
   public void test() throws Exception {
-    LdapContextFactory contextFactory = LdapContextFactories.createForAnonymousAccess(server.getUrl());
+    Map<String, LdapContextFactory> contextFactories = LdapContextFactories.createForAnonymousAccess(server.getUrl());
     Settings settings = new Settings()
         .setProperty("ldap.user.baseDn", "ou=users,dc=example,dc=org");
-    LdapUserMapping userMapping = new LdapUserMapping(settings);
-    LdapUsersProvider usersProvider = new LdapUsersProvider(contextFactory, userMapping);
+      LdapSettingsManager settingsManager = new LdapSettingsManager(settings);
+    LdapUserMapping userMapping = new LdapUserMapping(settings, "ldap");
+    LdapUsersProvider usersProvider = new LdapUsersProvider(contextFactories, settingsManager.getUserMappings());
 
     UserDetails details;
 

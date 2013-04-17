@@ -25,23 +25,23 @@ import org.sonar.api.config.Settings;
 import org.sonar.plugins.ldap.server.LdapServer;
 
 import java.util.Collection;
+import java.util.Map;
 
 import static org.fest.assertions.Assertions.assertThat;
 
 public class LdapGroupsProviderTest {
 
   @ClassRule
-  public static LdapServer server = new LdapServer("/static-groups.ldif");
+  public static LdapServer server = new LdapServer("/static-groups.example.org.ldif");
 
   @Test
   public void defaults() throws Exception {
-    LdapContextFactory contextFactory = LdapContextFactories.createForAnonymousAccess(server.getUrl());
+    Map<String, LdapContextFactory> contextFactories = LdapContextFactories.createForAnonymousAccess(server.getUrl());
     Settings settings = new Settings()
         .setProperty("ldap.user.baseDn", "ou=users,dc=example,dc=org")
         .setProperty("ldap.group.baseDn", "ou=groups,dc=example,dc=org");
-    LdapUserMapping userMapping = new LdapUserMapping(settings);
-    LdapGroupMapping groupMapping = new LdapGroupMapping(settings);
-    LdapGroupsProvider groupsProvider = new LdapGroupsProvider(contextFactory, userMapping, groupMapping);
+      LdapSettingsManager settingsManager = new LdapSettingsManager(settings);
+    LdapGroupsProvider groupsProvider = new LdapGroupsProvider(contextFactories, settingsManager.getUserMappings(), settingsManager.getGroupMappings());
 
     Collection<String> groups;
 
@@ -57,14 +57,14 @@ public class LdapGroupsProviderTest {
 
   @Test
   public void posix() {
-    LdapContextFactory contextFactory = LdapContextFactories.createForAnonymousAccess(server.getUrl());
+    Map<String, LdapContextFactory> contextFactories = LdapContextFactories.createForAnonymousAccess(server.getUrl());
     Settings settings = new Settings()
         .setProperty("ldap.user.baseDn", "ou=users,dc=example,dc=org")
         .setProperty("ldap.group.baseDn", "ou=groups,dc=example,dc=org")
         .setProperty("ldap.group.request", "(&(objectClass=posixGroup)(memberUid={uid}))");
-    LdapUserMapping userMapping = new LdapUserMapping(settings);
-    LdapGroupMapping groupMapping = new LdapGroupMapping(settings);
-    LdapGroupsProvider groupsProvider = new LdapGroupsProvider(contextFactory, userMapping, groupMapping);
+
+      LdapSettingsManager settingsManager = new LdapSettingsManager(settings);
+    LdapGroupsProvider groupsProvider = new LdapGroupsProvider(contextFactories, settingsManager.getUserMappings(), settingsManager.getGroupMappings());
 
     Collection<String> groups;
 
@@ -74,14 +74,14 @@ public class LdapGroupsProviderTest {
 
   @Test
   public void mixed() {
-    LdapContextFactory contextFactory = LdapContextFactories.createForAnonymousAccess(server.getUrl());
+    Map<String, LdapContextFactory> contextFactories = LdapContextFactories.createForAnonymousAccess(server.getUrl());
     Settings settings = new Settings()
         .setProperty("ldap.user.baseDn", "ou=users,dc=example,dc=org")
         .setProperty("ldap.group.baseDn", "ou=groups,dc=example,dc=org")
         .setProperty("ldap.group.request", "(&(|(objectClass=groupOfUniqueNames)(objectClass=posixGroup))(|(uniqueMember={dn})(memberUid={uid})))");
-    LdapUserMapping userMapping = new LdapUserMapping(settings);
-    LdapGroupMapping groupMapping = new LdapGroupMapping(settings);
-    LdapGroupsProvider groupsProvider = new LdapGroupsProvider(contextFactory, userMapping, groupMapping);
+
+      LdapSettingsManager settingsManager = new LdapSettingsManager(settings);
+    LdapGroupsProvider groupsProvider = new LdapGroupsProvider(contextFactories, settingsManager.getUserMappings(), settingsManager.getGroupMappings());
 
     Collection<String> groups;
 

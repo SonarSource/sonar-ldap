@@ -70,17 +70,17 @@ public class LdapContextFactory {
   private final String password;
   private final String realm;
 
-  public LdapContextFactory(Settings settings) {
-    this.authentication = StringUtils.defaultString(settings.getString("ldap.authentication"), DEFAULT_AUTHENTICATION);
-    this.factory = StringUtils.defaultString(settings.getString("ldap.contextFactoryClass"), DEFAULT_FACTORY);
-    this.realm = settings.getString("ldap.realm");
-    String ldapUrl = settings.getString("ldap.url");
+  public LdapContextFactory(Settings settings, String ldapIndex) {
+    this.authentication = StringUtils.defaultString(settings.getString(ldapIndex + ".authentication"), DEFAULT_AUTHENTICATION);
+    this.factory = StringUtils.defaultString(settings.getString(ldapIndex + ".contextFactoryClass"), DEFAULT_FACTORY);
+    this.realm = settings.getString(ldapIndex + ".realm");
+    String ldapUrl = settings.getString(ldapIndex + ".url");
     if (ldapUrl == null) {
       ldapUrl = LdapAutodiscovery.getLdapServer(realm);
     }
     this.providerUrl = ldapUrl;
-    this.username = settings.getString("ldap.bindDn");
-    this.password = settings.getString("ldap.bindPassword");
+    this.username = settings.getString(ldapIndex + ".bindDn");
+    this.password = settings.getString(ldapIndex + ".bindPassword");
   }
 
   /**

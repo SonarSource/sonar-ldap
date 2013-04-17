@@ -25,6 +25,7 @@ import org.sonar.api.config.Settings;
 import org.sonar.api.security.ExternalGroupsProvider;
 import org.sonar.api.security.ExternalUsersProvider;
 import org.sonar.api.security.LoginPasswordAuthenticator;
+import org.sonar.api.security.UserDetails;
 import org.sonar.api.utils.SonarException;
 import org.sonar.plugins.ldap.server.LdapServer;
 
@@ -34,7 +35,7 @@ import static org.junit.Assert.fail;
 public class LdapRealmTest {
 
   @ClassRule
-  public static LdapServer server = new LdapServer("/users.ldif");
+  public static LdapServer server = new LdapServer("/users.example.org.ldif");
 
   @Test
   public void normal() {
@@ -52,7 +53,7 @@ public class LdapRealmTest {
   public void noConnection() {
     Settings settings = new Settings()
         .setProperty("ldap.url", "ldap://no-such-host")
-        .setProperty("ldap.group.baseDn", "cn=groups,dc=example,dc=org");
+            .setProperty("ldap.group.baseDn", "cn=groups,dc=example,dc=org");
     LdapRealm realm = new LdapRealm(settings);
     assertThat(realm.getName()).isEqualTo("LDAP");
     try {

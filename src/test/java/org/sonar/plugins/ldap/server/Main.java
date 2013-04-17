@@ -32,7 +32,7 @@ public class Main {
 
   public static void main(String[] args) throws Exception {
     ApacheDS server = ApacheDS.start();
-    server.importLdif(Main.class.getResourceAsStream("/static-groups.ldif"));
+    server.importLdif(Main.class.getResourceAsStream("/static-groups.example.org.ldif"));
     System.out.println(server.getUrl());
   }
 

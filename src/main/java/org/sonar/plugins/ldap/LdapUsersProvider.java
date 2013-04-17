@@ -30,6 +30,8 @@ import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.SearchResult;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Evgeny Mandrikov
@@ -37,24 +39,25 @@ import javax.naming.directory.SearchResult;
 public class LdapUsersProvider extends ExternalUsersProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(LdapUsersProvider.class);
+  private final Map<String, LdapContextFactory> contextFactories;
+  private final Map<String, LdapUserMapping> userMappings;
 
-  private final LdapContextFactory contextFactory;
-  private final LdapUserMapping userMapping;
 
-  public LdapUsersProvider(LdapContextFactory contextFactory, LdapUserMapping userMapping) {
-    this.contextFactory = contextFactory;
-    this.userMapping = userMapping;
+  public LdapUsersProvider(Map<String, LdapContextFactory> contextFactories, Map<String, LdapUserMapping> userMappings) {
+    this.contextFactories = contextFactories;
+    this.userMappings = userMappings;
   }
 
-  /**
+    /**
    * @return details for specified user, or null if such user doesn't exist
    * @throws SonarException if unable to retrieve details
    */
   public UserDetails doGetUserDetails(String username) {
     LOG.debug("Requesting details for user {}", username);
+      for(String ldapIndex : userMappings.keySet()){
     try {
-      SearchResult searchResult = userMapping.createSearch(contextFactory, username)
-          .returns(userMapping.getEmailAttribute(), userMapping.getRealNameAttribute())
+      SearchResult searchResult = userMappings.get(ldapIndex).createSearch(contextFactories.get(ldapIndex), username)
+          .returns(userMappings.get(ldapIndex).getEmailAttribute(), userMappings.get(ldapIndex).getRealNameAttribute())
           .findUnique();
       if (searchResult == null) {
         // user not found
@@ -63,14 +66,16 @@ public class LdapUsersProvider extends ExternalUsersProvider {
       }
       UserDetails details = new UserDetails();
       Attributes attributes = searchResult.getAttributes();
-      details.setName(getAttributeValue(attributes.get(userMapping.getRealNameAttribute())));
-      details.setEmail(getAttributeValue(attributes.get(userMapping.getEmailAttribute())));
+      details.setName(getAttributeValue(attributes.get(userMappings.get(ldapIndex).getRealNameAttribute())));
+      details.setEmail(getAttributeValue(attributes.get(userMappings.get(ldapIndex).getEmailAttribute())));
       return details;
     } catch (NamingException e) {
       // just in case if Sonar silently swallowed exception
       LOG.debug(e.getMessage(), e);
       throw new SonarException("Unable to retrieve details for user " + username, e);
     }
+      }
+      throw new SonarException("Unable to retrieve details for user " + username);
   }
 
   private static String getAttributeValue(@Nullable Attribute attribute) throws NamingException {
