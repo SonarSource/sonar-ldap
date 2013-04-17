@@ -31,8 +31,10 @@ package org.sonar.plugins.ldap.server;
 public class Main {
 
   public static void main(String[] args) throws Exception {
-    ApacheDS server = ApacheDS.start();
-    server.importLdif(Main.class.getResourceAsStream("/static-groups.ldif"));
+    ApacheDS server = ApacheDS.start("example.org", "dc=example,dc=org");
+    String resourceFile = "\"/static-groups.example.org.ldif\"";
+    // String resourceFile = "\"/users.infosupport.com.ldif\"";
+    server.importLdif(Main.class.getResourceAsStream(resourceFile));
     System.out.println(server.getUrl());
   }
 

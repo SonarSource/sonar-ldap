@@ -49,12 +49,12 @@ public class LdapGroupMapping {
   /**
    * Constructs mapping from Sonar settings.
    */
-  public LdapGroupMapping(Settings settings) {
-    this.baseDn = settings.getString("ldap.group.baseDn");
-    this.idAttribute = StringUtils.defaultString(settings.getString("ldap.group.idAttribute"), DEFAULT_ID_ATTRIBUTE);
+  public LdapGroupMapping(Settings settings, String settingsPrefix) {
+    this.baseDn = settings.getString(settingsPrefix + ".group.baseDn");
+    this.idAttribute = StringUtils.defaultString(settings.getString(settingsPrefix + ".group.idAttribute"), DEFAULT_ID_ATTRIBUTE);
 
-    String objectClass = settings.getString("ldap.group.objectClass");
-    String memberAttribute = settings.getString("ldap.group.memberAttribute");
+    String objectClass = settings.getString(settingsPrefix + ".group.objectClass");
+    String memberAttribute = settings.getString(settingsPrefix + ".group.memberAttribute");
 
     String req;
     if (StringUtils.isNotBlank(objectClass) || StringUtils.isNotBlank(memberAttribute)) {
@@ -63,10 +63,10 @@ public class LdapGroupMapping {
       memberAttribute = StringUtils.defaultString(memberAttribute, DEFAULT_MEMBER_ATTRIBUTE);
       req = "(&(objectClass=" + objectClass + ")(" + memberAttribute + "=" + "{dn}))";
       LoggerFactory.getLogger(LdapGroupMapping.class)
-          .warn("Properties 'ldap.group.objectClass' and 'ldap.group.memberAttribute' are deprecated" +
-              " and should be replaced by single property 'ldap.group.request' with value: " + req);
+          .warn("Properties '" + settingsPrefix + ".group.objectClass' and '" + settingsPrefix + ".group.memberAttribute' are deprecated" +
+            " and should be replaced by single property '" + settingsPrefix + ".group.request' with value: " + req);
     } else {
-      req = StringUtils.defaultString(settings.getString("ldap.group.request"), DEFAULT_REQUEST);
+      req = StringUtils.defaultString(settings.getString(settingsPrefix + ".group.request"), DEFAULT_REQUEST);
     }
     this.requiredUserAttributes = StringUtils.substringsBetween(req, "{", "}");
     for (int i = 0; i < requiredUserAttributes.length; i++) {

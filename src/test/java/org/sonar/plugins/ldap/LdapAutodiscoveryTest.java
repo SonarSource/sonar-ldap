@@ -27,10 +27,10 @@ import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
-
 import java.net.UnknownHostException;
 
 import static org.fest.assertions.Assertions.assertThat;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -41,6 +41,15 @@ public class LdapAutodiscoveryTest {
     assertThat(LdapAutodiscovery.getDnsDomainName("localhost")).isNull();
     assertThat(LdapAutodiscovery.getDnsDomainName("godin.example.org")).isEqualTo("example.org");
     assertThat(LdapAutodiscovery.getDnsDomainName("godin.usr.example.org")).isEqualTo("usr.example.org");
+  }
+
+  @Test
+  public void testGetDnsDomainWithoutParameter() throws UnknownHostException {
+    try {
+      LdapAutodiscovery.getDnsDomainName();
+    } catch (UnknownHostException e) {
+      fail(e.getMessage());
+    }
   }
 
   @Test

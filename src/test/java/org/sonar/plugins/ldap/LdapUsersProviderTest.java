@@ -28,17 +28,25 @@ import org.sonar.plugins.ldap.server.LdapServer;
 import static org.fest.assertions.Assertions.assertThat;
 
 public class LdapUsersProviderTest {
+  /**
+   * A reference to the original ldif file
+   */
+  public static final String USERS_EXAMPLE_ORG_LDIF = "/users.example.org.ldif";
+  /**
+   * A reference to an aditional ldif file.
+   */
+  public static final String USERS_INFOSUPPORT_COM_LDIF = "/users.infosupport.com.ldif";
 
   @ClassRule
-  public static LdapServer server = new LdapServer("/users.ldif");
+  public static LdapServer exampleServer = new LdapServer(USERS_EXAMPLE_ORG_LDIF);
+  @ClassRule
+  public static LdapServer infosupportServer = new LdapServer(USERS_INFOSUPPORT_COM_LDIF, "infosupport.com", "dc=infosupport,dc=com");
 
   @Test
   public void test() throws Exception {
-    LdapContextFactory contextFactory = LdapContextFactories.createForAnonymousAccess(server.getUrl());
-    Settings settings = new Settings()
-        .setProperty("ldap.user.baseDn", "ou=users,dc=example,dc=org");
-    LdapUserMapping userMapping = new LdapUserMapping(settings);
-    LdapUsersProvider usersProvider = new LdapUsersProvider(contextFactory, userMapping);
+    Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer, infosupportServer);
+    LdapSettingsManager settingsManager = new LdapSettingsManager(settings);
+    LdapUsersProvider usersProvider = new LdapUsersProvider(settingsManager.getContextFactories(), settingsManager.getUserMappings());
 
     UserDetails details;
 
@@ -56,6 +64,14 @@ public class LdapUsersProviderTest {
 
     details = usersProvider.doGetUserDetails("notfound");
     assertThat(details).isNull();
+
+    details = usersProvider.doGetUserDetails("robby");
+    assertThat(details.getName()).isEqualTo("Robby Developer");
+    assertThat(details.getEmail()).isEqualTo("rd@infosupport.com");
+
+    details = usersProvider.doGetUserDetails("testerInfo");
+    assertThat(details.getName()).isEqualTo("Tester Testerovich");
+    assertThat(details.getEmail()).isEqualTo("tester@infosupport.com");
   }
 
 }

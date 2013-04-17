@@ -34,7 +34,7 @@ import static org.junit.Assert.fail;
 public class LdapRealmTest {
 
   @ClassRule
-  public static LdapServer server = new LdapServer("/users.ldif");
+  public static LdapServer server = new LdapServer("/users.example.org.ldif");
 
   @Test
   public void normal() {
@@ -57,7 +57,7 @@ public class LdapRealmTest {
     assertThat(realm.getName()).isEqualTo("LDAP");
     try {
       realm.init();
-      fail();
+      fail("Since there is no connection, the init method has to throw an exception.");
     } catch (SonarException e) {
       assertThat(e.getMessage()).contains("Unable to open LDAP connection");
     }
@@ -67,15 +67,15 @@ public class LdapRealmTest {
 
     try {
       realm.getUsersProvider().doGetUserDetails("tester");
-      fail();
+      fail("Since there is no connection, the doGetUserDetails method has to throw an exception.");
     } catch (SonarException e) {
       assertThat(e.getMessage()).contains("Unable to retrieve details for user tester");
     }
     try {
       realm.getGroupsProvider().doGetGroups("tester");
-      fail();
+      fail("Since there is no connection, the doGetGroups method has to throw an exception.");
     } catch (SonarException e) {
-      assertThat(e.getMessage()).contains("Unable to retrieve groups for user tester");
+      assertThat(e.getMessage()).contains("Unable to retrieve details for user tester");
     }
   }
 

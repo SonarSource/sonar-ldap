@@ -99,7 +99,7 @@ public final class LdapAutodiscovery {
   static String getLdapServer(DirContext context, String domain) throws NamingException {
     Attributes lSrvAttrs = context.getAttributes("dns:/_ldap._tcp." + domain, new String[] {"srv"});
     Attribute serversAttribute = lSrvAttrs.get("srv");
-    NamingEnumeration lEnum = serversAttribute.getAll();
+    NamingEnumeration<?> lEnum = serversAttribute.getAll();
     String server = null;
     int currentPriority = 0;
     int currentWeight = 0;

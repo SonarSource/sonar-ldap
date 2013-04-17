@@ -43,21 +43,21 @@ public class LdapUserMapping {
   /**
    * Constructs mapping from Sonar settings.
    */
-  public LdapUserMapping(Settings settings) {
-    String usersBaseDn = settings.getString("ldap.user.baseDn");
+  public LdapUserMapping(Settings settings, String settingsPrefix) {
+    String usersBaseDn = settings.getString(settingsPrefix + ".user.baseDn");
     if (usersBaseDn == null) {
-      String realm = settings.getString("ldap.realm");
+      String realm = settings.getString(settingsPrefix + ".realm");
       if (realm != null) {
         usersBaseDn = LdapAutodiscovery.getDnsDomainDn(realm);
       }
     }
 
-    String objectClass = settings.getString("ldap.user.objectClass");
-    String loginAttribute = settings.getString("ldap.user.loginAttribute");
+    String objectClass = settings.getString(settingsPrefix + ".user.objectClass");
+    String loginAttribute = settings.getString(settingsPrefix + ".user.loginAttribute");
 
     this.baseDn = usersBaseDn;
-    this.realNameAttribute = StringUtils.defaultString(settings.getString("ldap.user.realNameAttribute"), DEFAULT_NAME_ATTRIBUTE);
-    this.emailAttribute = StringUtils.defaultString(settings.getString("ldap.user.emailAttribute"), DEFAULT_EMAIL_ATTRIBUTE);
+    this.realNameAttribute = StringUtils.defaultString(settings.getString(settingsPrefix + ".user.realNameAttribute"), DEFAULT_NAME_ATTRIBUTE);
+    this.emailAttribute = StringUtils.defaultString(settings.getString(settingsPrefix + ".user.emailAttribute"), DEFAULT_EMAIL_ATTRIBUTE);
 
     String req;
     if (StringUtils.isNotBlank(objectClass) || StringUtils.isNotBlank(loginAttribute)) {
@@ -66,10 +66,10 @@ public class LdapUserMapping {
       req = "(&(objectClass=" + objectClass + ")(" + loginAttribute + "={login}))";
       // For backward compatibility with plugin versions lower than 1.2
       LoggerFactory.getLogger(LdapGroupMapping.class)
-          .warn("Properties 'ldap.user.objectClass' and 'ldap.user.loginAttribute' are deprecated" +
-              " and should be replaced by single property 'ldap.user.request' with value: " + req);
+          .warn("Properties '" + settingsPrefix + ".user.objectClass' and '" + settingsPrefix + ".user.loginAttribute' are deprecated" +
+            " and should be replaced by single property '" + settingsPrefix + ".user.request' with value: " + req);
     } else {
-      req = StringUtils.defaultString(settings.getString("ldap.user.request"), DEFAULT_REQUEST);
+      req = StringUtils.defaultString(settings.getString(settingsPrefix + ".user.request"), DEFAULT_REQUEST);
     }
     req = StringUtils.replace(req, "{login}", "{0}");
     this.request = req;

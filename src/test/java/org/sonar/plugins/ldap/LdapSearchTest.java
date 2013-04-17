@@ -30,26 +30,28 @@ import org.sonar.plugins.ldap.server.LdapServer;
 import javax.naming.NamingException;
 import javax.naming.directory.SearchControls;
 
+import java.util.Map;
+
 import static org.fest.assertions.Assertions.assertThat;
 
 public class LdapSearchTest {
 
   @ClassRule
-  public static LdapServer server = new LdapServer("/users.ldif");
+  public static LdapServer server = new LdapServer("/users.example.org.ldif");
 
   @Rule
   public ExpectedException thrown = ExpectedException.none();
 
-  private static LdapContextFactory contextFactory;
+  private static Map<String, LdapContextFactory> contextFactories;
 
   @BeforeClass
   public static void init() {
-    contextFactory = LdapContextFactories.createForAnonymousAccess(server.getUrl());
+    contextFactories = new LdapSettingsManager(LdapSettingsFactory.generateSimpleAnonymousAccessSettings(server, null)).getContextFactories();
   }
 
   @Test
   public void subtreeSearch() throws Exception {
-    LdapSearch search = new LdapSearch(contextFactory)
+    LdapSearch search = new LdapSearch(contextFactories.values().iterator().next())
         .setBaseDn("dc=example,dc=org")
         .setRequest("(objectClass={0})")
         .setParameters("inetOrgPerson")
@@ -69,7 +71,7 @@ public class LdapSearchTest {
 
   @Test
   public void oneLevelSearch() throws Exception {
-    LdapSearch search = new LdapSearch(contextFactory)
+    LdapSearch search = new LdapSearch(contextFactories.values().iterator().next())
         .setBaseDn("dc=example,dc=org")
         .setScope(SearchControls.ONELEVEL_SCOPE)
         .setRequest("(objectClass={0})")
@@ -88,7 +90,7 @@ public class LdapSearchTest {
 
   @Test
   public void objectSearch() throws Exception {
-    LdapSearch search = new LdapSearch(contextFactory)
+    LdapSearch search = new LdapSearch(contextFactories.values().iterator().next())
         .setBaseDn("cn=bind,ou=users,dc=example,dc=org")
         .setScope(SearchControls.OBJECT_SCOPE)
         .setRequest("(objectClass={0})")

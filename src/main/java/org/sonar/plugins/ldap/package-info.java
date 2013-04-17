@@ -22,3 +22,4 @@
 package org.sonar.plugins.ldap;
 
 import javax.annotation.ParametersAreNonnullByDefault;
+

@@ -70,17 +70,17 @@ public class LdapContextFactory {
   private final String password;
   private final String realm;
 
-  public LdapContextFactory(Settings settings) {
-    this.authentication = StringUtils.defaultString(settings.getString("ldap.authentication"), DEFAULT_AUTHENTICATION);
-    this.factory = StringUtils.defaultString(settings.getString("ldap.contextFactoryClass"), DEFAULT_FACTORY);
-    this.realm = settings.getString("ldap.realm");
-    String ldapUrl = settings.getString("ldap.url");
-    if (ldapUrl == null) {
+  public LdapContextFactory(Settings settings, String settingsPrefix) {
+    this.authentication = StringUtils.defaultString(settings.getString(settingsPrefix + ".authentication"), DEFAULT_AUTHENTICATION);
+    this.factory = StringUtils.defaultString(settings.getString(settingsPrefix + ".contextFactoryClass"), DEFAULT_FACTORY);
+    this.realm = settings.getString(settingsPrefix + ".realm");
+    String ldapUrl = settings.getString(settingsPrefix + ".url");
+    if (ldapUrl == null && realm != null) {
       ldapUrl = LdapAutodiscovery.getLdapServer(realm);
     }
     this.providerUrl = ldapUrl;
-    this.username = settings.getString("ldap.bindDn");
-    this.password = settings.getString("ldap.bindPassword");
+    this.username = settings.getString(settingsPrefix + ".bindDn");
+    this.password = settings.getString(settingsPrefix + ".bindPassword");
   }
 
   /**
@@ -153,6 +153,10 @@ public class LdapContextFactory {
         throw new SonarException("Unable to open LDAP connection", e);
       }
     }
+  }
+
+  public String getProviderUrl() {
+    return providerUrl;
   }
 
   @Override
