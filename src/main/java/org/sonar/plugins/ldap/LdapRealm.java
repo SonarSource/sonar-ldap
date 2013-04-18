@@ -64,7 +64,7 @@ public class LdapRealm extends SecurityRealm {
     authenticator = new LdapAuthenticator(contextFactories, userMappings);
       Map<String, LdapGroupMapping> groupMappings = settingsManager.getGroupMappings();
     if (groupMappings.size()==0) {
-      LOG.info("Groups will not be synchronized, because property 'ldap.group.baseDn' is empty for every ldap server.");
+      LOG.info("Groups will not be synchronized, because property 'ldap.group.baseDn' is empty for every ldap exampleServer.");
     } else {
       LOG.info("{}", groupMappings);
       groupsProvider = new LdapGroupsProvider(contextFactories, userMappings, groupMappings);

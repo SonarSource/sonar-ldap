@@ -2,7 +2,7 @@ dn: dc=infosupport,dc=com
 objectClass: domain
 objectClass: extensibleObject
 objectClass: top
-dc: example
+dc: infosupport
 
 #
 # USERS

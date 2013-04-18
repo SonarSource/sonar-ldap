@@ -82,16 +82,16 @@ public final class LdapAutodiscovery {
   }
 
   /**
-   * Get LDAP server from DNS.
+   * Get LDAP exampleServer from DNS.
    *
    * @param domain DNS domain
-   * @return LDAP server or null if unable to determine
+   * @return LDAP exampleServer or null if unable to determine
    */
   public static String getLdapServer(String domain) {
     try {
       return getLdapServer(new InitialDirContext(), domain);
     } catch (NamingException e) {
-      LOG.error("Unable to determine LDAP server from DNS", e);
+      LOG.error("Unable to determine LDAP exampleServer from DNS", e);
       return null;
     }
   }

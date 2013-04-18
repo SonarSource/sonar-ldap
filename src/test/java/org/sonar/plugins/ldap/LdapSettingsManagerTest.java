@@ -19,9 +19,10 @@
  */
 package org.sonar.plugins.ldap;
 
-import static org.fest.assertions.Assertions.assertThat;
 import org.junit.Test;
 import org.sonar.api.config.Settings;
+
+import static org.fest.assertions.Assertions.assertThat;
 
 /**
  * Here we test the settingsManagers ability to cope with multiple ldap servers.
@@ -30,6 +31,7 @@ public class LdapSettingsManagerTest {
 
     /**
      * Test there are 2 @link{org.sonar.plugins.ldap.LdapContextFactory}s found.
+     *
      * @throws Exception This is not expected.
      */
     @Test
@@ -40,20 +42,22 @@ public class LdapSettingsManagerTest {
 
     /**
      * Test there are 2 @link{org.sonar.plugins.ldap.LdapUserMapping}s found.
+     *
      * @throws Exception This is not expected.
      */
     @Test
-    public void testUserMappings() throws Exception{
+    public void testUserMappings() throws Exception {
         LdapSettingsManager settingsManager = new LdapSettingsManager(generateMultipleLdapSettingsWithUserAndGroupMapping());
         assertThat(settingsManager.getUserMappings().size()).isEqualTo(2);
     }
 
     /**
      * Test there are 2 @link{org.sonar.plugins.ldap.LdapGroupMapping}s found.
+     *
      * @throws Exception This is not expected.
      */
     @Test
-    public void testGroupMappings() throws Exception{
+    public void testGroupMappings() throws Exception {
         LdapSettingsManager settingsManager = new LdapSettingsManager(generateMultipleLdapSettingsWithUserAndGroupMapping());
         assertThat(settingsManager.getGroupMappings().size()).isEqualTo(2);
     }

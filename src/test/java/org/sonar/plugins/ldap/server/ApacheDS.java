@@ -30,6 +30,7 @@ import org.apache.directory.server.core.DefaultDirectoryService;
 import org.apache.directory.server.core.DirectoryService;
 import org.apache.directory.server.core.entry.DefaultServerEntry;
 import org.apache.directory.server.core.entry.ServerEntry;
+import org.apache.directory.server.core.interceptor.context.AddOperationContext;
 import org.apache.directory.server.core.jndi.CoreContextFactory;
 import org.apache.directory.server.core.partition.impl.btree.jdbm.JdbmIndex;
 import org.apache.directory.server.core.partition.impl.btree.jdbm.JdbmPartition;
@@ -46,6 +47,7 @@ import org.apache.directory.server.xdbm.Index;
 import org.apache.directory.shared.ldap.constants.SupportedSaslMechanisms;
 import org.apache.directory.shared.ldap.ldif.LdifEntry;
 import org.apache.directory.shared.ldap.ldif.LdifReader;
+import org.apache.directory.shared.ldap.name.LdapDN;
 import org.apache.mina.util.AvailablePortFinder;
 
 import javax.annotation.WillClose;
@@ -61,11 +63,11 @@ import java.util.Map;
 
 public class ApacheDS {
 
-  private static final String REALM = "example.org";
-  private static final String BASE_DN = "dc=example,dc=org";
+    private final String realm;
+    private final String baseDn;
 
-  public static ApacheDS start() throws Exception {
-    return new ApacheDS()
+    public static ApacheDS start(String realm, String baseDn) throws Exception {
+    return new ApacheDS(realm,baseDn)
         .startDirectoryService()
         .startLdapServer()
         .activateNis();
@@ -111,7 +113,9 @@ public class ApacheDS {
   private final LdapServer ldapServer;
   private final KdcServer kdcServer;
 
-  private ApacheDS() {
+  private ApacheDS(String realm, String baseDn) {
+      this.realm = realm;
+      this.baseDn= baseDn;
     directoryService = new DefaultDirectoryService();
     ldapServer = new LdapServer();
     kdcServer = new KdcServer();
@@ -122,13 +126,15 @@ public class ApacheDS {
 
     directoryService.setShutdownHookEnabled(false);
 
-    File workDir = new File("target/ldap-work");
+    File workDir = new File("target/ldap-work/"+realm);
+      if(workDir.exists()){
     FileUtils.deleteDirectory(workDir);
+      }
     directoryService.setWorkingDirectory(workDir);
 
     JdbmPartition partition = new JdbmPartition();
     partition.setId("test");
-    partition.setSuffix(BASE_DN);
+    partition.setSuffix(baseDn);
     partition.setIndexedAttributes(Sets.<Index<?, ServerEntry>> newHashSet(
         new JdbmIndex<String, ServerEntry>("ou"),
         new JdbmIndex<String, ServerEntry>("uid"),
@@ -158,10 +164,10 @@ public class ApacheDS {
     ldapServer.setSaslMechanismHandlers(mechanismHandlerMap);
 
     ldapServer.setSaslHost("localhost");
-    ldapServer.setSaslRealms(Collections.singletonList(REALM));
+    ldapServer.setSaslRealms(Collections.singletonList(realm));
     // TODO ldapServer.setSaslPrincipal();
     // The base DN containing users that can be SASL authenticated.
-    ldapServer.setSearchBaseDn(BASE_DN);
+    ldapServer.setSearchBaseDn(baseDn);
 
     ldapServer.start();
 
@@ -176,9 +182,9 @@ public class ApacheDS {
     // FIXME hard-coded ports
     kdcServer.setTransports(new TcpTransport(6088), new UdpTransport(6088));
     kdcServer.setEnabled(true);
-    kdcServer.setPrimaryRealm(REALM);
-    kdcServer.setSearchBaseDn(BASE_DN);
-    kdcServer.setKdcPrincipal("krbtgt/" + REALM + "@" + REALM);
+    kdcServer.setPrimaryRealm(realm);
+    kdcServer.setSearchBaseDn(baseDn);
+    kdcServer.setKdcPrincipal("krbtgt/" + realm + "@" + baseDn);
     kdcServer.start();
 
     // -------------------------------------------------------------------

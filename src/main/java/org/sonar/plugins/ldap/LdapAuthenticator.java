@@ -65,45 +65,46 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
       try {
         result = userMappings.get(ldapIndex).createSearch(contextFactories.get(ldapIndex), login).findUnique();
       } catch (NamingException e) {
-        LOG.debug("User {} not found: {}", login, e.getMessage());
-        return false;
+        LOG.debug("User {} not found in " + ldapIndex + ": {}", login, e.getMessage());
+        continue;
       }
       if (result == null) {
-        LOG.debug("User {} not found", login);
-        return false;
+        LOG.debug("User {} not found in " + ldapIndex, login);
+        continue;
       }
       principal = result.getNameInNamespace();
     }
+          boolean passwordValid = false;
     if (contextFactories.get(ldapIndex).isGssapi()) {
-      return checkPasswordUsingGssapi(principal, password);
+      passwordValid = checkPasswordUsingGssapi(principal, password,ldapIndex);
     }
-    return checkPasswordUsingBind(principal, password);
-      }
+    passwordValid = checkPasswordUsingBind(principal, password,ldapIndex);
+          if(passwordValid){
+              return true;
+          }
+    }
       LOG.debug("User {} not found", login);
       return false;
   }
 
-  private boolean checkPasswordUsingBind(String principal, String password) {
+  private boolean checkPasswordUsingBind(String principal, String password,String ldapIndex) {
     if (StringUtils.isEmpty(password)) {
       LOG.debug("Password is blank.");
       return false;
     }
-      for(String ldapIndex : contextFactories.keySet()) {
     InitialDirContext context = null;
     try {
       context = contextFactories.get(ldapIndex).createUserContext(principal, password);
       return true;
     } catch (NamingException e) {
-      LOG.debug("Password not valid for user {}: {}", principal, e.getMessage());
+      LOG.debug("Password not valid for user {} in " + ldapIndex + ": {}", principal, e.getMessage());
       return false;
     } finally {
       ContextHelper.closeQuetly(context);
     }
-      }
-      return false;
   }
 
-  private boolean checkPasswordUsingGssapi(String principal, String password) {
+  private boolean checkPasswordUsingGssapi(String principal, String password, String ldapIndex) {
     // Use our custom configuration to avoid reliance on external config
     Configuration.setConfiguration(new Krb5LoginConfiguration());
     LoginContext lc;
@@ -113,7 +114,7 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
     } catch (LoginException e) {
       // Bad username: Client not found in Kerberos database
       // Bad password: Integrity check on decrypted field failed
-      LOG.debug("Password not valid for {}: {}", principal, e.getMessage());
+      LOG.debug("Password not valid for {} in " + ldapIndex + ": {}", principal, e.getMessage());
       return false;
     }
     try {
