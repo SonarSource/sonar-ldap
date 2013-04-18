@@ -1,10 +1,20 @@
 <?xml version="1.0"?>
-
 <!DOCTYPE suppressions PUBLIC
-        "-//Puppy Crawl//DTD Suppressions 1.0//EN"
-        "http://www.puppycrawl.com/dtds/suppressions_1_0.dtd">
-
+        "-//Puppy Crawl//DTD Suppressions 1.1//EN"
+        "http://www.puppycrawl.com/dtds/suppressions_1_1.dtd">
 <suppressions>
-    <suppress checks="Indentation"
-              files="*.java"/>
+
+    <!-- Can't have both javadoc in the main and test, so suppress test. -->
+    <suppress checks="JavadocPackage" files=".*Test.java" />
+    <suppress checks="JavadocPackage" files="Test.*.java" />
+    <!-- Test and properties files usually have a lot of duplicate code so ignore that.
+    <suppress checks="StrictDuplicateCode" files=".*Test.java" />
+    <suppress checks="StrictDuplicateCode" files=".*.properties" />-->
+    <!-- properties properties can't have a header -->
+    <suppress checks="Header" files=".*.properties" />
+
+    <!--<suppress checks="Indentation" files="*.java"/>-->
+
+    <!-- This is an example filter to ignore the printline error in Example.java-->
+    <!-- <suppress checks="Regexp" files="Example.java" />  -->
 </suppressions>
