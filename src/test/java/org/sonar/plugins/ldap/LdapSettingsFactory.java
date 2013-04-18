@@ -1,3 +1,22 @@
+/*
+ * Sonar LDAP Plugin
+ * Copyright (C) 2009 SonarSource
+ * dev@sonar.codehaus.org
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
+ */
 package org.sonar.plugins.ldap;
 
 
@@ -5,10 +24,22 @@ import org.junit.ClassRule;
 import org.sonar.api.config.Settings;
 import org.sonar.plugins.ldap.server.LdapServer;
 
+/**
+ * Create Settings for most used test cases.
+ */
 public class LdapSettingsFactory {
+    /**
+     * A reference to the original ldif file
+     */
     public static final String USERS_EXAMPLE_ORG_LDIF = "/users.example.org.ldif";
+    /**
+     * A reference to an aditional ldif file.
+     */
     public static final String USERS_INFOSUPPORT_COM_LDIF = "/users.infosupport.com.ldif";
 
+    /**
+     * The settings for a simple ldap server without authentication.
+     */
     public static final Settings SIMPLEANONYMOUSACCESS;
 
     static{
@@ -16,6 +47,10 @@ public class LdapSettingsFactory {
         SIMPLEANONYMOUSACCESS = generateSimpleAnonymousAccessSettings();
     }
 
+    /**
+     * Generate simple settings for 2 ldap servers that allows anonymous access.
+     * @return The specific settings.
+     */
     private static Settings generateSimpleAnonymousAccessSettings() {
         Settings settings = new Settings();
 
@@ -27,6 +62,12 @@ public class LdapSettingsFactory {
         return settings;
     }
 
+    /**
+     * Generate settings for 2 ldap servers that require authenticaten.
+     * @param exampleServer The first ldap server.
+     * @param infosupportServer The second ldap server.
+     * @return The specific settings.
+     */
     public static Settings generateAuthenticationSettings(LdapServer exampleServer, LdapServer infosupportServer) {
         Settings settings = new Settings();
         settings.setProperty("ldap.url", exampleServer.getUrl())
