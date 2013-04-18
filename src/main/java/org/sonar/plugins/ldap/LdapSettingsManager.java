@@ -25,11 +25,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Robby
- * Date: 17/04/13
- * Time: 11:50
- * To change this template use File | Settings | File Templates.
+ * The LdapSettingsManager will parse the settings.
+ * This class is also responsible to cope with multiple ldap servers.
  */
 public class LdapSettingsManager {
     public static final String LDAP = "ldap";
@@ -38,10 +35,18 @@ public class LdapSettingsManager {
     private Map<String, LdapGroupMapping> groupMappings = null;
     private Map<String, LdapContextFactory> contextFactories;
 
+    /**
+     * Create an instance of the settings manager.
+     * @param settings The settings to use.
+     */
     public LdapSettingsManager(Settings settings) {
         this.settings = settings;
     }
 
+    /**
+     * Get all the @link{LdapUserMapping}s available in the settings.
+     * @return A @link{Map} with all the @link{LdapUserMapping} objects. The key is the prefix used in the settings (ldap = Default).
+     */
     public Map<String, LdapUserMapping> getUserMappings(){
         if(userMappings == null){
         userMappings = new HashMap<String, LdapUserMapping>();
@@ -56,6 +61,10 @@ public class LdapSettingsManager {
         return userMappings;
     }
 
+    /**
+     * Get all the @link{LdapGroupMapping}s available in the settings.
+     * @return A @link{Map} with all the @link{LdapGroupMapping} objects. The key is the prefix used in the settings (ldap = Default).
+     */
     public Map<String,LdapGroupMapping> getGroupMappings() {
         if(groupMappings == null){
             groupMappings = new HashMap<String, LdapGroupMapping>();
@@ -70,6 +79,10 @@ public class LdapSettingsManager {
         return groupMappings;
     }
 
+    /**
+     * Get all the @link{LdapContextFactory}s available in the settings.
+     * @return A @link{Map} with all the @link{LdapContextFactory} objects. The key is the prefix used in the settings (ldap = Default).
+     */
     public Map<String, LdapContextFactory> getContextFactories() {
         if(contextFactories == null){
             contextFactories = new HashMap<String, LdapContextFactory>();

@@ -67,6 +67,9 @@ public class LdapAuthenticatorTest {
     //assertThat(authenticator.authenticate("robby", "secret1")).isTrue();
     //assertThat(authenticator.authenticate("robby", "wrong")).isFalse();
   }
+    public void testSimpleMultiLdap(){
+        //TODO: check if authentication against multiple ldap servers works.
+    }
 
   @Test
   public void testSasl() {
