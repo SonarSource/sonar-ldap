@@ -53,6 +53,9 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
    * @throws SonarException if unable to retrieve groups
    */
   public Collection<String> doGetGroups(String username) {
+      if(userMappings.keySet().size()==0 || groupMappings.keySet().size()==0){
+          throw new SonarException("Unable to retrieve groups for user " + username);
+      }
       for(String ldapIndex : userMappings.keySet()){
           if(!groupMappings.containsKey(ldapIndex)){
               //No group mapping for this ldap instance.
@@ -66,7 +69,7 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
           .findUnique();
       if (searchResult == null) {
         // user not found
-        return Collections.emptyList();
+        continue;
       }
 
       NamingEnumeration result = groupMappings.get(ldapIndex).createSearch(contextFactories.get(ldapIndex), searchResult)
@@ -85,7 +88,7 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
       throw new SonarException("Unable to retrieve groups for user " + username, e);
     }
       }
-      throw new SonarException("Unable to retrieve groups for user " + username);
+      return Collections.emptyList();
   }
 
 }

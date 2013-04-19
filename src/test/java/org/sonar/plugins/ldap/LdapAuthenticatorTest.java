@@ -31,18 +31,27 @@ import static org.fest.assertions.Assertions.assertThat;
 
 public class LdapAuthenticatorTest {
 
+    /**
+     * A reference to the original ldif file
+     */
+    public static final String USERS_EXAMPLE_ORG_LDIF = "/users.example.org.ldif";
+    /**
+     * A reference to an aditional ldif file.
+     */
+    public static final String USERS_INFOSUPPORT_COM_LDIF = "/users.infosupport.com.ldif";
+
+
     @ClassRule
-    public static LdapServer exampleServer = new LdapServer("/users.example.org.ldif");
-    @Rule
-    public static LdapServer infosupportServer = new LdapServer("/users.infosupport.com.ldif","infosupport.com","dc=infosupport,dc=com");
+    public static LdapServer exampleServer = new LdapServer(USERS_EXAMPLE_ORG_LDIF);
+    @ClassRule
+    public static LdapServer infosupportServer = new LdapServer(USERS_INFOSUPPORT_COM_LDIF,"infosupport.com","dc=infosupport,dc=com");
 
   @Test
   public void testNoConnection() {
     exampleServer.disableAnonymousAccess();
     try {
-      Map<String, LdapContextFactory> contextFactories = LdapContextFactories.createForAnonymousAccess(exampleServer.getUrl());
-      Map<String, LdapUserMapping> userMappings = createMapping();
-      LdapAuthenticator authenticator = new LdapAuthenticator(contextFactories, userMappings);
+      LdapSettingsManager settingsManager = new LdapSettingsManager(LdapSettingsFactory.generateAuthenticationSettings(exampleServer,null));
+      LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings());
       authenticator.authenticate("godin", "secret1");
     } finally {
       exampleServer.enableAnonymousAccess();
@@ -51,9 +60,8 @@ public class LdapAuthenticatorTest {
 
   @Test
   public void testSimple() {
-    Map<String, LdapContextFactory> contextFactories = LdapContextFactories.createForAnonymousAccess(exampleServer.getUrl());
-    Map<String, LdapUserMapping> userMappings = createMapping();
-    LdapAuthenticator authenticator = new LdapAuthenticator(contextFactories, userMappings);
+    LdapSettingsManager settingsManager = new LdapSettingsManager(LdapSettingsFactory.generateAuthenticationSettings(exampleServer,null));
+    LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings());
 
     assertThat(authenticator.authenticate("godin", "secret1")).isTrue();
     assertThat(authenticator.authenticate("godin", "wrong")).isFalse();
@@ -67,7 +75,7 @@ public class LdapAuthenticatorTest {
     assertThat(authenticator.authenticate("godin", null)).isFalse();
   }
     public void testSimpleMultiLdap(){
-        LdapSettingsManager settingsManager = new LdapSettingsManager(LdapSettingsFactory.SIMPLEANONYMOUSACCESS);
+        LdapSettingsManager settingsManager = new LdapSettingsManager(LdapSettingsFactory.generateAuthenticationSettings(exampleServer,infosupportServer));
         LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings());
 
         assertThat(authenticator.authenticate("godin", "secret1")).isTrue();
@@ -88,10 +96,8 @@ public class LdapAuthenticatorTest {
 
   @Test
   public void testSasl() {
-    Map<String, LdapContextFactory> contextFactories =
-        LdapContextFactories.createForAuthenticationMethod(exampleServer.getUrl(), LdapContextFactory.CRAM_MD5_METHOD, "example.org", "bind", "bindpassword");
-    Map<String, LdapUserMapping> userMappings = createMapping();
-    LdapAuthenticator authenticator = new LdapAuthenticator(contextFactories, userMappings);
+    LdapSettingsManager settingsManager = new LdapSettingsManager(LdapSettingsFactory.generateAuthenticationSettings(exampleServer,null));
+    LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings());
 
     assertThat(authenticator.authenticate("godin", "secret1")).isTrue();
     assertThat(authenticator.authenticate("godin", "wrong")).isFalse();
@@ -117,12 +123,5 @@ public class LdapAuthenticatorTest {
         assertThat(authenticator.authenticate("robby", "secret1")).isTrue();
         assertThat(authenticator.authenticate("robby", "wrong")).isFalse();
     }
-
-  private static Map<String, LdapUserMapping> createMapping() {
-    Settings settings = new Settings()
-        .setProperty("ldap.user.baseDn", "ou=users,dc=example,dc=org");
-      LdapSettingsManager settingsManager = new LdapSettingsManager(settings);
-    return settingsManager.getUserMappings();
-  }
 
 }

@@ -66,3 +66,33 @@ givenname: Without
 sn: Email
 uid: without_email
 userpassword: secret3
+
+
+#
+# GROUPS
+#
+
+dn: ou=groups,dc=example,dc=org
+objectclass:organizationalunit
+ou: groups
+
+# sonar-users
+dn: cn=sonar-users,ou=groups,dc=example,dc=org
+objectclass: groupOfUniqueNames
+cn: sonar-users
+uniqueMember: cn=Tester Testerovich,ou=users,dc=example,dc=org
+uniqueMember: cn=Evgeny Mandrikov,ou=users,dc=example,dc=org
+
+# sonar-developers
+dn: cn=sonar-developers,ou=groups,dc=example,dc=org
+objectclass: groupOfUniqueNames
+cn: sonar-developers
+uniqueMember: cn=Evgeny Mandrikov,ou=users,dc=example,dc=org
+
+# linux-users
+dn: cn=linux-users,ou=groups,dc=example,dc=org
+objectclass: posixGroup
+objectclass: top
+cn: linux-users
+gidNumber: 10000
+memberUid: godin
