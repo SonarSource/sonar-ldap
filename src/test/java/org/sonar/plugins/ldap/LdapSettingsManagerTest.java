@@ -62,6 +62,14 @@ public class LdapSettingsManagerTest {
         assertThat(settingsManager.getGroupMappings().size()).isEqualTo(2);
     }
 
+    @Test
+    public void testEmptySettings() throws Exception {
+        LdapSettingsManager settingsManager = new LdapSettingsManager(new Settings());
+        assertThat(settingsManager.getContextFactories().size()).isEqualTo(0);
+        assertThat(settingsManager.getUserMappings().size()).isEqualTo(0);
+        assertThat(settingsManager.getGroupMappings().size()).isEqualTo(0);
+    }
+
     private Settings generateMultipleLdapSettingsWithUserAndGroupMapping() {
         Settings settings = new Settings();
         settings.setProperty("ldap.url", "/users.example.org.ldif")

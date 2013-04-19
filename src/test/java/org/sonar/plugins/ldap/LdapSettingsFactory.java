@@ -29,6 +29,8 @@ import org.sonar.plugins.ldap.server.LdapServer;
  */
 public class LdapSettingsFactory {
 
+    public static final String LDAP = "ldap";
+
     /**
      * Generate simple settings for 2 ldap servers that allows anonymous access.
      * @return The specific settings.

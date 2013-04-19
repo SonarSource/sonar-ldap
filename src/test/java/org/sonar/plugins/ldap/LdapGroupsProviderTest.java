@@ -48,13 +48,10 @@ public class LdapGroupsProviderTest {
 
     @Test
     public void defaults() throws Exception {
-        Map<String, LdapContextFactory> contextFactories = LdapContextFactories.createForAnonymousAccess(exampleServer.getUrl());
-        Settings settings = new Settings()
-                .setProperty("ldap.user.baseDn", "ou=users,dc=example,dc=org")
-                .setProperty("ldap.group.baseDn", "ou=groups,dc=example,dc=org");
-        LdapSettingsManager settingsManager = new LdapSettingsManager(settings);
-        LdapGroupsProvider groupsProvider = new LdapGroupsProvider(contextFactories, settingsManager.getUserMappings(), settingsManager.getGroupMappings());
+        Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer,null);
 
+        LdapSettingsManager settingsManager = new LdapSettingsManager(settings);
+        LdapGroupsProvider groupsProvider = new LdapGroupsProvider(settingsManager.getContextFactories(), settingsManager.getUserMappings(), settingsManager.getGroupMappings());
         Collection<String> groups;
 
         groups = groupsProvider.doGetGroups("tester");
@@ -94,24 +91,7 @@ public class LdapGroupsProviderTest {
 
     @Test
     public void posix() {
-        Map<String, LdapContextFactory> contextFactories = LdapContextFactories.createForAnonymousAccess(exampleServer.getUrl());
-        Settings settings = new Settings()
-                .setProperty("ldap.user.baseDn", "ou=users,dc=example,dc=org")
-                .setProperty("ldap.group.baseDn", "ou=groups,dc=example,dc=org")
-                .setProperty("ldap.group.request", "(&(objectClass=posixGroup)(memberUid={uid}))");
-
-        LdapSettingsManager settingsManager = new LdapSettingsManager(settings);
-        LdapGroupsProvider groupsProvider = new LdapGroupsProvider(contextFactories, settingsManager.getUserMappings(), settingsManager.getGroupMappings());
-
-        Collection<String> groups;
-
-        groups = groupsProvider.doGetGroups("godin");
-        assertThat(groups).containsOnly("linux-users");
-    }
-
-    @Test
-    public void posixMultipleLdap() {
-        Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer,infosupportServer);
+        Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer,null);
         settings.setProperty("ldap.group.request", "(&(objectClass=posixGroup)(memberUid={uid}))");
         LdapSettingsManager settingsManager = new LdapSettingsManager(settings);
         LdapGroupsProvider groupsProvider = new LdapGroupsProvider(settingsManager.getContextFactories(), settingsManager.getUserMappings(), settingsManager.getGroupMappings());
@@ -123,15 +103,28 @@ public class LdapGroupsProviderTest {
     }
 
     @Test
-    public void mixed() {
-        Map<String, LdapContextFactory> contextFactories = LdapContextFactories.createForAnonymousAccess(exampleServer.getUrl());
-        Settings settings = new Settings()
-                .setProperty("ldap.user.baseDn", "ou=users,dc=example,dc=org")
-                .setProperty("ldap.group.baseDn", "ou=groups,dc=example,dc=org")
-                .setProperty("ldap.group.request", "(&(|(objectClass=groupOfUniqueNames)(objectClass=posixGroup))(|(uniqueMember={dn})(memberUid={uid})))");
-
+    public void posixMultipleLdap() {
+        Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer,infosupportServer);
+        settings.setProperty("ldap.group.request", "(&(objectClass=posixGroup)(memberUid={uid}))");
+        settings.setProperty("ldap1.group.request", "(&(objectClass=posixGroup)(memberUid={uid}))");
         LdapSettingsManager settingsManager = new LdapSettingsManager(settings);
-        LdapGroupsProvider groupsProvider = new LdapGroupsProvider(contextFactories, settingsManager.getUserMappings(), settingsManager.getGroupMappings());
+        LdapGroupsProvider groupsProvider = new LdapGroupsProvider(settingsManager.getContextFactories(), settingsManager.getUserMappings(), settingsManager.getGroupMappings());
+
+        Collection<String> groups;
+
+        groups = groupsProvider.doGetGroups("godin");
+        assertThat(groups).containsOnly("linux-users");
+
+        groups = groupsProvider.doGetGroups("robby");
+        assertThat(groups).containsOnly("linux-users");
+    }
+
+    @Test
+    public void mixed() {
+        Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer,infosupportServer);
+        settings.setProperty("ldap.group.request", "(&(|(objectClass=groupOfUniqueNames)(objectClass=posixGroup))(|(uniqueMember={dn})(memberUid={uid})))");
+        LdapSettingsManager settingsManager = new LdapSettingsManager(settings);
+        LdapGroupsProvider groupsProvider = new LdapGroupsProvider(settingsManager.getContextFactories(), settingsManager.getUserMappings(), settingsManager.getGroupMappings());
 
         Collection<String> groups;
 
@@ -143,12 +136,16 @@ public class LdapGroupsProviderTest {
     public void mixedMultipleLdap() {
         Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer,infosupportServer);
         settings.setProperty("ldap.group.request", "(&(|(objectClass=groupOfUniqueNames)(objectClass=posixGroup))(|(uniqueMember={dn})(memberUid={uid})))");
+        settings.setProperty("ldap1.group.request", "(&(|(objectClass=groupOfUniqueNames)(objectClass=posixGroup))(|(uniqueMember={dn})(memberUid={uid})))");
         LdapSettingsManager settingsManager = new LdapSettingsManager(settings);
         LdapGroupsProvider groupsProvider = new LdapGroupsProvider(settingsManager.getContextFactories(), settingsManager.getUserMappings(), settingsManager.getGroupMappings());
 
         Collection<String> groups;
 
         groups = groupsProvider.doGetGroups("godin");
+        assertThat(groups).containsOnly("sonar-users", "sonar-developers", "linux-users");
+
+        groups = groupsProvider.doGetGroups("robby");
         assertThat(groups).containsOnly("sonar-users", "sonar-developers", "linux-users");
     }
 

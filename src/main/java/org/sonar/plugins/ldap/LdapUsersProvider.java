@@ -54,6 +54,9 @@ public class LdapUsersProvider extends ExternalUsersProvider {
    */
   public UserDetails doGetUserDetails(String username) {
     LOG.debug("Requesting details for user {}", username);
+      if(userMappings.size() == 0){
+          throw new SonarException("Unable to retrieve details for user " + username);
+      }
       for(String ldapIndex : userMappings.keySet()){
     try {
       SearchResult searchResult = userMappings.get(ldapIndex).createSearch(contextFactories.get(ldapIndex), username)
@@ -62,7 +65,7 @@ public class LdapUsersProvider extends ExternalUsersProvider {
       if (searchResult == null) {
         // user not found
         LOG.debug("User {} not found", username);
-        return null;
+        continue;
       }
       UserDetails details = new UserDetails();
       Attributes attributes = searchResult.getAttributes();
@@ -75,7 +78,7 @@ public class LdapUsersProvider extends ExternalUsersProvider {
       throw new SonarException("Unable to retrieve details for user " + username, e);
     }
       }
-      throw new SonarException("Unable to retrieve details for user " + username);
+      return null;
   }
 
   private static String getAttributeValue(@Nullable Attribute attribute) throws NamingException {

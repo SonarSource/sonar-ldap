@@ -30,28 +30,36 @@ import java.util.Map;
 import static org.fest.assertions.Assertions.assertThat;
 
 public class LdapUsersProviderTest {
+    /**
+     * A reference to the original ldif file
+     */
+    public static final String USERS_EXAMPLE_ORG_LDIF = "/users.example.org.ldif";
+    /**
+     * A reference to an aditional ldif file.
+     */
+    public static final String USERS_INFOSUPPORT_COM_LDIF = "/users.infosupport.com.ldif";
 
-  @ClassRule
-  public static LdapServer server = new LdapServer("/users.example.org.ldif");
+    @ClassRule
+    public static LdapServer exampleServer = new LdapServer(USERS_EXAMPLE_ORG_LDIF);
+    @ClassRule
+    public static LdapServer infosupportServer = new LdapServer(USERS_INFOSUPPORT_COM_LDIF,"infosupport.com","dc=infosupport,dc=com");
+
 
   @Test
   public void test() throws Exception {
-    Map<String, LdapContextFactory> contextFactories = LdapContextFactories.createForAnonymousAccess(server.getUrl());
-    Settings settings = new Settings()
-        .setProperty("ldap.user.baseDn", "ou=users,dc=example,dc=org");
+      Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer,infosupportServer);
       LdapSettingsManager settingsManager = new LdapSettingsManager(settings);
-    LdapUserMapping userMapping = new LdapUserMapping(settings, "ldap");
-    LdapUsersProvider usersProvider = new LdapUsersProvider(contextFactories, settingsManager.getUserMappings());
+    LdapUsersProvider usersProvider = new LdapUsersProvider(settingsManager.getContextFactories(), settingsManager.getUserMappings());
 
     UserDetails details;
 
-    details = usersProvider.doGetUserDetails("godin");
-    assertThat(details.getName()).isEqualTo("Evgeny Mandrikov");
-    assertThat(details.getEmail()).isEqualTo("godin@example.org");
+      details = usersProvider.doGetUserDetails("godin");
+      assertThat(details.getName()).isEqualTo("Evgeny Mandrikov");
+      assertThat(details.getEmail()).isEqualTo("godin@example.org");
 
-    details = usersProvider.doGetUserDetails("tester");
-    assertThat(details.getName()).isEqualTo("Tester Testerovich");
-    assertThat(details.getEmail()).isEqualTo("tester@example.org");
+      details = usersProvider.doGetUserDetails("tester");
+      assertThat(details.getName()).isEqualTo("Tester Testerovich");
+      assertThat(details.getEmail()).isEqualTo("tester@example.org");
 
     details = usersProvider.doGetUserDetails("without_email");
     assertThat(details.getName()).isEqualTo("Without Email");
@@ -59,6 +67,15 @@ public class LdapUsersProviderTest {
 
     details = usersProvider.doGetUserDetails("notfound");
     assertThat(details).isNull();
+
+
+      details = usersProvider.doGetUserDetails("robby");
+      assertThat(details.getName()).isEqualTo("Robby Developer");
+      assertThat(details.getEmail()).isEqualTo("rd@infosupport.com");
+
+      details = usersProvider.doGetUserDetails("testerInfo");
+      assertThat(details.getName()).isEqualTo("Tester Testerovich");
+      assertThat(details.getEmail()).isEqualTo("tester@infosupport.com");
   }
 
 }

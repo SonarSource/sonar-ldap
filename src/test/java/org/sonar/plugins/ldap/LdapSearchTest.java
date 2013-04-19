@@ -46,12 +46,12 @@ public class LdapSearchTest {
 
   @BeforeClass
   public static void init() {
-    contextFactories = LdapContextFactories.createForAnonymousAccess(server.getUrl());
+    contextFactories = new LdapSettingsManager(LdapSettingsFactory.generateSimpleAnonymousAccessSettings(server,null)).getContextFactories();
   }
 
   @Test
   public void subtreeSearch() throws Exception {
-    LdapSearch search = new LdapSearch(contextFactories.get(LdapContextFactories.LDAP))
+    LdapSearch search = new LdapSearch(contextFactories.get(LdapSettingsFactory.LDAP))
         .setBaseDn("dc=example,dc=org")
         .setRequest("(objectClass={0})")
         .setParameters("inetOrgPerson")
@@ -71,7 +71,7 @@ public class LdapSearchTest {
 
   @Test
   public void oneLevelSearch() throws Exception {
-    LdapSearch search = new LdapSearch(contextFactories.get(LdapContextFactories.LDAP))
+    LdapSearch search = new LdapSearch(contextFactories.get(LdapSettingsFactory.LDAP))
         .setBaseDn("dc=example,dc=org")
         .setScope(SearchControls.ONELEVEL_SCOPE)
         .setRequest("(objectClass={0})")
@@ -90,7 +90,7 @@ public class LdapSearchTest {
 
   @Test
   public void objectSearch() throws Exception {
-    LdapSearch search = new LdapSearch(contextFactories.get(LdapContextFactories.LDAP))
+    LdapSearch search = new LdapSearch(contextFactories.get(LdapSettingsFactory.LDAP))
         .setBaseDn("cn=bind,ou=users,dc=example,dc=org")
         .setScope(SearchControls.OBJECT_SCOPE)
         .setRequest("(objectClass={0})")
