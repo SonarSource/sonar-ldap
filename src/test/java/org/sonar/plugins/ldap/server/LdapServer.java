@@ -40,7 +40,6 @@ public class LdapServer extends ExternalResource {
 
   @Override
   protected void before() throws Throwable {
-      System.out.println("Creating Ldap server " + realm);
     server = ApacheDS.start(realm,baseDn);
     server.importLdif(LdapServer.class.getResourceAsStream(ldif));
   }
