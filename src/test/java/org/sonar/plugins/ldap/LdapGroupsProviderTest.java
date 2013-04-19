@@ -25,7 +25,6 @@ import org.sonar.api.config.Settings;
 import org.sonar.plugins.ldap.server.LdapServer;
 
 import java.util.Collection;
-import java.util.Map;
 
 import static org.fest.assertions.Assertions.assertThat;
 
@@ -43,12 +42,12 @@ public class LdapGroupsProviderTest {
     @ClassRule
     public static LdapServer exampleServer = new LdapServer(USERS_EXAMPLE_ORG_LDIF);
     @ClassRule
-    public static LdapServer infosupportServer = new LdapServer(USERS_INFOSUPPORT_COM_LDIF,"infosupport.com","dc=infosupport,dc=com");
+    public static LdapServer infosupportServer = new LdapServer(USERS_INFOSUPPORT_COM_LDIF, "infosupport.com", "dc=infosupport,dc=com");
 
 
     @Test
     public void defaults() throws Exception {
-        Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer,null);
+        Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer, null);
 
         LdapSettingsManager settingsManager = new LdapSettingsManager(settings);
         LdapGroupsProvider groupsProvider = new LdapGroupsProvider(settingsManager.getContextFactories(), settingsManager.getUserMappings(), settingsManager.getGroupMappings());
@@ -66,7 +65,7 @@ public class LdapGroupsProviderTest {
 
     @Test
     public void defaultsMultipleLdap() throws Exception {
-        Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer,infosupportServer);
+        Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer, infosupportServer);
 
         LdapSettingsManager settingsManager = new LdapSettingsManager(settings);
         LdapGroupsProvider groupsProvider = new LdapGroupsProvider(settingsManager.getContextFactories(), settingsManager.getUserMappings(), settingsManager.getGroupMappings());
@@ -91,7 +90,7 @@ public class LdapGroupsProviderTest {
 
     @Test
     public void posix() {
-        Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer,null);
+        Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer, null);
         settings.setProperty("ldap.group.request", "(&(objectClass=posixGroup)(memberUid={uid}))");
         LdapSettingsManager settingsManager = new LdapSettingsManager(settings);
         LdapGroupsProvider groupsProvider = new LdapGroupsProvider(settingsManager.getContextFactories(), settingsManager.getUserMappings(), settingsManager.getGroupMappings());
@@ -104,7 +103,7 @@ public class LdapGroupsProviderTest {
 
     @Test
     public void posixMultipleLdap() {
-        Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer,infosupportServer);
+        Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer, infosupportServer);
         settings.setProperty("ldap.group.request", "(&(objectClass=posixGroup)(memberUid={uid}))");
         settings.setProperty("ldap1.group.request", "(&(objectClass=posixGroup)(memberUid={uid}))");
         LdapSettingsManager settingsManager = new LdapSettingsManager(settings);
@@ -121,7 +120,7 @@ public class LdapGroupsProviderTest {
 
     @Test
     public void mixed() {
-        Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer,infosupportServer);
+        Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer, infosupportServer);
         settings.setProperty("ldap.group.request", "(&(|(objectClass=groupOfUniqueNames)(objectClass=posixGroup))(|(uniqueMember={dn})(memberUid={uid})))");
         LdapSettingsManager settingsManager = new LdapSettingsManager(settings);
         LdapGroupsProvider groupsProvider = new LdapGroupsProvider(settingsManager.getContextFactories(), settingsManager.getUserMappings(), settingsManager.getGroupMappings());
@@ -134,7 +133,7 @@ public class LdapGroupsProviderTest {
 
     @Test
     public void mixedMultipleLdap() {
-        Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer,infosupportServer);
+        Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer, infosupportServer);
         settings.setProperty("ldap.group.request", "(&(|(objectClass=groupOfUniqueNames)(objectClass=posixGroup))(|(uniqueMember={dn})(memberUid={uid})))");
         settings.setProperty("ldap1.group.request", "(&(|(objectClass=groupOfUniqueNames)(objectClass=posixGroup))(|(uniqueMember={dn})(memberUid={uid})))");
         LdapSettingsManager settingsManager = new LdapSettingsManager(settings);

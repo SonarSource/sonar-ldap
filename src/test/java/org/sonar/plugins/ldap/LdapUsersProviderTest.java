@@ -25,8 +25,6 @@ import org.sonar.api.config.Settings;
 import org.sonar.api.security.UserDetails;
 import org.sonar.plugins.ldap.server.LdapServer;
 
-import java.util.Map;
-
 import static org.fest.assertions.Assertions.assertThat;
 
 public class LdapUsersProviderTest {
@@ -42,40 +40,40 @@ public class LdapUsersProviderTest {
     @ClassRule
     public static LdapServer exampleServer = new LdapServer(USERS_EXAMPLE_ORG_LDIF);
     @ClassRule
-    public static LdapServer infosupportServer = new LdapServer(USERS_INFOSUPPORT_COM_LDIF,"infosupport.com","dc=infosupport,dc=com");
+    public static LdapServer infosupportServer = new LdapServer(USERS_INFOSUPPORT_COM_LDIF, "infosupport.com", "dc=infosupport,dc=com");
 
 
-  @Test
-  public void test() throws Exception {
-      Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer,infosupportServer);
-      LdapSettingsManager settingsManager = new LdapSettingsManager(settings);
-    LdapUsersProvider usersProvider = new LdapUsersProvider(settingsManager.getContextFactories(), settingsManager.getUserMappings());
+    @Test
+    public void test() throws Exception {
+        Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer, infosupportServer);
+        LdapSettingsManager settingsManager = new LdapSettingsManager(settings);
+        LdapUsersProvider usersProvider = new LdapUsersProvider(settingsManager.getContextFactories(), settingsManager.getUserMappings());
 
-    UserDetails details;
+        UserDetails details;
 
-      details = usersProvider.doGetUserDetails("godin");
-      assertThat(details.getName()).isEqualTo("Evgeny Mandrikov");
-      assertThat(details.getEmail()).isEqualTo("godin@example.org");
+        details = usersProvider.doGetUserDetails("godin");
+        assertThat(details.getName()).isEqualTo("Evgeny Mandrikov");
+        assertThat(details.getEmail()).isEqualTo("godin@example.org");
 
-      details = usersProvider.doGetUserDetails("tester");
-      assertThat(details.getName()).isEqualTo("Tester Testerovich");
-      assertThat(details.getEmail()).isEqualTo("tester@example.org");
+        details = usersProvider.doGetUserDetails("tester");
+        assertThat(details.getName()).isEqualTo("Tester Testerovich");
+        assertThat(details.getEmail()).isEqualTo("tester@example.org");
 
-    details = usersProvider.doGetUserDetails("without_email");
-    assertThat(details.getName()).isEqualTo("Without Email");
-    assertThat(details.getEmail()).isEqualTo("");
+        details = usersProvider.doGetUserDetails("without_email");
+        assertThat(details.getName()).isEqualTo("Without Email");
+        assertThat(details.getEmail()).isEqualTo("");
 
-    details = usersProvider.doGetUserDetails("notfound");
-    assertThat(details).isNull();
+        details = usersProvider.doGetUserDetails("notfound");
+        assertThat(details).isNull();
 
 
-      details = usersProvider.doGetUserDetails("robby");
-      assertThat(details.getName()).isEqualTo("Robby Developer");
-      assertThat(details.getEmail()).isEqualTo("rd@infosupport.com");
+        details = usersProvider.doGetUserDetails("robby");
+        assertThat(details.getName()).isEqualTo("Robby Developer");
+        assertThat(details.getEmail()).isEqualTo("rd@infosupport.com");
 
-      details = usersProvider.doGetUserDetails("testerInfo");
-      assertThat(details.getName()).isEqualTo("Tester Testerovich");
-      assertThat(details.getEmail()).isEqualTo("tester@infosupport.com");
-  }
+        details = usersProvider.doGetUserDetails("testerInfo");
+        assertThat(details.getName()).isEqualTo("Tester Testerovich");
+        assertThat(details.getEmail()).isEqualTo("tester@infosupport.com");
+    }
 
 }

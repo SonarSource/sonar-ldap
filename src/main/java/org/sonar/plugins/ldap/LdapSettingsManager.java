@@ -48,7 +48,7 @@ public class LdapSettingsManager {
      * Get all the @link{LdapUserMapping}s available in the settings.
      *
      * @return A @link{Map} with all the @link{LdapUserMapping} objects.
-     * The key is the prefix used in the settings (ldap = Default).
+     *         The key is the prefix used in the settings (ldap = Default).
      */
     public Map<String, LdapUserMapping> getUserMappings() {
         if (userMappings == null) {
@@ -68,7 +68,7 @@ public class LdapSettingsManager {
      * Get all the @link{LdapGroupMapping}s available in the settings.
      *
      * @return A @link{Map} with all the @link{LdapGroupMapping} objects.
-     * The key is the prefix used in the settings (ldap = Default).
+     *         The key is the prefix used in the settings (ldap = Default).
      */
     public Map<String, LdapGroupMapping> getGroupMappings() {
         if (groupMappings == null) {
@@ -88,7 +88,7 @@ public class LdapSettingsManager {
      * Get all the @link{LdapContextFactory}s available in the settings.
      *
      * @return A @link{Map} with all the @link{LdapContextFactory} objects.
-     * The key is the prefix used in the settings (ldap = Default).
+     *         The key is the prefix used in the settings (ldap = Default).
      */
     public Map<String, LdapContextFactory> getContextFactories() {
         if (contextFactories == null) {

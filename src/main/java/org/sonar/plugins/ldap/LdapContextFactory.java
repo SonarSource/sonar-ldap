@@ -31,7 +31,6 @@ import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.ldap.InitialLdapContext;
-
 import java.util.Properties;
 
 /**
@@ -39,131 +38,131 @@ import java.util.Properties;
  */
 public class LdapContextFactory {
 
-  private static final Logger LOG = LoggerFactory.getLogger(LdapContextFactory.class);
+    private static final Logger LOG = LoggerFactory.getLogger(LdapContextFactory.class);
 
-  private static final String DEFAULT_AUTHENTICATION = "simple";
-  private static final String DEFAULT_FACTORY = "com.sun.jndi.ldap.LdapCtxFactory";
-  private static final String DEFAULT_REFERRAL = "follow";
+    private static final String DEFAULT_AUTHENTICATION = "simple";
+    private static final String DEFAULT_FACTORY = "com.sun.jndi.ldap.LdapCtxFactory";
+    private static final String DEFAULT_REFERRAL = "follow";
 
-  @VisibleForTesting
-  static final String GSSAPI_METHOD = "GSSAPI";
+    @VisibleForTesting
+    static final String GSSAPI_METHOD = "GSSAPI";
 
-  @VisibleForTesting
-  static final String DIGEST_MD5_METHOD = "DIGEST-MD5";
+    @VisibleForTesting
+    static final String DIGEST_MD5_METHOD = "DIGEST-MD5";
 
-  @VisibleForTesting
-  static final String CRAM_MD5_METHOD = "CRAM-MD5";
+    @VisibleForTesting
+    static final String CRAM_MD5_METHOD = "CRAM-MD5";
 
-  /**
-   * The Sun LDAP property used to enable connection pooling. This is used in the default implementation to enable
-   * LDAP connection pooling.
-   */
-  private static final String SUN_CONNECTION_POOLING_PROPERTY = "com.sun.jndi.ldap.connect.pool";
+    /**
+     * The Sun LDAP property used to enable connection pooling. This is used in the default implementation to enable
+     * LDAP connection pooling.
+     */
+    private static final String SUN_CONNECTION_POOLING_PROPERTY = "com.sun.jndi.ldap.connect.pool";
 
-  private static final String SASL_REALM_PROPERTY = "java.naming.security.sasl.realm";
+    private static final String SASL_REALM_PROPERTY = "java.naming.security.sasl.realm";
 
-  private final String providerUrl;
-  private final String authentication;
-  private final String factory;
-  private final String referral = DEFAULT_REFERRAL;
-  private final String username;
-  private final String password;
-  private final String realm;
+    private final String providerUrl;
+    private final String authentication;
+    private final String factory;
+    private final String referral = DEFAULT_REFERRAL;
+    private final String username;
+    private final String password;
+    private final String realm;
 
-  public LdapContextFactory(Settings settings, String ldapIndex) {
-    this.authentication = StringUtils.defaultString(settings.getString(ldapIndex + ".authentication"), DEFAULT_AUTHENTICATION);
-    this.factory = StringUtils.defaultString(settings.getString(ldapIndex + ".contextFactoryClass"), DEFAULT_FACTORY);
-    this.realm = settings.getString(ldapIndex + ".realm");
-    String ldapUrl = settings.getString(ldapIndex + ".url");
-    if (ldapUrl == null) {
-      ldapUrl = LdapAutodiscovery.getLdapServer(realm);
+    public LdapContextFactory(Settings settings, String ldapIndex) {
+        this.authentication = StringUtils.defaultString(settings.getString(ldapIndex + ".authentication"), DEFAULT_AUTHENTICATION);
+        this.factory = StringUtils.defaultString(settings.getString(ldapIndex + ".contextFactoryClass"), DEFAULT_FACTORY);
+        this.realm = settings.getString(ldapIndex + ".realm");
+        String ldapUrl = settings.getString(ldapIndex + ".url");
+        if (ldapUrl == null) {
+            ldapUrl = LdapAutodiscovery.getLdapServer(realm);
+        }
+        this.providerUrl = ldapUrl;
+        this.username = settings.getString(ldapIndex + ".bindDn");
+        this.password = settings.getString(ldapIndex + ".bindPassword");
     }
-    this.providerUrl = ldapUrl;
-    this.username = settings.getString(ldapIndex + ".bindDn");
-    this.password = settings.getString(ldapIndex + ".bindPassword");
-  }
 
-  /**
-   * Returns {@code InitialDirContext} for Bind user.
-   */
-  public InitialDirContext createBindContext() throws NamingException {
-    return createInitialDirContext(username, password, true);
-  }
-
-  /**
-   * Returns {@code InitialDirContext} for specified user.
-   * Note that pooling intentionally disabled by this method.
-   */
-  public InitialDirContext createUserContext(String principal, String credentials) throws NamingException {
-    return createInitialDirContext(principal, credentials, false);
-  }
-
-  private InitialDirContext createInitialDirContext(String principal, String credentials, boolean pooling) throws NamingException {
-    return new InitialLdapContext(getEnvironment(principal, credentials, pooling), null);
-  }
-
-  private Properties getEnvironment(String principal, String credentials, boolean pooling) {
-    Properties env = new Properties();
-    env.put(Context.SECURITY_AUTHENTICATION, authentication);
-    if (realm != null) {
-      env.put(SASL_REALM_PROPERTY, realm);
+    /**
+     * Returns {@code InitialDirContext} for Bind user.
+     */
+    public InitialDirContext createBindContext() throws NamingException {
+        return createInitialDirContext(username, password, true);
     }
-    if (pooling) {
-      // Enable connection pooling
-      env.put(SUN_CONNECTION_POOLING_PROPERTY, "true");
-    }
-    env.put(Context.INITIAL_CONTEXT_FACTORY, factory);
-    env.put(Context.PROVIDER_URL, providerUrl);
-    env.put(Context.REFERRAL, referral);
-    if (principal != null) {
-      env.put(Context.SECURITY_PRINCIPAL, principal);
-    }
-    // Note: debug is intentionally was placed here - in order to not expose password in log
-    LOG.debug("Initializing LDAP context {}", env);
-    if (credentials != null) {
-      env.put(Context.SECURITY_CREDENTIALS, credentials);
-    }
-    return env;
-  }
 
-  public boolean isSasl() {
-    return DIGEST_MD5_METHOD.equals(authentication) ||
-      CRAM_MD5_METHOD.equals(authentication) ||
-      GSSAPI_METHOD.equals(authentication);
-  }
-
-  public boolean isGssapi() {
-    return GSSAPI_METHOD.equals(authentication);
-  }
-
-  /**
-   * Tests connection.
-   *
-   * @throws SonarException if unable to open connection
-   */
-  public void testConnection() {
-    if (StringUtils.isBlank(username) && isSasl()) {
-      throw new SonarException("When using SASL - property ldap.bindDn is required");
-    } else {
-      try {
-        createBindContext();
-        LOG.info("Test LDAP connection: OK");
-      } catch (NamingException e) {
-        LOG.info("Test LDAP connection: FAIL");
-        throw new SonarException("Unable to open LDAP connection", e);
-      }
+    /**
+     * Returns {@code InitialDirContext} for specified user.
+     * Note that pooling intentionally disabled by this method.
+     */
+    public InitialDirContext createUserContext(String principal, String credentials) throws NamingException {
+        return createInitialDirContext(principal, credentials, false);
     }
-  }
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("url", providerUrl)
-        .add("authentication", authentication)
-        .add("factory", factory)
-        .add("bindDn", username)
-        .add("realm", realm)
-        .toString();
-  }
+    private InitialDirContext createInitialDirContext(String principal, String credentials, boolean pooling) throws NamingException {
+        return new InitialLdapContext(getEnvironment(principal, credentials, pooling), null);
+    }
+
+    private Properties getEnvironment(String principal, String credentials, boolean pooling) {
+        Properties env = new Properties();
+        env.put(Context.SECURITY_AUTHENTICATION, authentication);
+        if (realm != null) {
+            env.put(SASL_REALM_PROPERTY, realm);
+        }
+        if (pooling) {
+            // Enable connection pooling
+            env.put(SUN_CONNECTION_POOLING_PROPERTY, "true");
+        }
+        env.put(Context.INITIAL_CONTEXT_FACTORY, factory);
+        env.put(Context.PROVIDER_URL, providerUrl);
+        env.put(Context.REFERRAL, referral);
+        if (principal != null) {
+            env.put(Context.SECURITY_PRINCIPAL, principal);
+        }
+        // Note: debug is intentionally was placed here - in order to not expose password in log
+        LOG.debug("Initializing LDAP context {}", env);
+        if (credentials != null) {
+            env.put(Context.SECURITY_CREDENTIALS, credentials);
+        }
+        return env;
+    }
+
+    public boolean isSasl() {
+        return DIGEST_MD5_METHOD.equals(authentication) ||
+                CRAM_MD5_METHOD.equals(authentication) ||
+                GSSAPI_METHOD.equals(authentication);
+    }
+
+    public boolean isGssapi() {
+        return GSSAPI_METHOD.equals(authentication);
+    }
+
+    /**
+     * Tests connection.
+     *
+     * @throws SonarException if unable to open connection
+     */
+    public void testConnection() {
+        if (StringUtils.isBlank(username) && isSasl()) {
+            throw new SonarException("When using SASL - property ldap.bindDn is required");
+        } else {
+            try {
+                createBindContext();
+                LOG.info("Test LDAP connection: OK");
+            } catch (NamingException e) {
+                LOG.info("Test LDAP connection: FAIL");
+                throw new SonarException("Unable to open LDAP connection", e);
+            }
+        }
+    }
+
+    @Override
+    public String toString() {
+        return Objects.toStringHelper(this)
+                .add("url", providerUrl)
+                .add("authentication", authentication)
+                .add("factory", factory)
+                .add("bindDn", username)
+                .add("realm", realm)
+                .toString();
+    }
 
 }
