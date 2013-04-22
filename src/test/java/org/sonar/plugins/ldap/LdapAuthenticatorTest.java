@@ -27,98 +27,118 @@ import static org.fest.assertions.Assertions.assertThat;
 
 public class LdapAuthenticatorTest {
 
-    /**
-     * A reference to the original ldif file
-     */
-    public static final String USERS_EXAMPLE_ORG_LDIF = "/users.example.org.ldif";
-    /**
-     * A reference to an aditional ldif file.
-     */
-    public static final String USERS_INFOSUPPORT_COM_LDIF = "/users.infosupport.com.ldif";
-    @ClassRule
-    public static LdapServer exampleServer = new LdapServer(USERS_EXAMPLE_ORG_LDIF);
-    @ClassRule
-    public static LdapServer infosupportServer = new LdapServer(USERS_INFOSUPPORT_COM_LDIF, "infosupport.com", "dc=infosupport,dc=com");
+  /**
+   * A reference to the original ldif file
+   */
+  public static final String USERS_EXAMPLE_ORG_LDIF = "/users.example.org.ldif";
+  /**
+   * A reference to an aditional ldif file.
+   */
+  public static final String USERS_INFOSUPPORT_COM_LDIF = "/users.infosupport.com.ldif";
+  @ClassRule
+  public static LdapServer exampleServer = new LdapServer(
+	  USERS_EXAMPLE_ORG_LDIF);
+  @ClassRule
+  public static LdapServer infosupportServer = new LdapServer(
+	  USERS_INFOSUPPORT_COM_LDIF, "infosupport.com", "dc=infosupport,dc=com");
 
-    @Test
-    public void testNoConnection() {
-        exampleServer.disableAnonymousAccess();
-        try {
-            LdapSettingsManager settingsManager = new LdapSettingsManager(LdapSettingsFactory.generateAuthenticationSettings(exampleServer, null));
-            LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings());
-            authenticator.authenticate("godin", "secret1");
-        } finally {
-            exampleServer.enableAnonymousAccess();
-        }
-    }
+  @Test
+  public void testNoConnection() {
+	exampleServer.disableAnonymousAccess();
+	try {
+	  LdapSettingsManager settingsManager = new LdapSettingsManager(
+		  LdapSettingsFactory.generateAuthenticationSettings(exampleServer,
+			  null));
+	  LdapAuthenticator authenticator = new LdapAuthenticator(
+		  settingsManager.getContextFactories(),
+		  settingsManager.getUserMappings());
+	  authenticator.authenticate("godin", "secret1");
+	} finally {
+	  exampleServer.enableAnonymousAccess();
+	}
+  }
 
-    @Test
-    public void testSimple() {
-        LdapSettingsManager settingsManager = new LdapSettingsManager(LdapSettingsFactory.generateAuthenticationSettings(exampleServer, null));
-        LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings());
+  @Test
+  public void testSimple() {
+	LdapSettingsManager settingsManager = new LdapSettingsManager(
+		LdapSettingsFactory.generateAuthenticationSettings(exampleServer, null));
+	LdapAuthenticator authenticator = new LdapAuthenticator(
+		settingsManager.getContextFactories(),
+		settingsManager.getUserMappings());
 
-        assertThat(authenticator.authenticate("godin", "secret1")).isTrue();
-        assertThat(authenticator.authenticate("godin", "wrong")).isFalse();
+	assertThat(authenticator.authenticate("godin", "secret1")).isTrue();
+	assertThat(authenticator.authenticate("godin", "wrong")).isFalse();
 
-        assertThat(authenticator.authenticate("tester", "secret2")).isTrue();
-        assertThat(authenticator.authenticate("tester", "wrong")).isFalse();
+	assertThat(authenticator.authenticate("tester", "secret2")).isTrue();
+	assertThat(authenticator.authenticate("tester", "wrong")).isFalse();
 
-        assertThat(authenticator.authenticate("notfound", "wrong")).isFalse();
-        // SONARPLUGINS-2493
-        assertThat(authenticator.authenticate("godin", "")).isFalse();
-        assertThat(authenticator.authenticate("godin", null)).isFalse();
-    }
+	assertThat(authenticator.authenticate("notfound", "wrong")).isFalse();
+	// SONARPLUGINS-2493
+	assertThat(authenticator.authenticate("godin", "")).isFalse();
+	assertThat(authenticator.authenticate("godin", null)).isFalse();
+  }
 
-    @Test
-    public void testSimpleMultiLdap() {
-        LdapSettingsManager settingsManager = new LdapSettingsManager(LdapSettingsFactory.generateAuthenticationSettings(exampleServer, infosupportServer));
-        LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings());
+  @Test
+  public void testSimpleMultiLdap() {
+	LdapSettingsManager settingsManager = new LdapSettingsManager(
+		LdapSettingsFactory.generateAuthenticationSettings(exampleServer,
+			infosupportServer));
+	LdapAuthenticator authenticator = new LdapAuthenticator(
+		settingsManager.getContextFactories(),
+		settingsManager.getUserMappings());
 
-        assertThat(authenticator.authenticate("godin", "secret1")).isTrue();
-        assertThat(authenticator.authenticate("godin", "wrong")).isFalse();
+	assertThat(authenticator.authenticate("godin", "secret1")).isTrue();
+	assertThat(authenticator.authenticate("godin", "wrong")).isFalse();
 
-        assertThat(authenticator.authenticate("tester", "secret2")).isTrue();
-        assertThat(authenticator.authenticate("tester", "wrong")).isFalse();
+	assertThat(authenticator.authenticate("tester", "secret2")).isTrue();
+	assertThat(authenticator.authenticate("tester", "wrong")).isFalse();
 
-        assertThat(authenticator.authenticate("notfound", "wrong")).isFalse();
-        // SONARPLUGINS-2493
-        assertThat(authenticator.authenticate("godin", "")).isFalse();
-        assertThat(authenticator.authenticate("godin", null)).isFalse();
+	assertThat(authenticator.authenticate("notfound", "wrong")).isFalse();
+	// SONARPLUGINS-2493
+	assertThat(authenticator.authenticate("godin", "")).isFalse();
+	assertThat(authenticator.authenticate("godin", null)).isFalse();
 
-        // SONARPLUGINS-2793
-        assertThat(authenticator.authenticate("robby", "secret1")).isTrue();
-        assertThat(authenticator.authenticate("robby", "wrong")).isFalse();
-    }
+	// SONARPLUGINS-2793
+	assertThat(authenticator.authenticate("robby", "secret1")).isTrue();
+	assertThat(authenticator.authenticate("robby", "wrong")).isFalse();
+  }
 
-    @Test
-    public void testSasl() {
-        LdapSettingsManager settingsManager = new LdapSettingsManager(LdapSettingsFactory.generateAuthenticationSettings(exampleServer, null));
-        LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings());
+  @Test
+  public void testSasl() {
+	LdapSettingsManager settingsManager = new LdapSettingsManager(
+		LdapSettingsFactory.generateAuthenticationSettings(exampleServer, null));
+	LdapAuthenticator authenticator = new LdapAuthenticator(
+		settingsManager.getContextFactories(),
+		settingsManager.getUserMappings());
 
-        assertThat(authenticator.authenticate("godin", "secret1")).isTrue();
-        assertThat(authenticator.authenticate("godin", "wrong")).isFalse();
+	assertThat(authenticator.authenticate("godin", "secret1")).isTrue();
+	assertThat(authenticator.authenticate("godin", "wrong")).isFalse();
 
-        assertThat(authenticator.authenticate("tester", "secret2")).isTrue();
-        assertThat(authenticator.authenticate("tester", "wrong")).isFalse();
+	assertThat(authenticator.authenticate("tester", "secret2")).isTrue();
+	assertThat(authenticator.authenticate("tester", "wrong")).isFalse();
 
-        assertThat(authenticator.authenticate("notfound", "wrong")).isFalse();
-    }
+	assertThat(authenticator.authenticate("notfound", "wrong")).isFalse();
+  }
 
-    @Test
-    public void testSaslMultipleLdap() {
-        LdapSettingsManager settingsManager = new LdapSettingsManager(LdapSettingsFactory.generateAuthenticationSettings(exampleServer, infosupportServer));
-        LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings());
+  @Test
+  public void testSaslMultipleLdap() {
+	LdapSettingsManager settingsManager = new LdapSettingsManager(
+		LdapSettingsFactory.generateAuthenticationSettings(exampleServer,
+			infosupportServer));
+	LdapAuthenticator authenticator = new LdapAuthenticator(
+		settingsManager.getContextFactories(),
+		settingsManager.getUserMappings());
 
-        assertThat(authenticator.authenticate("godin", "secret1")).isTrue();
-        assertThat(authenticator.authenticate("godin", "wrong")).isFalse();
+	assertThat(authenticator.authenticate("godin", "secret1")).isTrue();
+	assertThat(authenticator.authenticate("godin", "wrong")).isFalse();
 
-        assertThat(authenticator.authenticate("tester", "secret2")).isTrue();
-        assertThat(authenticator.authenticate("tester", "wrong")).isFalse();
+	assertThat(authenticator.authenticate("tester", "secret2")).isTrue();
+	assertThat(authenticator.authenticate("tester", "wrong")).isFalse();
 
-        assertThat(authenticator.authenticate("notfound", "wrong")).isFalse();
+	assertThat(authenticator.authenticate("notfound", "wrong")).isFalse();
 
-        assertThat(authenticator.authenticate("robby", "secret1")).isTrue();
-        assertThat(authenticator.authenticate("robby", "wrong")).isFalse();
-    }
+	assertThat(authenticator.authenticate("robby", "secret1")).isTrue();
+	assertThat(authenticator.authenticate("robby", "wrong")).isFalse();
+  }
 
 }

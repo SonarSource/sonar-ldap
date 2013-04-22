@@ -21,6 +21,7 @@ package org.sonar.plugins.ldap.server;
 
 /**
  * Settings for Sonar:
+ * 
  * <pre>
  * sonar.security.realm: LDAP
  * ldap.url: ldap://localhost:1024
@@ -30,12 +31,12 @@ package org.sonar.plugins.ldap.server;
  */
 public class Main {
 
-    public static void main(String[] args) throws Exception {
-        ApacheDS server = ApacheDS.start("example.org", "dc=example,dc=org");
-        String resourceFile = "\"/static-groups.example.org.ldif\"";
-        //String resourceFile = "\"/users.infosupport.com.ldif\"";
-        server.importLdif(Main.class.getResourceAsStream(resourceFile));
-        System.out.println(server.getUrl());
-    }
+  public static void main(String[] args) throws Exception {
+	ApacheDS server = ApacheDS.start("example.org", "dc=example,dc=org");
+	String resourceFile = "\"/static-groups.example.org.ldif\"";
+	// String resourceFile = "\"/users.infosupport.com.ldif\"";
+	server.importLdif(Main.class.getResourceAsStream(resourceFile));
+	System.out.println(server.getUrl());
+  }
 
 }

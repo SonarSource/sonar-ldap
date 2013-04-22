@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
  */
 
-@ParametersAreNonnullByDefault package org.sonar.plugins.ldap;
+@ParametersAreNonnullByDefault
+package org.sonar.plugins.ldap;
 
 import javax.annotation.ParametersAreNonnullByDefault;
+
