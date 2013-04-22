@@ -29,9 +29,9 @@ import static org.fest.assertions.Assertions.assertThat;
  */
 public class LdapPluginTest {
 
-    @Test
-    public void testGetExtensions() throws Exception {
-        assertThat(new LdapPlugin().getExtensions().size()).isGreaterThan(0);
-    }
+	@Test
+	public void testGetExtensions() throws Exception {
+		assertThat(new LdapPlugin().getExtensions().size()).isGreaterThan(0);
+	}
 
 }

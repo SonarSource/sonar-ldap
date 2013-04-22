@@ -40,7 +40,7 @@ public class LdapSettingsManagerTest {
 		LdapSettingsManager settingsManager = new LdapSettingsManager(
 				generateMultipleLdapSettingsWithUserAndGroupMapping());
 		assertThat(settingsManager.getContextFactories().size()).isEqualTo(2);
-		//We do it twice to make sure the settings keep the same.
+		// We do it twice to make sure the settings keep the same.
 		assertThat(settingsManager.getContextFactories().size()).isEqualTo(2);
 	}
 
@@ -55,7 +55,7 @@ public class LdapSettingsManagerTest {
 		LdapSettingsManager settingsManager = new LdapSettingsManager(
 				generateMultipleLdapSettingsWithUserAndGroupMapping());
 		assertThat(settingsManager.getUserMappings().size()).isEqualTo(2);
-		//We do it twice to make sure the settings keep the same.
+		// We do it twice to make sure the settings keep the same.
 		assertThat(settingsManager.getUserMappings().size()).isEqualTo(2);
 	}
 
@@ -70,13 +70,14 @@ public class LdapSettingsManagerTest {
 		LdapSettingsManager settingsManager = new LdapSettingsManager(
 				generateMultipleLdapSettingsWithUserAndGroupMapping());
 		assertThat(settingsManager.getGroupMappings().size()).isEqualTo(2);
-		//We do it twice to make sure the settings keep the same.
+		// We do it twice to make sure the settings keep the same.
 		assertThat(settingsManager.getGroupMappings().size()).isEqualTo(2);
 	}
 
 	/**
-	 * Test what happens when no configuration is set.
-	 * Normally there will be a contextFactory, but the autodiscovery doesn't work for the test server.
+	 * Test what happens when no configuration is set. Normally there will be a
+	 * contextFactory, but the autodiscovery doesn't work for the test server.
+	 * 
 	 * @throws Exception
 	 */
 	@Test
@@ -88,17 +89,17 @@ public class LdapSettingsManagerTest {
 		assertThat(settingsManager.getGroupMappings().size()).isEqualTo(0);
 	}
 
-	//TODO: Make it possible to test autodiscovery.
-	/*@Test
-	public void testSettingsManagerWithoutUrl() {
-
-		LdapSettingsManager settingsManager = new LdapSettingsManager(
-				generateAutoDiscoverySettings());
-
-		assertThat(settingsManager.getContextFactories().size()).isEqualTo(2);
-		assertThat(settingsManager.getUserMappings().size()).isEqualTo(2);
-		assertThat(settingsManager.getGroupMappings().size()).isEqualTo(2);
-	}*/
+	// TODO: Make it possible to test autodiscovery.
+	/*
+	 * @Test public void testSettingsManagerWithoutUrl() {
+	 * 
+	 * LdapSettingsManager settingsManager = new LdapSettingsManager(
+	 * generateAutoDiscoverySettings());
+	 * 
+	 * assertThat(settingsManager.getContextFactories().size()).isEqualTo(2);
+	 * assertThat(settingsManager.getUserMappings().size()).isEqualTo(2);
+	 * assertThat(settingsManager.getGroupMappings().size()).isEqualTo(2); }
+	 */
 
 	private Settings generateMultipleLdapSettingsWithUserAndGroupMapping() {
 		Settings settings = new Settings();
@@ -119,14 +120,14 @@ public class LdapSettingsManagerTest {
 		return settings;
 	}
 
-	/*private Settings generateAutoDiscoverySettings() {
-		Settings settings = generateMultipleLdapSettingsWithUserAndGroupMapping();
-		settings.removeProperty("ldap.url").removeProperty("ldap1.url");
-
-		// we put the realm because the test ldap server has no dns entry
-		settings.setProperty("ldap.realm", "").setProperty(
-				"ldap1.realm", "");
-
-		return settings;
-	}*/
+	/*
+	 * private Settings generateAutoDiscoverySettings() { Settings settings =
+	 * generateMultipleLdapSettingsWithUserAndGroupMapping();
+	 * settings.removeProperty("ldap.url").removeProperty("ldap1.url");
+	 * 
+	 * // we put the realm because the test ldap server has no dns entry
+	 * settings.setProperty("ldap.realm", "").setProperty( "ldap1.realm", "");
+	 * 
+	 * return settings; }
+	 */
 }
