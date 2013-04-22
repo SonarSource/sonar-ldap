@@ -46,11 +46,18 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
         this.userMappings = userMappings;
     }
 
+    
+    /* (non-Javadoc)
+     * @see org.sonar.api.security.LoginPasswordAuthenticator#init()
+     */
     public void init() {
         // nothing to do
     }
 
     /**
+     * Authenticate the user against all the ldap servers and return true if 1 succeeds.
+     * @param login The login to use.
+     * @param password The password to use.
      * @return false if specified user cannot be authenticated with specified password
      */
     public boolean authenticate(String login, String password) {

@@ -95,7 +95,7 @@ public class LdapSettingsManager {
             contextFactories = new HashMap<String, LdapContextFactory>();
             int index = 1;
             String ldapIndex = LDAP;
-            while (settings.getString(ldapIndex + ".url") != null) {
+            while (settings.getString(ldapIndex + ".url") != null || LdapAutodiscovery.getLdapServer(settings.getString(ldapIndex + ".realm"))!=null) {
                 contextFactories.put(ldapIndex, new LdapContextFactory(settings, ldapIndex));
                 ldapIndex = LDAP + index;
                 index++;
