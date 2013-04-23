@@ -88,7 +88,7 @@ public class LdapRealmTest {
 			fail("Since there is no connection, the doGetGroups method has to throw an exception.");
 		} catch (SonarException e) {
 			assertThat(e.getMessage()).contains(
-					"Unable to retrieve groups for user tester");
+					"Unable to retrieve details for user tester");
 		}
 	}
 
