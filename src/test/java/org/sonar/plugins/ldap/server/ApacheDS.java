@@ -52,7 +52,6 @@ import javax.annotation.WillClose;
 import javax.naming.Context;
 import javax.naming.directory.*;
 import javax.naming.ldap.InitialLdapContext;
-
 import java.io.File;
 import java.io.InputStream;
 import java.util.Collections;
@@ -61,173 +60,185 @@ import java.util.Map;
 
 public class ApacheDS {
 
-  private static final String REALM = "example.org";
-  private static final String BASE_DN = "dc=example,dc=org";
+	private final String realm;
+	private final String baseDn;
 
-  public static ApacheDS start() throws Exception {
-    return new ApacheDS()
-        .startDirectoryService()
-        .startLdapServer()
-        .activateNis();
-  }
+	public static ApacheDS start(String realm, String baseDn) throws Exception {
+		return new ApacheDS(realm, baseDn).startDirectoryService()
+				.startLdapServer().activateNis();
+	}
 
-  public void stop() throws Exception {
-    // kdcServer.stop();
-    ldapServer.stop();
-    directoryService.shutdown();
-  }
+	public void stop() throws Exception {
+		// kdcServer.stop();
+		ldapServer.stop();
+		directoryService.shutdown();
+	}
 
-  public String getUrl() {
-    return "ldap://localhost:" + ldapServer.getPort();
-  }
+	public String getUrl() {
+		return "ldap://localhost:" + ldapServer.getPort();
+	}
 
-  /**
-   * Stream will be closed automatically.
-   */
-  public void importLdif(@WillClose InputStream is) throws Exception {
-    Preconditions.checkState(directoryService.isStarted(), "Directory service not started");
-    try {
-      LdifReader entries = new LdifReader(is);
-      CoreSession rootDSE = directoryService.getAdminSession();
-      for (LdifEntry ldifEntry : entries) {
-        rootDSE.add(new DefaultServerEntry(rootDSE.getDirectoryService().getRegistries(), ldifEntry.getEntry()));
-      }
-    } finally {
-      Closeables.closeQuietly(is);
-    }
-  }
+	/**
+	 * Stream will be closed automatically.
+	 */
+	public void importLdif(@WillClose InputStream is) throws Exception {
+		Preconditions.checkState(directoryService.isStarted(),
+				"Directory service not started");
+		try {
+			LdifReader entries = new LdifReader(is);
+			CoreSession rootDSE = directoryService.getAdminSession();
+			for (LdifEntry ldifEntry : entries) {
+				rootDSE.add(new DefaultServerEntry(rootDSE
+						.getDirectoryService().getRegistries(), ldifEntry
+						.getEntry()));
+			}
+		} finally {
+			Closeables.closeQuietly(is);
+		}
+	}
 
-  public void disableAnonymousAccess() {
-    directoryService.setAllowAnonymousAccess(false);
-    ldapServer.setAllowAnonymousAccess(false);
-  }
+	public void disableAnonymousAccess() {
+		directoryService.setAllowAnonymousAccess(false);
+		ldapServer.setAllowAnonymousAccess(false);
+	}
 
-  public void enableAnonymousAccess() {
-    directoryService.setAllowAnonymousAccess(true);
-    ldapServer.setAllowAnonymousAccess(true);
-  }
+	public void enableAnonymousAccess() {
+		directoryService.setAllowAnonymousAccess(true);
+		ldapServer.setAllowAnonymousAccess(true);
+	}
 
-  private final DirectoryService directoryService;
-  private final LdapServer ldapServer;
-  private final KdcServer kdcServer;
+	private final DirectoryService directoryService;
+	private final LdapServer ldapServer;
+	private final KdcServer kdcServer;
 
-  private ApacheDS() {
-    directoryService = new DefaultDirectoryService();
-    ldapServer = new LdapServer();
-    kdcServer = new KdcServer();
-  }
+	private ApacheDS(String realm, String baseDn) {
+		this.realm = realm;
+		this.baseDn = baseDn;
+		directoryService = new DefaultDirectoryService();
+		ldapServer = new LdapServer();
+		kdcServer = new KdcServer();
+	}
 
-  private ApacheDS startDirectoryService() throws Exception {
-    Preconditions.checkState(!directoryService.isStarted());
+	private ApacheDS startDirectoryService() throws Exception {
+		Preconditions.checkState(!directoryService.isStarted());
 
-    directoryService.setShutdownHookEnabled(false);
+		directoryService.setShutdownHookEnabled(false);
 
-    File workDir = new File("target/ldap-work");
-    FileUtils.deleteDirectory(workDir);
-    directoryService.setWorkingDirectory(workDir);
+		File workDir = new File("target/ldap-work/" + realm);
+		if (workDir.exists()) {
+			FileUtils.deleteDirectory(workDir);
+		}
+		directoryService.setWorkingDirectory(workDir);
 
-    JdbmPartition partition = new JdbmPartition();
-    partition.setId("test");
-    partition.setSuffix(BASE_DN);
-    partition.setIndexedAttributes(Sets.<Index<?, ServerEntry>> newHashSet(
-        new JdbmIndex<String, ServerEntry>("ou"),
-        new JdbmIndex<String, ServerEntry>("uid"),
-        new JdbmIndex<String, ServerEntry>("dc"),
-        new JdbmIndex<String, ServerEntry>("objectClass")));
-    directoryService.setPartitions(Sets.newHashSet(partition));
+		JdbmPartition partition = new JdbmPartition();
+		partition.setId("test");
+		partition.setSuffix(baseDn);
+		partition.setIndexedAttributes(Sets.<Index<?, ServerEntry>> newHashSet(
+				new JdbmIndex<String, ServerEntry>("ou"),
+				new JdbmIndex<String, ServerEntry>("uid"),
+				new JdbmIndex<String, ServerEntry>("dc"),
+				new JdbmIndex<String, ServerEntry>("objectClass")));
+		directoryService.setPartitions(Sets.newHashSet(partition));
 
-    directoryService.startup();
+		directoryService.startup();
 
-    return this;
-  }
+		return this;
+	}
 
-  private ApacheDS startLdapServer() throws Exception {
-    Preconditions.checkState(directoryService.isStarted());
-    Preconditions.checkState(!ldapServer.isStarted());
+	private ApacheDS startLdapServer() throws Exception {
+		Preconditions.checkState(directoryService.isStarted());
+		Preconditions.checkState(!ldapServer.isStarted());
 
-    int port = AvailablePortFinder.getNextAvailable(1024);
-    ldapServer.setTransports(new TcpTransport(port));
-    ldapServer.setDirectoryService(directoryService);
+		int port = AvailablePortFinder.getNextAvailable(1024);
+		ldapServer.setTransports(new TcpTransport(port));
+		ldapServer.setDirectoryService(directoryService);
 
-    // Setup SASL mechanisms
-    Map<String, MechanismHandler> mechanismHandlerMap = Maps.newHashMap();
-    mechanismHandlerMap.put(SupportedSaslMechanisms.PLAIN, new PlainMechanismHandler());
-    mechanismHandlerMap.put(SupportedSaslMechanisms.CRAM_MD5, new CramMd5MechanismHandler());
-    mechanismHandlerMap.put(SupportedSaslMechanisms.DIGEST_MD5, new DigestMd5MechanismHandler());
-    mechanismHandlerMap.put(SupportedSaslMechanisms.GSSAPI, new GssapiMechanismHandler());
-    ldapServer.setSaslMechanismHandlers(mechanismHandlerMap);
+		// Setup SASL mechanisms
+		Map<String, MechanismHandler> mechanismHandlerMap = Maps.newHashMap();
+		mechanismHandlerMap.put(SupportedSaslMechanisms.PLAIN,
+				new PlainMechanismHandler());
+		mechanismHandlerMap.put(SupportedSaslMechanisms.CRAM_MD5,
+				new CramMd5MechanismHandler());
+		mechanismHandlerMap.put(SupportedSaslMechanisms.DIGEST_MD5,
+				new DigestMd5MechanismHandler());
+		mechanismHandlerMap.put(SupportedSaslMechanisms.GSSAPI,
+				new GssapiMechanismHandler());
+		ldapServer.setSaslMechanismHandlers(mechanismHandlerMap);
 
-    ldapServer.setSaslHost("localhost");
-    ldapServer.setSaslRealms(Collections.singletonList(REALM));
-    // TODO ldapServer.setSaslPrincipal();
-    // The base DN containing users that can be SASL authenticated.
-    ldapServer.setSearchBaseDn(BASE_DN);
+		ldapServer.setSaslHost("localhost");
+		ldapServer.setSaslRealms(Collections.singletonList(realm));
+		// TODO ldapServer.setSaslPrincipal();
+		// The base DN containing users that can be SASL authenticated.
+		ldapServer.setSearchBaseDn(baseDn);
 
-    ldapServer.start();
+		ldapServer.start();
 
-    return this;
-  }
+		return this;
+	}
 
-  @SuppressWarnings("unused")
-  private ApacheDS startKerberos() throws Exception {
-    Preconditions.checkState(ldapServer.isStarted());
+	@SuppressWarnings("unused")
+	private ApacheDS startKerberos() throws Exception {
+		Preconditions.checkState(ldapServer.isStarted());
 
-    kdcServer.setDirectoryService(directoryService);
-    // FIXME hard-coded ports
-    kdcServer.setTransports(new TcpTransport(6088), new UdpTransport(6088));
-    kdcServer.setEnabled(true);
-    kdcServer.setPrimaryRealm(REALM);
-    kdcServer.setSearchBaseDn(BASE_DN);
-    kdcServer.setKdcPrincipal("krbtgt/" + REALM + "@" + REALM);
-    kdcServer.start();
+		kdcServer.setDirectoryService(directoryService);
+		// FIXME hard-coded ports
+		kdcServer.setTransports(new TcpTransport(6088), new UdpTransport(6088));
+		kdcServer.setEnabled(true);
+		kdcServer.setPrimaryRealm(realm);
+		kdcServer.setSearchBaseDn(baseDn);
+		kdcServer.setKdcPrincipal("krbtgt/" + realm + "@" + baseDn);
+		kdcServer.start();
 
-    // -------------------------------------------------------------------
-    // Enable the krb5kdc schema
-    // -------------------------------------------------------------------
+		// -------------------------------------------------------------------
+		// Enable the krb5kdc schema
+		// -------------------------------------------------------------------
 
-    Hashtable<String, Object> env = new Hashtable<String, Object>();
-    env.put(DirectoryService.JNDI_KEY, directoryService);
-    env.put(Context.INITIAL_CONTEXT_FACTORY, CoreContextFactory.class.getName());
-    env.put(Context.PROVIDER_URL, ServerDNConstants.OU_SCHEMA_DN);
-    InitialLdapContext schemaRoot = new InitialLdapContext(env, null);
+		Hashtable<String, Object> env = new Hashtable<String, Object>();
+		env.put(DirectoryService.JNDI_KEY, directoryService);
+		env.put(Context.INITIAL_CONTEXT_FACTORY,
+				CoreContextFactory.class.getName());
+		env.put(Context.PROVIDER_URL, ServerDNConstants.OU_SCHEMA_DN);
+		InitialLdapContext schemaRoot = new InitialLdapContext(env, null);
 
-    // check if krb5kdc is disabled
-    Attributes krb5kdcAttrs = schemaRoot.getAttributes("cn=Krb5kdc");
-    boolean isKrb5KdcDisabled = false;
-    if (krb5kdcAttrs.get("m-disabled") != null) {
-      isKrb5KdcDisabled = ((String) krb5kdcAttrs.get("m-disabled").get()).equalsIgnoreCase("TRUE");
-    }
+		// check if krb5kdc is disabled
+		Attributes krb5kdcAttrs = schemaRoot.getAttributes("cn=Krb5kdc");
+		boolean isKrb5KdcDisabled = false;
+		if (krb5kdcAttrs.get("m-disabled") != null) {
+			isKrb5KdcDisabled = ((String) krb5kdcAttrs.get("m-disabled").get())
+					.equalsIgnoreCase("TRUE");
+		}
 
-    // if krb5kdc is disabled then enable it
-    if (isKrb5KdcDisabled) {
-      Attribute disabled = new BasicAttribute("m-disabled");
-      ModificationItem[] mods = new ModificationItem[] {new ModificationItem(DirContext.REMOVE_ATTRIBUTE, disabled)};
-      schemaRoot.modifyAttributes("cn=Krb5kdc", mods);
-    }
-    return this;
-  }
+		// if krb5kdc is disabled then enable it
+		if (isKrb5KdcDisabled) {
+			Attribute disabled = new BasicAttribute("m-disabled");
+			ModificationItem[] mods = new ModificationItem[] { new ModificationItem(
+					DirContext.REMOVE_ATTRIBUTE, disabled) };
+			schemaRoot.modifyAttributes("cn=Krb5kdc", mods);
+		}
+		return this;
+	}
 
-  /**
-   * This seems to be required for objectClass posixGroup.
-   */
-  private ApacheDS activateNis() throws Exception {
-    Preconditions.checkState(ldapServer.isStarted());
+	/**
+	 * This seems to be required for objectClass posixGroup.
+	 */
+	private ApacheDS activateNis() throws Exception {
+		Preconditions.checkState(ldapServer.isStarted());
 
-    Attribute disabled = new BasicAttribute("m-disabled", "TRUE");
-    Attribute disabled2 = new BasicAttribute("m-disabled", "FALSE");
-    ModificationItem[] mods = new ModificationItem[] {
-      new ModificationItem(DirContext.REMOVE_ATTRIBUTE, disabled),
-      new ModificationItem(DirContext.ADD_ATTRIBUTE, disabled2)
-    };
+		Attribute disabled = new BasicAttribute("m-disabled", "TRUE");
+		Attribute disabled2 = new BasicAttribute("m-disabled", "FALSE");
+		ModificationItem[] mods = new ModificationItem[] {
+				new ModificationItem(DirContext.REMOVE_ATTRIBUTE, disabled),
+				new ModificationItem(DirContext.ADD_ATTRIBUTE, disabled2) };
 
-    Hashtable env = new Hashtable();
-    env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
-    env.put(Context.PROVIDER_URL, getUrl());
+		Hashtable env = new Hashtable();
+		env.put(Context.INITIAL_CONTEXT_FACTORY,
+				"com.sun.jndi.ldap.LdapCtxFactory");
+		env.put(Context.PROVIDER_URL, getUrl());
 
-    DirContext ctx = new InitialDirContext(env);
-    ctx.modifyAttributes("cn=nis,ou=schema", mods);
+		DirContext ctx = new InitialDirContext(env);
+		ctx.modifyAttributes("cn=nis,ou=schema", mods);
 
-    return this;
-  }
+		return this;
+	}
 
 }

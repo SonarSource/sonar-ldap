@@ -19,7 +19,6 @@
  */
 package org.sonar.plugins.ldap;
 
-import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.config.Settings;
@@ -28,64 +27,71 @@ import org.sonar.api.security.ExternalUsersProvider;
 import org.sonar.api.security.LoginPasswordAuthenticator;
 import org.sonar.api.security.SecurityRealm;
 
+import java.util.Map;
+
 /**
  * @author Evgeny Mandrikov
  */
 public class LdapRealm extends SecurityRealm {
 
-  private static final Logger LOG = LoggerFactory.getLogger(LdapRealm.class);
+	private static final Logger LOG = LoggerFactory.getLogger(LdapRealm.class);
 
-  private final Settings settings;
+	private LdapUsersProvider usersProvider;
+	private LdapGroupsProvider groupsProvider;
+	private LdapAuthenticator authenticator;
+	private final LdapSettingsManager settingsManager;
 
-  private LdapUsersProvider usersProvider;
-  private LdapGroupsProvider groupsProvider;
-  private LdapAuthenticator authenticator;
+	public LdapRealm(Settings settings) {
+		settingsManager = new LdapSettingsManager(settings);
+	}
 
-  public LdapRealm(Settings settings) {
-    this.settings = settings;
-  }
+	@Override
+	public String getName() {
+		return "LDAP";
+	}
 
-  @Override
-  public String getName() {
-    return "LDAP";
-  }
+	/**
+	 * Initializes LDAP realm and tests connection.
+	 * 
+	 * @throws org.sonar.api.utils.SonarException
+	 *             if a NamingException was thrown during test
+	 */
+	@Override
+	public void init() {
 
-  /**
-   * Initializes LDAP realm and tests connection.
-   *
-   * @throws org.sonar.api.utils.SonarException if a NamingException was thrown during test
-   */
-  @Override
-  public void init() {
-    LdapContextFactory contextFactory = new LdapContextFactory(settings);
-    LOG.info("{}", contextFactory);
-    LdapUserMapping userMapping = new LdapUserMapping(settings);
-    LOG.info("{}", userMapping);
-    usersProvider = new LdapUsersProvider(contextFactory, userMapping);
-    authenticator = new LdapAuthenticator(contextFactory, userMapping);
-    LdapGroupMapping groupMapping = new LdapGroupMapping(settings);
-    if (Strings.isNullOrEmpty(groupMapping.getBaseDn())) {
-      LOG.info("Groups will not be synchronized, because property 'ldap.group.baseDn' is empty.");
-    } else {
-      LOG.info("{}", groupMapping);
-      groupsProvider = new LdapGroupsProvider(contextFactory, userMapping, groupMapping);
-    }
-    contextFactory.testConnection();
-  }
+		Map<String, LdapContextFactory> contextFactories = settingsManager
+				.getContextFactories();
+		Map<String, LdapUserMapping> userMappings = settingsManager
+				.getUserMappings();
+		usersProvider = new LdapUsersProvider(contextFactories, userMappings);
+		authenticator = new LdapAuthenticator(contextFactories, userMappings);
+		Map<String, LdapGroupMapping> groupMappings = settingsManager
+				.getGroupMappings();
+		if (groupMappings.size() == 0) {
+			LOG.info("Groups will not be synchronized, because property 'ldap.group.baseDn' is empty for every ldap exampleServer.");
+		} else {
+			LOG.info("{}", groupMappings);
+			groupsProvider = new LdapGroupsProvider(contextFactories,
+					userMappings, groupMappings);
+		}
+		for (LdapContextFactory contextFactory : contextFactories.values()) {
+			contextFactory.testConnection();
+		}
+	}
 
-  @Override
-  public LoginPasswordAuthenticator getLoginPasswordAuthenticator() {
-    return authenticator;
-  }
+	@Override
+	public LoginPasswordAuthenticator getLoginPasswordAuthenticator() {
+		return authenticator;
+	}
 
-  @Override
-  public ExternalUsersProvider getUsersProvider() {
-    return usersProvider;
-  }
+	@Override
+	public ExternalUsersProvider getUsersProvider() {
+		return usersProvider;
+	}
 
-  @Override
-  public ExternalGroupsProvider getGroupsProvider() {
-    return groupsProvider;
-  }
+	@Override
+	public ExternalGroupsProvider getGroupsProvider() {
+		return groupsProvider;
+	}
 
 }

@@ -28,7 +28,6 @@ import org.sonar.api.utils.SonarException;
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.SearchResult;
-
 import java.util.Arrays;
 
 /**
@@ -36,119 +35,135 @@ import java.util.Arrays;
  */
 public class LdapGroupMapping {
 
-  private static final String DEFAULT_OBJECT_CLASS = "groupOfUniqueNames";
-  private static final String DEFAULT_ID_ATTRIBUTE = "cn";
-  private static final String DEFAULT_MEMBER_ATTRIBUTE = "uniqueMember";
-  private static final String DEFAULT_REQUEST = "(&(objectClass=groupOfUniqueNames)(uniqueMember={dn}))";
+	private static final String DEFAULT_OBJECT_CLASS = "groupOfUniqueNames";
+	private static final String DEFAULT_ID_ATTRIBUTE = "cn";
+	private static final String DEFAULT_MEMBER_ATTRIBUTE = "uniqueMember";
+	private static final String DEFAULT_REQUEST = "(&(objectClass=groupOfUniqueNames)(uniqueMember={dn}))";
 
-  private final String baseDn;
-  private final String idAttribute;
-  private final String request;
-  private final String[] requiredUserAttributes;
+	private final String baseDn;
+	private final String idAttribute;
+	private final String request;
+	private final String[] requiredUserAttributes;
 
-  /**
-   * Constructs mapping from Sonar settings.
-   */
-  public LdapGroupMapping(Settings settings) {
-    this.baseDn = settings.getString("ldap.group.baseDn");
-    this.idAttribute = StringUtils.defaultString(settings.getString("ldap.group.idAttribute"), DEFAULT_ID_ATTRIBUTE);
+	/**
+	 * Constructs mapping from Sonar settings.
+	 */
+	public LdapGroupMapping(Settings settings, String ldapIndex) {
+		this.baseDn = settings.getString(ldapIndex + ".group.baseDn");
+		this.idAttribute = StringUtils.defaultString(
+				settings.getString(ldapIndex + ".group.idAttribute"),
+				DEFAULT_ID_ATTRIBUTE);
 
-    String objectClass = settings.getString("ldap.group.objectClass");
-    String memberAttribute = settings.getString("ldap.group.memberAttribute");
+		String objectClass = settings.getString(ldapIndex
+				+ ".group.objectClass");
+		String memberAttribute = settings.getString(ldapIndex
+				+ ".group.memberAttribute");
 
-    String req;
-    if (StringUtils.isNotBlank(objectClass) || StringUtils.isNotBlank(memberAttribute)) {
-      // For backward compatibility with plugin versions 1.1 and 1.1.1
-      objectClass = StringUtils.defaultString(objectClass, DEFAULT_OBJECT_CLASS);
-      memberAttribute = StringUtils.defaultString(memberAttribute, DEFAULT_MEMBER_ATTRIBUTE);
-      req = "(&(objectClass=" + objectClass + ")(" + memberAttribute + "=" + "{dn}))";
-      LoggerFactory.getLogger(LdapGroupMapping.class)
-          .warn("Properties 'ldap.group.objectClass' and 'ldap.group.memberAttribute' are deprecated" +
-              " and should be replaced by single property 'ldap.group.request' with value: " + req);
-    } else {
-      req = StringUtils.defaultString(settings.getString("ldap.group.request"), DEFAULT_REQUEST);
-    }
-    this.requiredUserAttributes = StringUtils.substringsBetween(req, "{", "}");
-    for (int i = 0; i < requiredUserAttributes.length; i++) {
-      req = StringUtils.replace(req, "{" + requiredUserAttributes[i] + "}", "{" + i + "}");
-    }
-    this.request = req;
-  }
+		String req;
+		if (StringUtils.isNotBlank(objectClass)
+				|| StringUtils.isNotBlank(memberAttribute)) {
+			// For backward compatibility with plugin versions 1.1 and 1.1.1
+			objectClass = StringUtils.defaultString(objectClass,
+					DEFAULT_OBJECT_CLASS);
+			memberAttribute = StringUtils.defaultString(memberAttribute,
+					DEFAULT_MEMBER_ATTRIBUTE);
+			req = "(&(objectClass=" + objectClass + ")(" + memberAttribute
+					+ "=" + "{dn}))";
+			LoggerFactory
+					.getLogger(LdapGroupMapping.class)
+					.warn("Properties 'ldap.group.objectClass' and 'ldap.group.memberAttribute' are deprecated"
+							+ " and should be replaced by single property 'ldap.group.request' with value: "
+							+ req);
+		} else {
+			req = StringUtils.defaultString(
+					settings.getString(ldapIndex + ".group.request"),
+					DEFAULT_REQUEST);
+		}
+		this.requiredUserAttributes = StringUtils.substringsBetween(req, "{",
+				"}");
+		for (int i = 0; i < requiredUserAttributes.length; i++) {
+			req = StringUtils.replace(req, "{" + requiredUserAttributes[i]
+					+ "}", "{" + i + "}");
+		}
+		this.request = req;
+	}
 
-  /**
-   * Search for this mapping.
-   */
-  public LdapSearch createSearch(LdapContextFactory contextFactory, SearchResult user) {
-    String[] attrs = getRequiredUserAttributes();
-    String[] parameters = new String[attrs.length];
-    for (int i = 0; i < parameters.length; i++) {
-      String attr = attrs[i];
-      if ("dn".equals(attr)) {
-        parameters[i] = user.getNameInNamespace();
-      } else {
-        parameters[i] = getAttributeValue(user, attr);
-      }
-    }
-    return new LdapSearch(contextFactory)
-        .setBaseDn(getBaseDn())
-        .setRequest(getRequest())
-        .setParameters(parameters)
-        .returns(getIdAttribute());
-  }
+	/**
+	 * Search for this mapping.
+	 */
+	public LdapSearch createSearch(LdapContextFactory contextFactory,
+			SearchResult user) {
+		String[] attrs = getRequiredUserAttributes();
+		String[] parameters = new String[attrs.length];
+		for (int i = 0; i < parameters.length; i++) {
+			String attr = attrs[i];
+			if ("dn".equals(attr)) {
+				parameters[i] = user.getNameInNamespace();
+			} else {
+				parameters[i] = getAttributeValue(user, attr);
+			}
+		}
+		return new LdapSearch(contextFactory).setBaseDn(getBaseDn())
+				.setRequest(getRequest()).setParameters(parameters)
+				.returns(getIdAttribute());
+	}
 
-  private static String getAttributeValue(SearchResult user, String attributeId) {
-    Attribute attribute = user.getAttributes().get(attributeId);
-    if (attribute == null) {
-      return null;
-    }
-    try {
-      return (String) attribute.get();
-    } catch (NamingException e) {
-      throw new SonarException(e);
-    }
-  }
+	private static String getAttributeValue(SearchResult user,
+			String attributeId) {
+		Attribute attribute = user.getAttributes().get(attributeId);
+		if (attribute == null) {
+			return null;
+		}
+		try {
+			return (String) attribute.get();
+		} catch (NamingException e) {
+			throw new SonarException(e);
+		}
+	}
 
-  /**
-   * Base DN. For example "ou=groups,o=mycompany".
-   */
-  public String getBaseDn() {
-    return baseDn;
-  }
+	/**
+	 * Base DN. For example "ou=groups,o=mycompany".
+	 */
+	public String getBaseDn() {
+		return baseDn;
+	}
 
-  /**
-   * Group ID Attribute. For example "cn".
-   */
-  public String getIdAttribute() {
-    return idAttribute;
-  }
+	/**
+	 * Group ID Attribute. For example "cn".
+	 */
+	public String getIdAttribute() {
+		return idAttribute;
+	}
 
-  /**
-   * Request. For example:
-   * <pre>
-   * (&(objectClass=groupOfUniqueNames)(uniqueMember={0}))
-   * (&(objectClass=posixGroup)(memberUid={0}))
-   * (&(|(objectClass=groupOfUniqueNames)(objectClass=posixGroup))(|(uniqueMember={0})(memberUid={1})))
-   * </pre>
-   */
-  public String getRequest() {
-    return request;
-  }
+	/**
+	 * Request. For example:
+	 * 
+	 * <pre>
+	 * (&(objectClass=groupOfUniqueNames)(uniqueMember={0}))
+	 * (&(objectClass=posixGroup)(memberUid={0}))
+	 * (&(|(objectClass=groupOfUniqueNames)(objectClass=posixGroup))(|(uniqueMember={0})(memberUid={1})))
+	 * </pre>
+	 */
+	public String getRequest() {
+		return request;
+	}
 
-  /**
-   * Attributes of user required for search of groups.
-   */
-  public String[] getRequiredUserAttributes() {
-    return requiredUserAttributes;
-  }
+	/**
+	 * Attributes of user required for search of groups.
+	 */
+	public String[] getRequiredUserAttributes() {
+		return requiredUserAttributes;
+	}
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("baseDn", getBaseDn())
-        .add("idAttribute", getIdAttribute())
-        .add("requiredUserAttributes", Arrays.toString(getRequiredUserAttributes()))
-        .add("request", getRequest())
-        .toString();
-  }
+	@Override
+	public String toString() {
+		return Objects
+				.toStringHelper(this)
+				.add("baseDn", getBaseDn())
+				.add("idAttribute", getIdAttribute())
+				.add("requiredUserAttributes",
+						Arrays.toString(getRequiredUserAttributes()))
+				.add("request", getRequest()).toString();
+	}
 
 }

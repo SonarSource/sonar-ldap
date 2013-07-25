@@ -23,38 +23,46 @@ import org.junit.rules.ExternalResource;
 
 public class LdapServer extends ExternalResource {
 
-  private ApacheDS server;
-  private String ldif;
+	private ApacheDS server;
+	private String ldif;
+	private final String realm;
+	private final String baseDn;
 
-  public LdapServer(String ldifResourceName) {
-    this.ldif = ldifResourceName;
-  }
+	public LdapServer(String ldifResourceName) {
+		this(ldifResourceName, "example.org", "dc=example,dc=org");
+	}
 
-  @Override
-  protected void before() throws Throwable {
-    server = ApacheDS.start();
-    server.importLdif(LdapServer.class.getResourceAsStream(ldif));
-  }
+	public LdapServer(String ldifResourceName, String realm, String baseDn) {
+		this.ldif = ldifResourceName;
+		this.realm = realm;
+		this.baseDn = baseDn;
+	}
 
-  @Override
-  protected void after() {
-    try {
-      server.stop();
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
+	@Override
+	protected void before() throws Throwable {
+		server = ApacheDS.start(realm, baseDn);
+		server.importLdif(LdapServer.class.getResourceAsStream(ldif));
+	}
 
-  public String getUrl() {
-    return server.getUrl();
-  }
+	@Override
+	protected void after() {
+		try {
+			server.stop();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
 
-  public void disableAnonymousAccess() {
-    server.disableAnonymousAccess();
-  }
+	public String getUrl() {
+		return server.getUrl();
+	}
 
-  public void enableAnonymousAccess() {
-    server.enableAnonymousAccess();
-  }
+	public void disableAnonymousAccess() {
+		server.disableAnonymousAccess();
+	}
+
+	public void enableAnonymousAccess() {
+		server.enableAnonymousAccess();
+	}
 
 }

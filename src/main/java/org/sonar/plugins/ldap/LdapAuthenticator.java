@@ -30,89 +30,125 @@ import javax.naming.directory.SearchResult;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
+import java.util.Map;
 
 /**
  * @author Evgeny Mandrikov
  */
 public class LdapAuthenticator implements LoginPasswordAuthenticator {
 
-  private static final Logger LOG = LoggerFactory.getLogger(LdapAuthenticator.class);
+	private static final Logger LOG = LoggerFactory
+			.getLogger(LdapAuthenticator.class);
+	private final Map<String, LdapContextFactory> contextFactories;
+	private final Map<String, LdapUserMapping> userMappings;
 
-  private final LdapContextFactory contextFactory;
-  private final LdapUserMapping userMapping;
+	public LdapAuthenticator(Map<String, LdapContextFactory> contextFactories,
+			Map<String, LdapUserMapping> userMappings) {
+		this.contextFactories = contextFactories;
+		this.userMappings = userMappings;
+	}
 
-  public LdapAuthenticator(LdapContextFactory contextFactory, LdapUserMapping userMapping) {
-    this.contextFactory = contextFactory;
-    this.userMapping = userMapping;
-  }
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.sonar.api.security.LoginPasswordAuthenticator#init()
+	 */
+	public void init() {
+		// nothing to do
+	}
 
-  public void init() {
-    // nothing to do
-  }
+	/**
+	 * Authenticate the user against all the ldap servers and return true if 1
+	 * succeeds.
+	 * 
+	 * @param login
+	 *            The login to use.
+	 * @param password
+	 *            The password to use.
+	 * @return false if specified user cannot be authenticated with specified
+	 *         password
+	 */
+	public boolean authenticate(String login, String password) {
+		for (String ldapIndex : userMappings.keySet()) {
+			final String principal;
+			if (contextFactories.get(ldapIndex).isSasl()) {
+				principal = login;
+			} else {
+				final SearchResult result;
+				try {
+					result = userMappings
+							.get(ldapIndex)
+							.createSearch(contextFactories.get(ldapIndex),
+									login).findUnique();
+				} catch (NamingException e) {
+					LOG.debug("User {} not found in " + ldapIndex + ": {}",
+							login, e.getMessage());
+					continue;
+				}
+				if (result == null) {
+					LOG.debug("User {} not found in " + ldapIndex, login);
+					continue;
+				}
+				principal = result.getNameInNamespace();
+			}
+			boolean passwordValid;
+			if (contextFactories.get(ldapIndex).isGssapi()) {
+				passwordValid = checkPasswordUsingGssapi(principal, password,
+						ldapIndex);
+			}
+			passwordValid = checkPasswordUsingBind(principal, password,
+					ldapIndex);
+			if (passwordValid) {
+				return true;
+			}
+		}
+		LOG.debug("User {} not found", login);
+		return false;
+	}
 
-  /**
-   * @return false if specified user cannot be authenticated with specified password
-   */
-  public boolean authenticate(String login, String password) {
-    final String principal;
-    if (contextFactory.isSasl()) {
-      principal = login;
-    } else {
-      final SearchResult result;
-      try {
-        result = userMapping.createSearch(contextFactory, login).findUnique();
-      } catch (NamingException e) {
-        LOG.debug("User {} not found: {}", login, e.getMessage());
-        return false;
-      }
-      if (result == null) {
-        LOG.debug("User {} not found", login);
-        return false;
-      }
-      principal = result.getNameInNamespace();
-    }
-    if (contextFactory.isGssapi()) {
-      return checkPasswordUsingGssapi(principal, password);
-    }
-    return checkPasswordUsingBind(principal, password);
-  }
+	private boolean checkPasswordUsingBind(String principal, String password,
+			String ldapIndex) {
+		if (StringUtils.isEmpty(password)) {
+			LOG.debug("Password is blank.");
+			return false;
+		}
+		InitialDirContext context = null;
+		try {
+			context = contextFactories.get(ldapIndex).createUserContext(
+					principal, password);
+			return true;
+		} catch (NamingException e) {
+			LOG.debug(
+					"Password not valid for user {} in " + ldapIndex + ": {}",
+					principal, e.getMessage());
+			return false;
+		} finally {
+			ContextHelper.closeQuetly(context);
+		}
+	}
 
-  private boolean checkPasswordUsingBind(String principal, String password) {
-    if (StringUtils.isEmpty(password)) {
-      LOG.debug("Password is blank.");
-      return false;
-    }
-    InitialDirContext context = null;
-    try {
-      context = contextFactory.createUserContext(principal, password);
-      return true;
-    } catch (NamingException e) {
-      LOG.debug("Password not valid for user {}: {}", principal, e.getMessage());
-      return false;
-    } finally {
-      ContextHelper.closeQuetly(context);
-    }
-  }
-
-  private boolean checkPasswordUsingGssapi(String principal, String password) {
-    // Use our custom configuration to avoid reliance on external config
-    Configuration.setConfiguration(new Krb5LoginConfiguration());
-    LoginContext lc;
-    try {
-      lc = new LoginContext(getClass().getName(), new CallbackHandlerImpl(principal, password));
-      lc.login();
-    } catch (LoginException e) {
-      // Bad username: Client not found in Kerberos database
-      // Bad password: Integrity check on decrypted field failed
-      LOG.debug("Password not valid for {}: {}", principal, e.getMessage());
-      return false;
-    }
-    try {
-      lc.logout();
-    } catch (LoginException e) {
-      LOG.warn("Logout fails", e);
-    }
-    return true;
-  }
+	private boolean checkPasswordUsingGssapi(String principal, String password,
+			String ldapIndex) {
+		// Use our custom configuration to avoid reliance on external config
+		Configuration.setConfiguration(new Krb5LoginConfiguration());
+		LoginContext lc;
+		try {
+			lc = new LoginContext(getClass().getName(),
+					new CallbackHandlerImpl(principal, password));
+			lc.login();
+		} catch (LoginException e) {
+			// Bad username: Client not found in Kerberos database
+			// Bad password: Integrity check on decrypted field failed
+			LOG.debug("Password not valid for {} in " + ldapIndex + ": {}",
+					principal, e.getMessage());
+			return false;
+		}
+		try {
+			lc.logout();
+		} catch (LoginException e) {
+			LOG.warn("Logout fails", e);
+		}
+		return true;
+	}
 
 }
