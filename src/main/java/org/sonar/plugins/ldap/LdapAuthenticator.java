@@ -52,10 +52,10 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
   }
 
   /**
-   * Authenticate the user against all the ldap servers and return true if 1 succeeds.
+   * Authenticate the user against LDAP servers until first success.
    * @param login The login to use.
    * @param password The password to use.
-   * @return false if specified user cannot be authenticated with specified password
+   * @return false if specified user cannot be authenticated with specified password on any LDAP server
    */
   public boolean authenticate(String login, String password) {
     for (String ldapKey : userMappings.keySet()) {
