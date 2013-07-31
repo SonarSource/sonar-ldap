@@ -23,6 +23,7 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.config.Settings;
+import org.sonar.api.utils.SonarException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -66,15 +67,21 @@ public class LdapSettingsManager {
       if (serverKeys.length > 0) {
         for (String serverKey : serverKeys) {
           LdapUserMapping userMapping = new LdapUserMapping(settings, LDAP_PROPERTY_PREFIX + "." + serverKey);
-          if (userMapping.getBaseDn() != null) {
+          if (StringUtils.isNotBlank(userMapping.getBaseDn())) {
+            LOG.info("User mapping for server {}: {}", serverKey, userMapping);
             userMappings.put(serverKey, userMapping);
+          } else {
+            LOG.info("Users will not be synchronized for server {}, because property 'ldap.{}.user.baseDn' is empty.", serverKey, serverKey);
           }
         }
       } else {
         // Backward compatibility with single server configuration
         LdapUserMapping userMapping = new LdapUserMapping(settings, LDAP_PROPERTY_PREFIX);
-        if (userMapping.getBaseDn() != null) {
+        if (StringUtils.isNotBlank(userMapping.getBaseDn())) {
+          LOG.info("User mapping: {}", userMapping);
           userMappings.put(DEFAULT_LDAP_SERVER_KEY, userMapping);
+        } else {
+          LOG.info("Users will not be synchronized, because property 'ldap.user.baseDn' is empty.");
         }
       }
     }
@@ -128,6 +135,10 @@ public class LdapSettingsManager {
       contextFactories = new LinkedHashMap<String, LdapContextFactory>();
       String[] serverKeys = settings.getStringArray(LDAP_SERVERS_PROPERTY);
       if (serverKeys.length > 0) {
+        if (settings.hasKey("ldap.url") || settings.hasKey("ldap.realm")) {
+          throw new SonarException("When defining multiple LDAP servers with the property '" + LDAP_SERVERS_PROPERTY + "', "
+            + "all LDAP properties must be linked to one of those servers. Please remove properties like 'ldap.url', 'ldap.realm', ...");
+        }
         for (String serverKey : serverKeys) {
           LdapContextFactory contextFactory = new LdapContextFactory(settings, LDAP_PROPERTY_PREFIX + "." + serverKey);
           if (StringUtils.isNotBlank(contextFactory.getProviderUrl())) {

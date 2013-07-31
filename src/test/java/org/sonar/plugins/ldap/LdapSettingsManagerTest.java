@@ -19,15 +19,41 @@
  */
 package org.sonar.plugins.ldap;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.sonar.api.config.Settings;
+import org.sonar.api.utils.SonarException;
 
 import static org.fest.assertions.Assertions.assertThat;
 
-/**
- * Here we test the settingsManagers ability to cope with multiple ldap servers.
- */
 public class LdapSettingsManagerTest {
+
+  @Rule
+  public ExpectedException thrown = ExpectedException.none();
+
+  @Test
+  public void shouldFailWhenNoLdapUrl() throws Exception {
+    Settings settings = generateMultipleLdapSettingsWithUserAndGroupMapping();
+    settings.removeProperty("ldap.example.url");
+    LdapSettingsManager settingsManager = new LdapSettingsManager(settings);
+
+    thrown.expect(SonarException.class);
+    thrown.expectMessage("The property 'ldap.example.url' property is empty and SonarQube is not able to auto-discover any LDAP server.");
+    settingsManager.getContextFactories();
+  }
+
+  @Test
+  public void shouldFailWhenMixingSingleAndMultipleConfiguration() throws Exception {
+    Settings settings = generateMultipleLdapSettingsWithUserAndGroupMapping();
+    settings.setProperty("ldap.url", "ldap://foo");
+    LdapSettingsManager settingsManager = new LdapSettingsManager(settings);
+
+    thrown.expect(SonarException.class);
+    thrown
+        .expectMessage("When defining multiple LDAP servers with the property 'ldap.servers', all LDAP properties must be linked to one of those servers. Please remove properties like 'ldap.url', 'ldap.realm', ...");
+    settingsManager.getContextFactories();
+  }
 
   /**
    * Test there are 2 @link{org.sonar.plugins.ldap.LdapContextFactory}s found.
@@ -83,24 +109,11 @@ public class LdapSettingsManagerTest {
   public void testEmptySettings() throws Exception {
     LdapSettingsManager settingsManager = new LdapSettingsManager(
         new Settings());
-    assertThat(settingsManager.getContextFactories().size()).isEqualTo(0);
-    assertThat(settingsManager.getUserMappings().size()).isEqualTo(0);
-    assertThat(settingsManager.getGroupMappings().size()).isEqualTo(0);
-  }
 
-  // TODO: Make it possible to test autodiscovery.
-  /*
-   * @Test
-   * public void testSettingsManagerWithoutUrl() {
-   * 
-   * LdapSettingsManager settingsManager = new LdapSettingsManager(
-   * generateAutoDiscoverySettings());
-   * 
-   * assertThat(settingsManager.getContextFactories().size()).isEqualTo(2);
-   * assertThat(settingsManager.getUserMappings().size()).isEqualTo(2);
-   * assertThat(settingsManager.getGroupMappings().size()).isEqualTo(2);
-   * }
-   */
+    thrown.expect(SonarException.class);
+    thrown.expectMessage("The property 'ldap.url' property is empty and SonarQube is not able to auto-discover any LDAP server.");
+    settingsManager.getContextFactories();
+  }
 
   private Settings generateMultipleLdapSettingsWithUserAndGroupMapping() {
     Settings settings = new Settings();
@@ -123,17 +136,4 @@ public class LdapSettingsManagerTest {
 
     return settings;
   }
-
-  /*
-   * private Settings generateAutoDiscoverySettings() {
-   * Settings settings = generateMultipleLdapSettingsWithUserAndGroupMapping();
-   * settings.removeProperty("ldap.url").removeProperty("ldap1.url");
-   * 
-   * // we put the realm because the test ldap server has no dns entry
-   * settings.setProperty("ldap.realm", "").setProperty(
-   * "ldap1.realm", "");
-   * 
-   * return settings;
-   * }
-   */
 }

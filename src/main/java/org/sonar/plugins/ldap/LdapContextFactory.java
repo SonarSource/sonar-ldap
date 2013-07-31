@@ -74,9 +74,13 @@ public class LdapContextFactory {
     this.authentication = StringUtils.defaultString(settings.getString(settingsPrefix + ".authentication"), DEFAULT_AUTHENTICATION);
     this.factory = StringUtils.defaultString(settings.getString(settingsPrefix + ".contextFactoryClass"), DEFAULT_FACTORY);
     this.realm = settings.getString(settingsPrefix + ".realm");
-    String ldapUrl = settings.getString(settingsPrefix + ".url");
+    String urlKey = settingsPrefix + ".url";
+    String ldapUrl = settings.getString(urlKey);
     if (ldapUrl == null && realm != null) {
       ldapUrl = LdapAutodiscovery.getLdapServer(realm);
+    }
+    if (StringUtils.isBlank(ldapUrl)) {
+      throw new SonarException("The property '" + urlKey + "' property is empty and SonarQube is not able to auto-discover any LDAP server.");
     }
     this.providerUrl = ldapUrl;
     this.username = settings.getString(settingsPrefix + ".bindDn");
@@ -147,7 +151,7 @@ public class LdapContextFactory {
     } else {
       try {
         createBindContext();
-        LOG.info("Test LDAP connection: OK");
+        LOG.info("Test LDAP connection on {}: OK", providerUrl);
       } catch (NamingException e) {
         LOG.info("Test LDAP connection: FAIL");
         throw new SonarException("Unable to open LDAP connection", e);
