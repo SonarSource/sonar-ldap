@@ -19,20 +19,22 @@
  */
 package org.sonar.plugins.ldap;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Objects;
-import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.sonar.api.config.Settings;
-import org.sonar.api.utils.SonarException;
+import java.util.Properties;
 
 import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.ldap.InitialLdapContext;
 
-import java.util.Properties;
+import org.apache.commons.lang.BooleanUtils;
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.sonar.api.config.Settings;
+import org.sonar.api.utils.SonarException;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Objects;
 
 /**
  * @author Evgeny Mandrikov
@@ -63,6 +65,7 @@ public class LdapContextFactory {
   private static final String SASL_REALM_PROPERTY = "java.naming.security.sasl.realm";
 
   private final String providerUrl;
+  private final boolean preAuthentication;
   private final String authentication;
   private final String factory;
   private final String referral = DEFAULT_REFERRAL;
@@ -71,6 +74,7 @@ public class LdapContextFactory {
   private final String realm;
 
   public LdapContextFactory(Settings settings, String settingsPrefix) {
+    this.preAuthentication = BooleanUtils.toBoolean(settings.getString(settingsPrefix + ".preauthentication"));
     this.authentication = StringUtils.defaultString(settings.getString(settingsPrefix + ".authentication"), DEFAULT_AUTHENTICATION);
     this.factory = StringUtils.defaultString(settings.getString(settingsPrefix + ".contextFactoryClass"), DEFAULT_FACTORY);
     this.realm = settings.getString(settingsPrefix + ".realm");
@@ -138,6 +142,10 @@ public class LdapContextFactory {
 
   public boolean isGssapi() {
     return GSSAPI_METHOD.equals(authentication);
+  }
+  
+  public boolean isPreAuth() {
+    return preAuthentication;
   }
 
   /**

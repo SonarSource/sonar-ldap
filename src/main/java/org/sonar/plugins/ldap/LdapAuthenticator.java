@@ -51,7 +51,7 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
     // nothing to do
   }
 
-  /**
+  /** 
    * Authenticate the user against LDAP servers until first success.
    * @param login The login to use.
    * @param password The password to use.
@@ -59,6 +59,9 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
    */
   public boolean authenticate(String login, String password) {
     for (String ldapKey : userMappings.keySet()) {
+      if (contextFactories.get(ldapKey).isPreAuth()) {
+        return true;
+      }
       final String principal;
       if (contextFactories.get(ldapKey).isSasl()) {
         principal = login;
