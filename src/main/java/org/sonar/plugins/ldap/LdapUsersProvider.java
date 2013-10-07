@@ -58,8 +58,9 @@ public class LdapUsersProvider extends ExternalUsersProvider {
    * @return details for specified user, or null if such user doesn't exist
    * @throws SonarException if unable to retrieve details
    */
-  public UserDetails doGetUserDetails(String username) {
-    LOG.debug("Requesting details for user {}", username);
+  public UserDetails doGetUserDetails(Context context) {
+      String username = context.getUsername();
+      LOG.debug("Requesting details for user {}", username);
     // If there are no userMappings available, we can not retrieve user details.
     if (userMappings.isEmpty()) {
       String errorMessage = "Unable to retrieve details for user " + username + ": No user mapping found.";

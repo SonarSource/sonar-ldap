@@ -49,8 +49,7 @@ public class LdapAuthenticator extends Authenticator {
 
   /** 
    * Authenticate the user against LDAP servers until first success.
-   * @param login The login to use.
-   * @param password The password to use.
+   * @param context the authentication context
    * @return false if specified user cannot be authenticated with specified password on any LDAP server
    */
   @Override
@@ -59,11 +58,9 @@ public class LdapAuthenticator extends Authenticator {
       LdapContextFactory ldapContextFactory = contextFactories.get(ldapKey);
       if (ldapContextFactory.isPreAuth()) {
         String userName = context.getRequest().getHeader(ldapContextFactory.getPreAuthHeaderName());
-        if (userName != null 
-            && context.getUsername() != null){ 
-          return userName.equals(context.getUsername());
-        }
-        return false;
+        return userName != null
+               && context.getUsername() != null
+               && userName.equals(context.getUsername());
       }
       final String principal;
       if (ldapContextFactory.isSasl()) {
@@ -85,10 +82,11 @@ public class LdapAuthenticator extends Authenticator {
       boolean passwordValid;
       if (ldapContextFactory.isGssapi()) {
         passwordValid = checkPasswordUsingGssapi(principal, context.getPassword(), ldapKey);
+      } else {
+        passwordValid = checkPasswordUsingBind(principal, context.getPassword(), ldapKey);
       }
-      passwordValid = checkPasswordUsingBind(principal, context.getPassword(), ldapKey);
       if (passwordValid) {
-        return true;
+          return true;
       }
     }
     LOG.debug("User {} not found", context.getUsername());

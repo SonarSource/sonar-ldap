@@ -130,7 +130,7 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
   private Collection<? extends String> mapGroups(String serverKey, NamingEnumeration<SearchResult> searchResult) throws NamingException {
     HashSet<String> groups = new HashSet<String>();
     while (searchResult.hasMoreElements()) {
-      SearchResult obj = (SearchResult) searchResult.nextElement();
+      SearchResult obj = searchResult.nextElement();
       Attributes attributes = obj.getAttributes();
       String groupId = (String) attributes.get(groupMappings.get(serverKey).getIdAttribute()).get();
       groups.add(groupId);

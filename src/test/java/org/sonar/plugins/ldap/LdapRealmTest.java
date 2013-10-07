@@ -21,11 +21,14 @@ package org.sonar.plugins.ldap;
 
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.sonar.api.config.Settings;
 import org.sonar.api.security.ExternalGroupsProvider;
 import org.sonar.api.security.ExternalUsersProvider;
 import org.sonar.api.utils.SonarException;
 import org.sonar.plugins.ldap.server.LdapServer;
+
+import javax.servlet.http.HttpServletRequest;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.junit.Assert.fail;
@@ -61,9 +64,9 @@ public class LdapRealmTest {
     }
     assertThat(realm.getUsersProvider()).isInstanceOf(ExternalUsersProvider.class).isInstanceOf(LdapUsersProvider.class);
     assertThat(realm.getGroupsProvider()).isInstanceOf(ExternalGroupsProvider.class).isInstanceOf(LdapGroupsProvider.class);
-
+    ExternalUsersProvider.Context context = new ExternalUsersProvider.Context("tester", Mockito.mock(HttpServletRequest.class));
     try {
-      realm.getUsersProvider().doGetUserDetails("tester");
+      realm.getUsersProvider().doGetUserDetails(context);
       fail("Since there is no connection, the doGetUserDetails method has to throw an exception.");
     } catch (SonarException e) {
       assertThat(e.getMessage()).contains("Unable to retrieve details for user tester");

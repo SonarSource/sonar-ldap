@@ -21,9 +21,13 @@ package org.sonar.plugins.ldap;
 
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.sonar.api.config.Settings;
+import org.sonar.api.security.ExternalUsersProvider;
 import org.sonar.api.security.UserDetails;
 import org.sonar.plugins.ldap.server.LdapServer;
+
+import javax.servlet.http.HttpServletRequest;
 
 import static org.fest.assertions.Assertions.assertThat;
 
@@ -49,27 +53,27 @@ public class LdapUsersProviderTest {
     LdapUsersProvider usersProvider = new LdapUsersProvider(settingsManager.getContextFactories(), settingsManager.getUserMappings());
 
     UserDetails details;
-
-    details = usersProvider.doGetUserDetails("godin");
+      HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
+      details = usersProvider.doGetUserDetails(new ExternalUsersProvider.Context("godin", request));
     assertThat(details.getName()).isEqualTo("Evgeny Mandrikov");
     assertThat(details.getEmail()).isEqualTo("godin@example.org");
 
-    details = usersProvider.doGetUserDetails("tester");
+    details = usersProvider.doGetUserDetails(new ExternalUsersProvider.Context("tester", request));
     assertThat(details.getName()).isEqualTo("Tester Testerovich");
     assertThat(details.getEmail()).isEqualTo("tester@example.org");
 
-    details = usersProvider.doGetUserDetails("without_email");
+    details = usersProvider.doGetUserDetails(new ExternalUsersProvider.Context("without_email", request));
     assertThat(details.getName()).isEqualTo("Without Email");
     assertThat(details.getEmail()).isEqualTo("");
 
-    details = usersProvider.doGetUserDetails("notfound");
+    details = usersProvider.doGetUserDetails(new ExternalUsersProvider.Context("notfound", request));
     assertThat(details).isNull();
 
-    details = usersProvider.doGetUserDetails("robby");
+    details = usersProvider.doGetUserDetails(new ExternalUsersProvider.Context("robby", request));
     assertThat(details.getName()).isEqualTo("Robby Developer");
     assertThat(details.getEmail()).isEqualTo("rd@infosupport.com");
 
-    details = usersProvider.doGetUserDetails("testerInfo");
+    details = usersProvider.doGetUserDetails(new ExternalUsersProvider.Context("testerInfo", request));
     assertThat(details.getName()).isEqualTo("Tester Testerovich");
     assertThat(details.getEmail()).isEqualTo("tester@infosupport.com");
   }
