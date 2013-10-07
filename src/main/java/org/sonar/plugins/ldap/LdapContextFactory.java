@@ -42,10 +42,12 @@ import com.google.common.base.Objects;
 public class LdapContextFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(LdapContextFactory.class);
-
   private static final String DEFAULT_AUTHENTICATION = "simple";
   private static final String DEFAULT_FACTORY = "com.sun.jndi.ldap.LdapCtxFactory";
   private static final String DEFAULT_REFERRAL = "follow";
+  
+  @VisibleForTesting
+  static final String DEFAULT_PRE_AUTH_HEADER_NAME = "REMOTE_USER";
 
   @VisibleForTesting
   static final String GSSAPI_METHOD = "GSSAPI";
@@ -66,6 +68,7 @@ public class LdapContextFactory {
 
   private final String providerUrl;
   private final boolean preAuthentication;
+  private final String preAuthHeaderName;
   private final String authentication;
   private final String factory;
   private final String referral = DEFAULT_REFERRAL;
@@ -75,6 +78,7 @@ public class LdapContextFactory {
 
   public LdapContextFactory(Settings settings, String settingsPrefix) {
     this.preAuthentication = BooleanUtils.toBoolean(settings.getString(settingsPrefix + ".preauthentication"));
+    this.preAuthHeaderName = StringUtils.defaultString(settings.getString(settingsPrefix + ".preAuthHeaderName"), DEFAULT_PRE_AUTH_HEADER_NAME);
     this.authentication = StringUtils.defaultString(settings.getString(settingsPrefix + ".authentication"), DEFAULT_AUTHENTICATION);
     this.factory = StringUtils.defaultString(settings.getString(settingsPrefix + ".contextFactoryClass"), DEFAULT_FACTORY);
     this.realm = settings.getString(settingsPrefix + ".realm");
@@ -146,6 +150,10 @@ public class LdapContextFactory {
   
   public boolean isPreAuth() {
     return preAuthentication;
+  }
+  
+  public String getPreAuthHeaderName() {
+    return preAuthHeaderName;
   }
 
   /**

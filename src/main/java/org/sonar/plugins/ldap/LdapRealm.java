@@ -19,13 +19,12 @@
  */
 package org.sonar.plugins.ldap;
 
+import java.util.Map;
+
 import org.sonar.api.config.Settings;
 import org.sonar.api.security.ExternalGroupsProvider;
 import org.sonar.api.security.ExternalUsersProvider;
-import org.sonar.api.security.LoginPasswordAuthenticator;
 import org.sonar.api.security.SecurityRealm;
-
-import java.util.Map;
 
 /**
  * @author Evgeny Mandrikov
@@ -34,7 +33,6 @@ public class LdapRealm extends SecurityRealm {
 
   private LdapUsersProvider usersProvider;
   private LdapGroupsProvider groupsProvider;
-  private LdapAuthenticator authenticator;
   private final LdapSettingsManager settingsManager;
 
   public LdapRealm(Settings settings) {
@@ -57,7 +55,6 @@ public class LdapRealm extends SecurityRealm {
     Map<String, LdapContextFactory> contextFactories = settingsManager.getContextFactories();
     Map<String, LdapUserMapping> userMappings = settingsManager.getUserMappings();
     usersProvider = new LdapUsersProvider(contextFactories, userMappings);
-    authenticator = new LdapAuthenticator(contextFactories, userMappings);
     Map<String, LdapGroupMapping> groupMappings = settingsManager.getGroupMappings();
     if (!groupMappings.isEmpty()) {
       groupsProvider = new LdapGroupsProvider(contextFactories, userMappings, groupMappings);
@@ -65,11 +62,6 @@ public class LdapRealm extends SecurityRealm {
     for (LdapContextFactory contextFactory : contextFactories.values()) {
       contextFactory.testConnection();
     }
-  }
-
-  @Override
-  public LoginPasswordAuthenticator getLoginPasswordAuthenticator() {
-    return authenticator;
   }
 
   @Override

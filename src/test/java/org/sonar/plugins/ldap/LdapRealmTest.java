@@ -24,7 +24,6 @@ import org.junit.Test;
 import org.sonar.api.config.Settings;
 import org.sonar.api.security.ExternalGroupsProvider;
 import org.sonar.api.security.ExternalUsersProvider;
-import org.sonar.api.security.LoginPasswordAuthenticator;
 import org.sonar.api.utils.SonarException;
 import org.sonar.plugins.ldap.server.LdapServer;
 
@@ -43,7 +42,6 @@ public class LdapRealmTest {
     LdapRealm realm = new LdapRealm(settings);
     assertThat(realm.getName()).isEqualTo("LDAP");
     realm.init();
-    assertThat(realm.getLoginPasswordAuthenticator()).isInstanceOf(LoginPasswordAuthenticator.class).isInstanceOf(LdapAuthenticator.class);
     assertThat(realm.getUsersProvider()).isInstanceOf(ExternalUsersProvider.class).isInstanceOf(LdapUsersProvider.class);
     assertThat(realm.getGroupsProvider()).isNull();
   }
@@ -61,7 +59,6 @@ public class LdapRealmTest {
     } catch (SonarException e) {
       assertThat(e.getMessage()).contains("Unable to open LDAP connection");
     }
-    assertThat(realm.getLoginPasswordAuthenticator()).isInstanceOf(LoginPasswordAuthenticator.class).isInstanceOf(LdapAuthenticator.class);
     assertThat(realm.getUsersProvider()).isInstanceOf(ExternalUsersProvider.class).isInstanceOf(LdapUsersProvider.class);
     assertThat(realm.getGroupsProvider()).isInstanceOf(ExternalGroupsProvider.class).isInstanceOf(LdapGroupsProvider.class);
 

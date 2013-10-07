@@ -57,7 +57,7 @@
   </ciManagement>
 
   <properties>
-    <sonar.version>3.0</sonar.version>
+    <sonar.version>3.1</sonar.version>
     <sonar.pluginName>LDAP</sonar.pluginName>
     <sonar.pluginClass>org.sonar.plugins.ldap.LdapPlugin</sonar.pluginClass>
 
@@ -71,7 +71,7 @@
     <dependency>
       <groupId>org.codehaus.sonar</groupId>
       <artifactId>sonar-plugin-api</artifactId>
-      <version>${sonar.version}</version>
+      <version>3.1</version>
       <scope>provided</scope>
     </dependency>
 
@@ -98,6 +98,12 @@
       <artifactId>logback-classic</artifactId>
       <version>0.9.30</version>
       <scope>test</scope>
+    </dependency>
+      <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+      <version>3.0.1</version>
+      <optional>true</optional>
     </dependency>
 
     <!-- ApacheDS -->
