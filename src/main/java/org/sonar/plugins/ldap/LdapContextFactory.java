@@ -71,7 +71,6 @@ public class LdapContextFactory {
   private final String preAuthHeaderName;
   private final String authentication;
   private final String factory;
-  private final String referral = DEFAULT_REFERRAL;
   private final String username;
   private final String password;
   private final String realm;
@@ -126,7 +125,7 @@ public class LdapContextFactory {
     }
     env.put(Context.INITIAL_CONTEXT_FACTORY, factory);
     env.put(Context.PROVIDER_URL, providerUrl);
-    env.put(Context.REFERRAL, referral);
+    env.put(Context.REFERRAL, DEFAULT_REFERRAL);
     if (principal != null) {
       env.put(Context.SECURITY_PRINCIPAL, principal);
     }
