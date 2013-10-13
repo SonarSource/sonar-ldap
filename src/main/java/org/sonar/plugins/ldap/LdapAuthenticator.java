@@ -27,6 +27,7 @@ import javax.naming.directory.SearchResult;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -56,31 +57,15 @@ public class LdapAuthenticator extends Authenticator {
   public boolean doAuthenticate(Context context) {
     for (String ldapKey : userMappings.keySet()) {
       LdapContextFactory ldapContextFactory = contextFactories.get(ldapKey);
-      if (ldapContextFactory.isPreAuth()) {
-        String userName = context.getRequest().getHeader(ldapContextFactory.getPreAuthHeaderName());
-        return userName != null
-               && context.getUsername() != null
-               && userName.equals(context.getUsername());
+      final String principal = determinePrincipal(context, ldapKey, ldapContextFactory);
+      if (principal == null) {
+        continue;
       }
-      final String principal;
-      if (ldapContextFactory.isSasl()) {
-        principal = context.getUsername();
-      } else {
-        final SearchResult result;
-        try {
-          result = userMappings.get(ldapKey).createSearch(ldapContextFactory, context.getUsername()).findUnique();
-        } catch (NamingException e) {
-          LOG.debug("User {} not found in server {}: {}", new Object[] {context.getUsername(), ldapKey, e.getMessage()});
-          continue;
-        }
-        if (result == null) {
-          LOG.debug("User {} not found in " + ldapKey, context.getUsername());
-          continue;
-        }
-        principal = result.getNameInNamespace();
-      }
+      
       boolean passwordValid;
-      if (ldapContextFactory.isGssapi()) {
+      if (ldapContextFactory.isPreAuth()) {
+        passwordValid = checkPreAuth(principal, context.getRequest(), ldapContextFactory, ldapKey);
+      } else if (ldapContextFactory.isGssapi()) {
         passwordValid = checkPasswordUsingGssapi(principal, context.getPassword(), ldapKey);
       } else {
         passwordValid = checkPasswordUsingBind(principal, context.getPassword(), ldapKey);
@@ -91,6 +76,45 @@ public class LdapAuthenticator extends Authenticator {
     }
     LOG.debug("User {} not found", context.getUsername());
     return false;
+  }
+
+  private String determinePrincipal(Context context,
+      String ldapKey,
+      LdapContextFactory ldapContextFactory) {
+    
+    if (ldapContextFactory.isPreAuth() 
+        || ldapContextFactory.isSasl()) {
+      return context.getUsername();
+      
+    } else {
+      // Simple auth
+      final SearchResult result;
+      try {
+        result = userMappings.get(ldapKey).createSearch(ldapContextFactory, context.getUsername()).findUnique();
+      } catch (NamingException e) {
+        LOG.debug("User {} not found in server {}: {}", new Object[] {context.getUsername(), ldapKey, e.getMessage()});
+        return null;
+      }
+      if (result == null) {
+        LOG.debug("User {} not found in " + ldapKey, context.getUsername());
+        return null;
+      }
+      return result.getNameInNamespace();
+    }
+  }
+
+  private boolean checkPreAuth(String principal, 
+      HttpServletRequest request, 
+      LdapContextFactory ldapContextFactory,
+      String ldapKey) {
+    String preAuthHeaderName = ldapContextFactory.getPreAuthHeaderName();
+    String userNameFromHeader = request.getHeader(preAuthHeaderName);
+    if (userNameFromHeader == null) {
+      LOG.debug("Preauthentication Header " + preAuthHeaderName + " not found for " + ldapKey + ".");
+      return false;
+    }
+    LOG.debug("Found preauthenticated user " + userNameFromHeader);
+    return userNameFromHeader.equals(principal);
   }
 
   private boolean checkPasswordUsingBind(String principal, String password, String ldapKey) {
