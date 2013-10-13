@@ -183,6 +183,8 @@ public class LdapContextFactory {
     return Objects.toStringHelper(this)
         .add("url", providerUrl)
         .add("authentication", authentication)
+        .add("preAuthentication", BooleanUtils.toStringTrueFalse(preAuthentication))
+        .add("preAuthHeaderName", preAuthHeaderName)
         .add("factory", factory)
         .add("bindDn", username)
         .add("realm", realm)
