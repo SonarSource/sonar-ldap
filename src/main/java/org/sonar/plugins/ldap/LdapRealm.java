@@ -22,6 +22,7 @@ package org.sonar.plugins.ldap;
 import java.util.Map;
 
 import org.sonar.api.config.Settings;
+import org.sonar.api.security.Authenticator;
 import org.sonar.api.security.ExternalGroupsProvider;
 import org.sonar.api.security.ExternalUsersProvider;
 import org.sonar.api.security.SecurityRealm;
@@ -62,6 +63,11 @@ public class LdapRealm extends SecurityRealm {
     for (LdapContextFactory contextFactory : contextFactories.values()) {
       contextFactory.testConnection();
     }
+  }
+  
+  @Override
+  public Authenticator doGetAuthenticator() {
+    return new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings());
   }
 
   @Override
