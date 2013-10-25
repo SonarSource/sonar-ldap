@@ -19,6 +19,7 @@
  */
 package org.sonar.plugins.ldap;
 
+import java.util.Enumeration;
 import java.util.Map;
 
 import javax.naming.NamingException;
@@ -64,13 +65,17 @@ public class LdapAuthenticator extends Authenticator {
       
       boolean passwordValid;
       if (ldapContextFactory.isPreAuth()) {
-        passwordValid = checkPreAuth(principal, context.getRequest(), ldapContextFactory, ldapKey);
+        LOG.debug("User " + principal + " was preauthenticated.");
+        passwordValid = true;
       } else if (ldapContextFactory.isGssapi()) {
+        LOG.debug("Checking Password through GSSAPI");
         passwordValid = checkPasswordUsingGssapi(principal, context.getPassword(), ldapKey);
       } else {
+        LOG.debug("Checking Password through SASL");
         passwordValid = checkPasswordUsingBind(principal, context.getPassword(), ldapKey);
       }
       if (passwordValid) {
+        LOG.debug("Successfully authenticated!");
           return true;
       }
     }
@@ -82,8 +87,10 @@ public class LdapAuthenticator extends Authenticator {
       String ldapKey,
       LdapContextFactory ldapContextFactory) {
     
-    if (ldapContextFactory.isPreAuth() 
-        || ldapContextFactory.isSasl()) {
+    if (ldapContextFactory.isPreAuth()) {
+      return findPreAuthenticatedUser(context.getRequest(), ldapContextFactory.getPreAuthHeaderName());
+          
+    } else if (ldapContextFactory.isSasl()) {
       return context.getUsername();
       
     } else {
@@ -103,18 +110,27 @@ public class LdapAuthenticator extends Authenticator {
     }
   }
 
-  private boolean checkPreAuth(String principal, 
-      HttpServletRequest request, 
-      LdapContextFactory ldapContextFactory,
-      String ldapKey) {
-    String preAuthHeaderName = ldapContextFactory.getPreAuthHeaderName();
+  private String findPreAuthenticatedUser(HttpServletRequest request, String preAuthHeaderName) {
     String userNameFromHeader = request.getHeader(preAuthHeaderName);
     if (userNameFromHeader == null) {
-      LOG.debug("Preauthentication Header " + preAuthHeaderName + " not found for " + ldapKey + ".");
-      return false;
+      LOG.debug("Preauthentication Header " + preAuthHeaderName + " not found.");
+      logAvailableHeaders(request);
+      return userNameFromHeader;
     }
-    LOG.debug("Found preauthenticated user " + userNameFromHeader);
-    return userNameFromHeader.equals(principal);
+    LOG.debug("Found preauthenticated user " + userNameFromHeader + " in header " + preAuthHeaderName);
+    return userNameFromHeader;
+  }
+
+  private void logAvailableHeaders(HttpServletRequest request) {
+    StringBuilder sb = new StringBuilder("Available Headers: ");
+    Enumeration<String> headerNames = request.getHeaderNames();
+    while (headerNames.hasMoreElements()) {
+      sb.append(headerNames.nextElement());
+      if (headerNames.hasMoreElements()) {
+        sb.append(", ");
+      }
+    }
+    LOG.debug(sb.toString());
   }
 
   private boolean checkPasswordUsingBind(String principal, String password, String ldapKey) {
