@@ -19,7 +19,6 @@
  */
 package org.sonar.plugins.ldap;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
 
 import javax.servlet.FilterChain;
@@ -27,12 +26,15 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sonar.api.web.ServletFilter;
 
 
 public class LdapAuthenticationFilter extends ServletFilter {
+  
+  private static final Logger LOGGER = LoggerFactory.getLogger(LdapAuthenticationFilter.class);
 
   public void init(FilterConfig filterConfig) throws ServletException {
   }
@@ -45,15 +47,8 @@ public class LdapAuthenticationFilter extends ServletFilter {
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException {
     
-    HttpServletResponse httpServletResponse = (HttpServletResponse) response;
-    
-    DataOutputStream wr = new DataOutputStream(httpServletResponse.getOutputStream ());
-    wr.writeBytes("login:jstadler\n");
-    wr.writeBytes("password:\n");
-    wr.flush();
-    wr.close();
-    
-    httpServletResponse.sendRedirect("/session/login");
+    LOGGER.debug("Triggered LdapAuthenticationFilter... what now?");
+    chain.doFilter(request, response);
   }
 
   public void destroy() {

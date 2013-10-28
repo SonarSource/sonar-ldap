@@ -20,18 +20,22 @@
 
 package org.sonar.plugins.ldap;
 
-import com.google.common.collect.ImmutableList;
+import java.util.List;
+
+import org.sonar.api.ServerExtension;
 import org.sonar.api.SonarPlugin;
 
-import java.util.List;
+import com.google.common.collect.ImmutableList;
 
 /**
  * @author Evgeny Mandrikov
  */
 public class LdapPlugin extends SonarPlugin {
 
-  public List getExtensions() {
-    return ImmutableList.of(LdapRealm.class);
+  public List<Class<? extends ServerExtension>> getExtensions() {
+    return ImmutableList.of(
+        LdapRealm.class,
+        LdapAuthenticationFilter.class);
   }
 
 }
