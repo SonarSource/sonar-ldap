@@ -74,7 +74,7 @@ public class LdapAuthenticator extends Authenticator {
       }
       if (passwordValid) {
         LOG.debug("Successfully authenticated!");
-          return true;
+        return true;
       }
     }
     LOG.debug("User {} not found", context.getUsername());

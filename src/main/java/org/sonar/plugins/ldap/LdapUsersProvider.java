@@ -59,14 +59,13 @@ public class LdapUsersProvider extends ExternalUsersProvider {
    * @throws SonarException if unable to retrieve details
    */
   public UserDetails doGetUserDetails(Context context) {
-    String username = context.getUsername();
-    LOG.debug("Requesting details for user {}", username);
     // If there are no userMappings available, we can not retrieve user details.
     if (userMappings.isEmpty()) {
-      String errorMessage = "Unable to retrieve details for user " + username + ": No user mapping found.";
+      String errorMessage = "Unable to retrieve user details: No user mappings found.";
       LOG.debug(errorMessage);
       throw new SonarException(errorMessage);
     }
+    String username = context.getUsername();
     UserDetails details = null;
     SonarException sonarException = null;
     for (String serverKey : userMappings.keySet()) {
@@ -74,6 +73,7 @@ public class LdapUsersProvider extends ExternalUsersProvider {
       if (username == null && contextFactory.isPreAuth()) {
         username = contextFactory.findPreAuthenticatedUser(context.getRequest());
       }
+      LOG.debug("Requesting details for user {}", username);
       SearchResult searchResult = null;
       try {
         LdapUserMapping ldapUserMapping = userMappings.get(serverKey);

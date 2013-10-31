@@ -56,7 +56,7 @@ public class LdapAuthenticationFilter extends ServletFilter {
     if (httpServletRequest.getSession(false) == null) {
       LOGGER.debug("No session available. Authenticating user...");
       HttpServletResponse httpServletResponse = (HttpServletResponse) response;
-      httpServletResponse.sendRedirect(httpServletRequest.getContextPath() + "/ldap/validate");
+      httpServletResponse.sendRedirect(httpServletRequest.getContextPath() + "/ldap/authenticate");
     } else {
       filterChain.doFilter(httpServletRequest, response);
     }

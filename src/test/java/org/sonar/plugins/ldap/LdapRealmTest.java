@@ -69,7 +69,7 @@ public class LdapRealmTest {
       realm.getUsersProvider().doGetUserDetails(context);
       fail("Since there is no connection, the doGetUserDetails method has to throw an exception.");
     } catch (SonarException e) {
-      assertThat(e.getMessage()).contains("Unable to retrieve details for user tester");
+      assertThat(e.getMessage()).contains("Unable to retrieve user details: No user mappings found.");
     }
     try {
       realm.getGroupsProvider().doGetGroups("tester");
