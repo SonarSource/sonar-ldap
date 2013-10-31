@@ -4,7 +4,7 @@ class LdapController < ApplicationController
 
   def validate
     begin
-      self.current_user = User.authenticate(servlet_request['COLOS_USER'], nil, servlet_request)
+      self.current_user = User.authenticate(nil, nil, servlet_request)
 
     rescue Exception => e
       self.current_user = nil

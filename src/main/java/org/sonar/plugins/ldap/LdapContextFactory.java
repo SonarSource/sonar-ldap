@@ -19,12 +19,14 @@
  */
 package org.sonar.plugins.ldap;
 
+import java.util.Enumeration;
 import java.util.Properties;
 
 import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.ldap.InitialLdapContext;
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
@@ -151,8 +153,34 @@ public class LdapContextFactory {
     return preAuthentication;
   }
   
-  public String getPreAuthHeaderName() {
-    return preAuthHeaderName;
+  
+  /**
+   * Finds the name of the preauthenticated user.
+   * @param request the {@link HttpServletRequest}
+   * @return the name of the preauthenticated user or <code>null</code>
+   */
+  public String findPreAuthenticatedUser(HttpServletRequest request) {
+    String userNameFromHeader = request.getHeader(preAuthHeaderName);
+    if (userNameFromHeader == null) {
+      LOG.info("Preauthentication Header " + preAuthHeaderName + " not found.");
+      logAvailableHeaders(request);
+    }
+    return userNameFromHeader;
+  }
+
+  private void logAvailableHeaders(HttpServletRequest request) {
+    if (!LOG.isDebugEnabled()) {
+      return;
+    }
+    StringBuilder sb = new StringBuilder("Available Headers: ");
+    Enumeration<String> headerNames = request.getHeaderNames();
+    while (headerNames.hasMoreElements()) {
+      sb.append(headerNames.nextElement());
+      if (headerNames.hasMoreElements()) {
+        sb.append(", ");
+      }
+    }
+    LOG.debug(sb.toString());
   }
 
   /**

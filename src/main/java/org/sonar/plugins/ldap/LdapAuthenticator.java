@@ -19,7 +19,6 @@
  */
 package org.sonar.plugins.ldap;
 
-import java.util.Enumeration;
 import java.util.Map;
 
 import javax.naming.NamingException;
@@ -28,7 +27,6 @@ import javax.naming.directory.SearchResult;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
-import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -88,7 +86,7 @@ public class LdapAuthenticator extends Authenticator {
       LdapContextFactory ldapContextFactory) {
     
     if (ldapContextFactory.isPreAuth()) {
-      return findPreAuthenticatedUser(context.getRequest(), ldapContextFactory.getPreAuthHeaderName());
+      return ldapContextFactory.findPreAuthenticatedUser(context.getRequest());
           
     } else if (ldapContextFactory.isSasl()) {
       return context.getUsername();
@@ -109,30 +107,7 @@ public class LdapAuthenticator extends Authenticator {
       return result.getNameInNamespace();
     }
   }
-
-  private String findPreAuthenticatedUser(HttpServletRequest request, String preAuthHeaderName) {
-    String userNameFromHeader = request.getHeader(preAuthHeaderName);
-    if (userNameFromHeader == null) {
-      LOG.debug("Preauthentication Header " + preAuthHeaderName + " not found.");
-      logAvailableHeaders(request);
-      return userNameFromHeader;
-    }
-    LOG.debug("Found preauthenticated user " + userNameFromHeader + " in header " + preAuthHeaderName);
-    return userNameFromHeader;
-  }
-
-  private void logAvailableHeaders(HttpServletRequest request) {
-    StringBuilder sb = new StringBuilder("Available Headers: ");
-    Enumeration<String> headerNames = request.getHeaderNames();
-    while (headerNames.hasMoreElements()) {
-      sb.append(headerNames.nextElement());
-      if (headerNames.hasMoreElements()) {
-        sb.append(", ");
-      }
-    }
-    LOG.debug(sb.toString());
-  }
-
+  
   private boolean checkPasswordUsingBind(String principal, String password, String ldapKey) {
     if (StringUtils.isEmpty(password)) {
       LOG.debug("Password is blank.");
