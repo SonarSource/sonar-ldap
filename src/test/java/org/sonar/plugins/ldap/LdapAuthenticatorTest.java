@@ -29,6 +29,8 @@ import org.sonar.api.config.Settings;
 import org.sonar.api.security.Authenticator.Context;
 import org.sonar.plugins.ldap.server.LdapServer;
 
+import static org.mockito.Mockito.when;
+
 import static org.fest.assertions.Assertions.assertThat;
 
 public class LdapAuthenticatorTest {
@@ -57,7 +59,7 @@ public class LdapAuthenticatorTest {
     exampleServer.disableAnonymousAccess();
     try {
       LdapSettingsManager settingsManager = new LdapSettingsManager(LdapSettingsFactory.generateAuthenticationSettings(exampleServer, null));
-      LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings());
+      LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings(), Mockito.mock(PreAuthHelper.class));
       authenticator.doAuthenticate(new Context("godin", "secret1", request));
     } finally {
       exampleServer.enableAnonymousAccess();
@@ -67,7 +69,7 @@ public class LdapAuthenticatorTest {
   @Test
   public void testSimple() {
     LdapSettingsManager settingsManager = new LdapSettingsManager(LdapSettingsFactory.generateAuthenticationSettings(exampleServer, null));
-    LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings());
+    LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings(), Mockito.mock(PreAuthHelper.class));
 
     assertThat(authenticator.doAuthenticate(new Context("godin", "secret1", request))).isTrue();
     assertThat(authenticator.doAuthenticate(new Context("godin", "wrong", request))).isFalse();
@@ -84,7 +86,7 @@ public class LdapAuthenticatorTest {
   @Test
   public void testSimpleMultiLdap() {
     LdapSettingsManager settingsManager = new LdapSettingsManager(LdapSettingsFactory.generateAuthenticationSettings(exampleServer, infosupportServer));
-    LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings());
+    LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings(), Mockito.mock(PreAuthHelper.class));
 
     assertThat(authenticator.doAuthenticate(new Context("godin", "secret1", request))).isTrue();
     assertThat(authenticator.doAuthenticate(new Context("godin", "wrong", request))).isFalse();
@@ -105,7 +107,7 @@ public class LdapAuthenticatorTest {
   @Test
   public void testSasl() {
     LdapSettingsManager settingsManager = new LdapSettingsManager(LdapSettingsFactory.generateAuthenticationSettings(exampleServer, null));
-    LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings());
+    LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings(), Mockito.mock(PreAuthHelper.class));
 
     assertThat(authenticator.doAuthenticate(new Context("godin", "secret1", request))).isTrue();
     assertThat(authenticator.doAuthenticate(new Context("godin", "wrong", request))).isFalse();
@@ -118,7 +120,7 @@ public class LdapAuthenticatorTest {
   @Test
   public void testSaslMultipleLdap() {
     LdapSettingsManager settingsManager = new LdapSettingsManager(LdapSettingsFactory.generateAuthenticationSettings(exampleServer, infosupportServer));
-    LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings());
+    LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings(), Mockito.mock(PreAuthHelper.class));
     
     assertThat(authenticator.doAuthenticate(new Context("godin", "secret1", request))).isTrue();
     assertThat(authenticator.doAuthenticate(new Context("godin", "wrong", request))).isFalse();
@@ -135,10 +137,11 @@ public class LdapAuthenticatorTest {
   @Test
   public void testPreAuth() {
     Settings settings = LdapSettingsFactory.generateAuthenticationSettings(exampleServer, null);
-    settings.setProperty("ldap.preauthentication", "true");
-    Mockito.when(request.getHeader(LdapContextFactory.DEFAULT_PRE_AUTH_HEADER_NAME)).thenReturn("godin", "godin", "tester", "tester", "notfound");
+    PreAuthHelper preAuthHelper = Mockito.mock(PreAuthHelper.class);
+    when(preAuthHelper.isPreAuth()).thenReturn(true);
+    when(preAuthHelper.findPreAuthenticatedUser(request)).thenReturn("godin", "godin", "tester", "tester", "notfound");
     LdapSettingsManager settingsManager = new LdapSettingsManager(settings);
-    LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings());
+    LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings(), preAuthHelper);
     
     assertThat(authenticator.doAuthenticate(new Context("godin", "secret1", request))).isTrue();
     assertThat(authenticator.doAuthenticate(new Context("godin", "wrong", request))).isTrue();
@@ -152,12 +155,12 @@ public class LdapAuthenticatorTest {
   @Test
   public void testPreAuthMultipleLdap() {
     Settings settings = LdapSettingsFactory.generateAuthenticationSettings(exampleServer, infosupportServer);
-    settings.setProperty("ldap.example.preauthentication", "true")
-            .setProperty("ldap.infosupport.preauthentication", "true");
-    Mockito.when(request.getHeader(LdapContextFactory.DEFAULT_PRE_AUTH_HEADER_NAME))
-    .thenReturn("godin", "godin", "tester", "tester", "notfound", "robby", "robby");
+    PreAuthHelper preAuthHelper = Mockito.mock(PreAuthHelper.class);
+    when(preAuthHelper.isPreAuth()).thenReturn(true);
+    when(preAuthHelper.findPreAuthenticatedUser(request))
+      .thenReturn("godin", "godin", "tester", "tester", "notfound", "robby", "robby");
     LdapSettingsManager settingsManager = new LdapSettingsManager(settings);
-    LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings());
+    LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings(), preAuthHelper);
 
     assertThat(authenticator.doAuthenticate(new Context("godin", "secret1", request))).isTrue();
     assertThat(authenticator.doAuthenticate(new Context("godin", "wrong", request))).isTrue();

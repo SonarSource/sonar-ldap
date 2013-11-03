@@ -41,10 +41,14 @@ public class LdapAuthenticator extends Authenticator {
   private static final Logger LOG = LoggerFactory.getLogger(LdapAuthenticator.class);
   private final Map<String, LdapContextFactory> contextFactories;
   private final Map<String, LdapUserMapping> userMappings;
+  private final PreAuthHelper preAuthHelper;
 
-  public LdapAuthenticator(Map<String, LdapContextFactory> contextFactories, Map<String, LdapUserMapping> userMappings) {
+  public LdapAuthenticator(Map<String, LdapContextFactory> contextFactories, 
+      Map<String, LdapUserMapping> userMappings,
+      PreAuthHelper preAuthHelper) {
     this.contextFactories = contextFactories;
     this.userMappings = userMappings;
+    this.preAuthHelper = preAuthHelper;
   }
 
   /** 
@@ -62,7 +66,7 @@ public class LdapAuthenticator extends Authenticator {
       }
       
       boolean passwordValid;
-      if (ldapContextFactory.isPreAuth()) {
+      if (preAuthHelper.isPreAuth()) {
         LOG.debug("User " + principal + " was preauthenticated.");
         passwordValid = true;
       } else if (ldapContextFactory.isGssapi()) {
@@ -85,8 +89,8 @@ public class LdapAuthenticator extends Authenticator {
       String ldapKey,
       LdapContextFactory ldapContextFactory) {
     
-    if (ldapContextFactory.isPreAuth()) {
-      return ldapContextFactory.findPreAuthenticatedUser(context.getRequest());
+    if (preAuthHelper.isPreAuth()) {
+      return preAuthHelper.findPreAuthenticatedUser(context.getRequest());
           
     } else if (ldapContextFactory.isSasl()) {
       return context.getUsername();

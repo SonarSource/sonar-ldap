@@ -34,8 +34,10 @@ public class LdapPlugin extends SonarPlugin {
 
   public List<Class<? extends ServerExtension>> getExtensions() {
     return ImmutableList.of(
+        PreAuthHelper.class,
         LdapRealm.class,
-        LdapAuthenticationFilter.class);
+        AutomaticLoginFilter.class,
+        PreAuthenticationFilter.class);
   }
 
 }

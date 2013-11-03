@@ -35,9 +35,11 @@ public class LdapRealm extends SecurityRealm {
   private LdapUsersProvider usersProvider;
   private LdapGroupsProvider groupsProvider;
   private final LdapSettingsManager settingsManager;
+  private final PreAuthHelper preAuthHelper;
 
-  public LdapRealm(Settings settings) {
+  public LdapRealm(Settings settings, PreAuthHelper preAuthHelper) {
     settingsManager = new LdapSettingsManager(settings);
+    this.preAuthHelper = preAuthHelper;
   }
 
   @Override
@@ -67,7 +69,7 @@ public class LdapRealm extends SecurityRealm {
   
   @Override
   public Authenticator doGetAuthenticator() {
-    return new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings());
+    return new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings(), preAuthHelper);
   }
 
   @Override

@@ -42,7 +42,8 @@ public class LdapUsersProvider extends ExternalUsersProvider {
   private final Map<String, LdapContextFactory> contextFactories;
   private final Map<String, LdapUserMapping> userMappings;
 
-  public LdapUsersProvider(Map<String, LdapContextFactory> contextFactories, Map<String, LdapUserMapping> userMappings) {
+  public LdapUsersProvider(Map<String, LdapContextFactory> contextFactories, 
+      Map<String, LdapUserMapping> userMappings) {
     this.contextFactories = contextFactories;
     this.userMappings = userMappings;
   }
@@ -60,24 +61,20 @@ public class LdapUsersProvider extends ExternalUsersProvider {
    */
   public UserDetails doGetUserDetails(Context context) {
     // If there are no userMappings available, we can not retrieve user details.
+    String username = context.getUsername();
+    LOG.debug("Requesting details for user {}", username);
     if (userMappings.isEmpty()) {
       String errorMessage = "Unable to retrieve user details: No user mappings found.";
       LOG.debug(errorMessage);
       throw new SonarException(errorMessage);
     }
-    String username = context.getUsername();
     UserDetails details = null;
     SonarException sonarException = null;
     for (String serverKey : userMappings.keySet()) {
-      LdapContextFactory contextFactory = contextFactories.get(serverKey);
-      if (username == null && contextFactory.isPreAuth()) {
-        username = contextFactory.findPreAuthenticatedUser(context.getRequest());
-      }
-      LOG.debug("Requesting details for user {}", username);
       SearchResult searchResult = null;
       try {
         LdapUserMapping ldapUserMapping = userMappings.get(serverKey);
-        searchResult = ldapUserMapping.createSearch(contextFactory, username)
+        searchResult = ldapUserMapping.createSearch(contextFactories.get(serverKey), username)
             .returns(ldapUserMapping.getEmailAttribute(), ldapUserMapping.getRealNameAttribute())
             .findUnique();
       } catch (NamingException e) {

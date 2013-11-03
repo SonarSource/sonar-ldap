@@ -29,17 +29,24 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.web.ServletFilter;
 
 
 /**
- * Filter that triggers automatic login when the user isn't logged in.
+ * Filter that redirects to pre-authentication filter when the user isn't logged in and pre-authentication is enabled.
  */
-public class LdapAuthenticationFilter extends ServletFilter {
+public class AutomaticLoginFilter extends ServletFilter {
   
-  private static final Logger LOGGER = LoggerFactory.getLogger(LdapAuthenticationFilter.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(AutomaticLoginFilter.class);
+  
+  private final PreAuthHelper preAuthHelper;
+  
+  public AutomaticLoginFilter(PreAuthHelper preAuthHelper) {
+    this.preAuthHelper = preAuthHelper;
+  }
 
   public void init(FilterConfig filterConfig) throws ServletException {
   }
@@ -53,12 +60,16 @@ public class LdapAuthenticationFilter extends ServletFilter {
       throws IOException, ServletException {
     
     HttpServletRequest httpServletRequest = (HttpServletRequest) request;
-    if (httpServletRequest.getSession(false) == null) {
-      LOGGER.debug("No session available. Authenticating user...");
-      HttpServletResponse httpServletResponse = (HttpServletResponse) response;
-      httpServletResponse.sendRedirect(httpServletRequest.getContextPath() + "/ldap/authenticate");
-    } else {
+    HttpServletResponse httpServletResponse = (HttpServletResponse) response;
+    if (!preAuthHelper.isPreAuthRequired(httpServletRequest)) {
+      // If not preauth or already logged in just continue
       filterChain.doFilter(httpServletRequest, response);
+    } else if (StringUtils.isBlank(preAuthHelper.findPreAuthenticatedUser(httpServletRequest))) {
+      LOGGER.warn("Could not find any pre-authenticated user in Header: " + preAuthHelper.getPreAuthHeaderName());
+      filterChain.doFilter(httpServletRequest, response);
+    } else  {
+      LOGGER.debug("No session available. Redirecting to pre-authentication...");
+      httpServletResponse.sendRedirect(httpServletRequest.getContextPath() + "/ldap/authenticate");
     }
   }
   

@@ -3,9 +3,10 @@ class LdapController < ApplicationController
   skip_before_filter :check_authentication
 
   def authenticate
-    # See need_authentication.rb in sonar-server for details
     begin
-      self.current_user = User.authenticate(nil, nil, servlet_request)
+      user = servlet_request.getAttribute("preauth_user")
+      Rails.logger.info("Authenticating user " + user)
+      self.current_user = User.authenticate(user, nil, servlet_request)
 
     rescue Exception => e
       self.current_user = nil

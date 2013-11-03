@@ -19,16 +19,13 @@
  */
 package org.sonar.plugins.ldap;
 
-import java.util.Enumeration;
 import java.util.Properties;
 
 import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.ldap.InitialLdapContext;
-import javax.servlet.http.HttpServletRequest;
 
-import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,9 +44,6 @@ public class LdapContextFactory {
   private static final String DEFAULT_AUTHENTICATION = "simple";
   private static final String DEFAULT_FACTORY = "com.sun.jndi.ldap.LdapCtxFactory";
   private static final String DEFAULT_REFERRAL = "follow";
-  
-  @VisibleForTesting
-  static final String DEFAULT_PRE_AUTH_HEADER_NAME = "REMOTE_USER";
 
   @VisibleForTesting
   static final String GSSAPI_METHOD = "GSSAPI";
@@ -69,8 +63,6 @@ public class LdapContextFactory {
   private static final String SASL_REALM_PROPERTY = "java.naming.security.sasl.realm";
 
   private final String providerUrl;
-  private final boolean preAuthentication;
-  private final String preAuthHeaderName;
   private final String authentication;
   private final String factory;
   private final String username;
@@ -78,8 +70,6 @@ public class LdapContextFactory {
   private final String realm;
 
   public LdapContextFactory(Settings settings, String settingsPrefix) {
-    this.preAuthentication = BooleanUtils.toBoolean(settings.getString(settingsPrefix + ".preauthentication"));
-    this.preAuthHeaderName = StringUtils.defaultString(settings.getString(settingsPrefix + ".preAuthHeaderName"), DEFAULT_PRE_AUTH_HEADER_NAME);
     this.authentication = StringUtils.defaultString(settings.getString(settingsPrefix + ".authentication"), DEFAULT_AUTHENTICATION);
     this.factory = StringUtils.defaultString(settings.getString(settingsPrefix + ".contextFactoryClass"), DEFAULT_FACTORY);
     this.realm = settings.getString(settingsPrefix + ".realm");
@@ -149,40 +139,6 @@ public class LdapContextFactory {
     return GSSAPI_METHOD.equals(authentication);
   }
   
-  public boolean isPreAuth() {
-    return preAuthentication;
-  }
-  
-  
-  /**
-   * Finds the name of the preauthenticated user.
-   * @param request the {@link HttpServletRequest}
-   * @return the name of the preauthenticated user or <code>null</code>
-   */
-  public String findPreAuthenticatedUser(HttpServletRequest request) {
-    String userNameFromHeader = request.getHeader(preAuthHeaderName);
-    if (userNameFromHeader == null) {
-      LOG.info("Preauthentication Header " + preAuthHeaderName + " not found.");
-      logAvailableHeaders(request);
-    }
-    return userNameFromHeader;
-  }
-
-  private void logAvailableHeaders(HttpServletRequest request) {
-    if (!LOG.isDebugEnabled()) {
-      return;
-    }
-    StringBuilder sb = new StringBuilder("Available Headers: ");
-    Enumeration<String> headerNames = request.getHeaderNames();
-    while (headerNames.hasMoreElements()) {
-      sb.append(headerNames.nextElement());
-      if (headerNames.hasMoreElements()) {
-        sb.append(", ");
-      }
-    }
-    LOG.debug(sb.toString());
-  }
-
   /**
    * Tests connection.
    *
@@ -211,8 +167,6 @@ public class LdapContextFactory {
     return Objects.toStringHelper(this)
         .add("url", providerUrl)
         .add("authentication", authentication)
-        .add("preAuthentication", BooleanUtils.toStringTrueFalse(preAuthentication))
-        .add("preAuthHeaderName", preAuthHeaderName)
         .add("factory", factory)
         .add("bindDn", username)
         .add("realm", realm)
