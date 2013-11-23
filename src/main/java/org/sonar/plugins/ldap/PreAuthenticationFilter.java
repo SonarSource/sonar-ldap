@@ -34,7 +34,7 @@ import org.sonar.api.web.ServletFilter;
 
 
 /**
- * Filter that triggers the login of the user that is defined by the preauthentication header.
+ * Filter that triggers the login of the user that is defined by the pre-authentication header.
  */
 public class PreAuthenticationFilter extends ServletFilter {
   
