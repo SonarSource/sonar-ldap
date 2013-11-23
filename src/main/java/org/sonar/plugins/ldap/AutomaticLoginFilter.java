@@ -33,6 +33,7 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.security.ExternalUsersProvider.Context;
+import org.sonar.api.security.UserDetails;
 import org.sonar.api.utils.SonarException;
 import org.sonar.api.web.ServletFilter;
 
@@ -66,7 +67,7 @@ public class AutomaticLoginFilter extends ServletFilter {
 
     HttpServletRequest httpServletRequest = (HttpServletRequest) request;
     HttpServletResponse httpServletResponse = (HttpServletResponse) response;
-    
+
     if (!preAuthHelper.isPreAuthRequired(httpServletRequest)) {
       // If not preauth or already logged in just continue
       filterChain.doFilter(httpServletRequest, response);
@@ -83,11 +84,17 @@ public class AutomaticLoginFilter extends ServletFilter {
     String user = preAuthHelper.findPreAuthenticatedUser(httpServletRequest);
     try {
       // Verify that user exists in ldap otherwise we run into a redirect loop
-      ldapRealm.getUsersProvider().doGetUserDetails(new Context(user, httpServletRequest));
+      Context context = new Context(user, httpServletRequest);
+      UserDetails userDetails = ldapRealm.getUsersProvider().doGetUserDetails(context);
+      if (userDetails == null) {
+        LOGGER.warn("Pre-authenticated user could not be found in LDAP: " + user);
+        filterChain.doFilter(httpServletRequest, response);
+        return;
+      }
       LOGGER.debug("No session available. Redirecting to pre-authentication...");
       httpServletResponse.sendRedirect(httpServletRequest.getContextPath() + "/ldap/authenticate");
     } catch (SonarException se) {
-      LOGGER.warn("Pre-authenticated user could not be found in LDAP: " + user);
+      LOGGER.warn("Pre-authenticated user could not be found in LDAP: " + user, se);
       filterChain.doFilter(httpServletRequest, response);
     }
   }
