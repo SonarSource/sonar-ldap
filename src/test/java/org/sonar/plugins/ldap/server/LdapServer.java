@@ -24,7 +24,7 @@ import org.junit.rules.ExternalResource;
 public class LdapServer extends ExternalResource {
 
   private ApacheDS server;
-  private String ldif;
+  private final String ldif;
   private final String realm;
   private final String baseDn;
 

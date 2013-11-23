@@ -19,17 +19,19 @@
  */
 package org.sonar.plugins.ldap;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.sonar.api.config.Settings;
 import org.sonar.api.security.ExternalGroupsProvider;
 import org.sonar.api.security.ExternalUsersProvider;
-import org.sonar.api.security.LoginPasswordAuthenticator;
 import org.sonar.api.utils.SonarException;
 import org.sonar.plugins.ldap.server.LdapServer;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
 
 public class LdapRealmTest {
 
@@ -40,10 +42,9 @@ public class LdapRealmTest {
   public void normal() {
     Settings settings = new Settings()
         .setProperty("ldap.url", server.getUrl());
-    LdapRealm realm = new LdapRealm(settings);
+    LdapRealm realm = new LdapRealm(settings, mock(PreAuthHelper.class));
     assertThat(realm.getName()).isEqualTo("LDAP");
     realm.init();
-    assertThat(realm.getLoginPasswordAuthenticator()).isInstanceOf(LoginPasswordAuthenticator.class).isInstanceOf(LdapAuthenticator.class);
     assertThat(realm.getUsersProvider()).isInstanceOf(ExternalUsersProvider.class).isInstanceOf(LdapUsersProvider.class);
     assertThat(realm.getGroupsProvider()).isNull();
   }
@@ -53,7 +54,7 @@ public class LdapRealmTest {
     Settings settings = new Settings()
         .setProperty("ldap.url", "ldap://no-such-host")
         .setProperty("ldap.group.baseDn", "cn=groups,dc=example,dc=org");
-    LdapRealm realm = new LdapRealm(settings);
+    LdapRealm realm = new LdapRealm(settings, mock(PreAuthHelper.class));
     assertThat(realm.getName()).isEqualTo("LDAP");
     try {
       realm.init();
@@ -61,15 +62,14 @@ public class LdapRealmTest {
     } catch (SonarException e) {
       assertThat(e.getMessage()).contains("Unable to open LDAP connection");
     }
-    assertThat(realm.getLoginPasswordAuthenticator()).isInstanceOf(LoginPasswordAuthenticator.class).isInstanceOf(LdapAuthenticator.class);
     assertThat(realm.getUsersProvider()).isInstanceOf(ExternalUsersProvider.class).isInstanceOf(LdapUsersProvider.class);
     assertThat(realm.getGroupsProvider()).isInstanceOf(ExternalGroupsProvider.class).isInstanceOf(LdapGroupsProvider.class);
-
+    ExternalUsersProvider.Context context = new ExternalUsersProvider.Context("tester", mock(HttpServletRequest.class));
     try {
-      realm.getUsersProvider().doGetUserDetails("tester");
+      realm.getUsersProvider().doGetUserDetails(context);
       fail("Since there is no connection, the doGetUserDetails method has to throw an exception.");
     } catch (SonarException e) {
-      assertThat(e.getMessage()).contains("Unable to retrieve details for user tester");
+      assertThat(e.getMessage()).contains("Unable to retrieve user details: No user mappings found.");
     }
     try {
       realm.getGroupsProvider().doGetGroups("tester");

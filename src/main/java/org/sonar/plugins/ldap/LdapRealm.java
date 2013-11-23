@@ -19,13 +19,13 @@
  */
 package org.sonar.plugins.ldap;
 
+import java.util.Map;
+
 import org.sonar.api.config.Settings;
+import org.sonar.api.security.Authenticator;
 import org.sonar.api.security.ExternalGroupsProvider;
 import org.sonar.api.security.ExternalUsersProvider;
-import org.sonar.api.security.LoginPasswordAuthenticator;
 import org.sonar.api.security.SecurityRealm;
-
-import java.util.Map;
 
 /**
  * @author Evgeny Mandrikov
@@ -34,11 +34,12 @@ public class LdapRealm extends SecurityRealm {
 
   private LdapUsersProvider usersProvider;
   private LdapGroupsProvider groupsProvider;
-  private LdapAuthenticator authenticator;
   private final LdapSettingsManager settingsManager;
+  private final PreAuthHelper preAuthHelper;
 
-  public LdapRealm(Settings settings) {
+  public LdapRealm(Settings settings, PreAuthHelper preAuthHelper) {
     settingsManager = new LdapSettingsManager(settings);
+    this.preAuthHelper = preAuthHelper;
   }
 
   @Override
@@ -57,7 +58,6 @@ public class LdapRealm extends SecurityRealm {
     Map<String, LdapContextFactory> contextFactories = settingsManager.getContextFactories();
     Map<String, LdapUserMapping> userMappings = settingsManager.getUserMappings();
     usersProvider = new LdapUsersProvider(contextFactories, userMappings);
-    authenticator = new LdapAuthenticator(contextFactories, userMappings);
     Map<String, LdapGroupMapping> groupMappings = settingsManager.getGroupMappings();
     if (!groupMappings.isEmpty()) {
       groupsProvider = new LdapGroupsProvider(contextFactories, userMappings, groupMappings);
@@ -66,10 +66,10 @@ public class LdapRealm extends SecurityRealm {
       contextFactory.testConnection();
     }
   }
-
+  
   @Override
-  public LoginPasswordAuthenticator getLoginPasswordAuthenticator() {
-    return authenticator;
+  public Authenticator doGetAuthenticator() {
+    return new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings(), preAuthHelper);
   }
 
   @Override

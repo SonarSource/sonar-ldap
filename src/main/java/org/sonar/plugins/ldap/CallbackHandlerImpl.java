@@ -28,8 +28,8 @@ import java.io.IOException;
  * @author Evgeny Mandrikov
  */
 public class CallbackHandlerImpl implements CallbackHandler {
-  private String name;
-  private String password;
+  private final String name;
+  private final String password;
 
   public CallbackHandlerImpl(String name, String password) {
     this.name = name;

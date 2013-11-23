@@ -19,10 +19,7 @@
  */
 package org.sonar.plugins.ldap;
 
-import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.sonar.api.security.LoginPasswordAuthenticator;
+import java.util.Map;
 
 import javax.naming.NamingException;
 import javax.naming.directory.InitialDirContext;
@@ -31,64 +28,90 @@ import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
 
-import java.util.Map;
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.sonar.api.security.Authenticator;
 
 /**
  * @author Evgeny Mandrikov
  */
-public class LdapAuthenticator implements LoginPasswordAuthenticator {
+public class LdapAuthenticator extends Authenticator {
 
   private static final Logger LOG = LoggerFactory.getLogger(LdapAuthenticator.class);
   private final Map<String, LdapContextFactory> contextFactories;
   private final Map<String, LdapUserMapping> userMappings;
+  private final PreAuthHelper preAuthHelper;
 
-  public LdapAuthenticator(Map<String, LdapContextFactory> contextFactories, Map<String, LdapUserMapping> userMappings) {
+  public LdapAuthenticator(Map<String, LdapContextFactory> contextFactories, 
+      Map<String, LdapUserMapping> userMappings,
+      PreAuthHelper preAuthHelper) {
     this.contextFactories = contextFactories;
     this.userMappings = userMappings;
+    this.preAuthHelper = preAuthHelper;
   }
 
-  public void init() {
-    // nothing to do
-  }
-
-  /**
+  /** 
    * Authenticate the user against LDAP servers until first success.
-   * @param login The login to use.
-   * @param password The password to use.
+   * @param context the authentication context
    * @return false if specified user cannot be authenticated with specified password on any LDAP server
    */
-  public boolean authenticate(String login, String password) {
+  @Override
+  public boolean doAuthenticate(Context context) {
     for (String ldapKey : userMappings.keySet()) {
-      final String principal;
-      if (contextFactories.get(ldapKey).isSasl()) {
-        principal = login;
-      } else {
-        final SearchResult result;
-        try {
-          result = userMappings.get(ldapKey).createSearch(contextFactories.get(ldapKey), login).findUnique();
-        } catch (NamingException e) {
-          LOG.debug("User {} not found in server {}: {}", new Object[] {login, ldapKey, e.getMessage()});
-          continue;
-        }
-        if (result == null) {
-          LOG.debug("User {} not found in " + ldapKey, login);
-          continue;
-        }
-        principal = result.getNameInNamespace();
+      LdapContextFactory ldapContextFactory = contextFactories.get(ldapKey);
+      final String principal = determinePrincipal(context, ldapKey, ldapContextFactory);
+      if (principal == null) {
+        continue;
       }
+      
       boolean passwordValid;
-      if (contextFactories.get(ldapKey).isGssapi()) {
-        passwordValid = checkPasswordUsingGssapi(principal, password, ldapKey);
+      if (preAuthHelper.isPreAuth()) {
+        LOG.debug("User " + principal + " was preauthenticated.");
+        passwordValid = true;
+      } else if (ldapContextFactory.isGssapi()) {
+        LOG.debug("Checking Password through GSSAPI");
+        passwordValid = checkPasswordUsingGssapi(principal, context.getPassword(), ldapKey);
+      } else {
+        LOG.debug("Checking Password through SASL");
+        passwordValid = checkPasswordUsingBind(principal, context.getPassword(), ldapKey);
       }
-      passwordValid = checkPasswordUsingBind(principal, password, ldapKey);
       if (passwordValid) {
+        LOG.debug("Successfully authenticated!");
         return true;
       }
     }
-    LOG.debug("User {} not found", login);
+    LOG.debug("User {} not found", context.getUsername());
     return false;
   }
 
+  private String determinePrincipal(Context context,
+      String ldapKey,
+      LdapContextFactory ldapContextFactory) {
+    
+    if (preAuthHelper.isPreAuth()) {
+      return preAuthHelper.findPreAuthenticatedUser(context.getRequest());
+          
+    } else if (ldapContextFactory.isSasl()) {
+      return context.getUsername();
+      
+    } else {
+      // Simple auth
+      final SearchResult result;
+      try {
+        result = userMappings.get(ldapKey).createSearch(ldapContextFactory, context.getUsername()).findUnique();
+      } catch (NamingException e) {
+        LOG.debug("User {} not found in server {}: {}", new Object[] {context.getUsername(), ldapKey, e.getMessage()});
+        return null;
+      }
+      if (result == null) {
+        LOG.debug("User {} not found in " + ldapKey, context.getUsername());
+        return null;
+      }
+      return result.getNameInNamespace();
+    }
+  }
+  
   private boolean checkPasswordUsingBind(String principal, String password, String ldapKey) {
     if (StringUtils.isEmpty(password)) {
       LOG.debug("Password is blank.");

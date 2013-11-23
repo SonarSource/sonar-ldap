@@ -42,7 +42,8 @@ public class LdapUsersProvider extends ExternalUsersProvider {
   private final Map<String, LdapContextFactory> contextFactories;
   private final Map<String, LdapUserMapping> userMappings;
 
-  public LdapUsersProvider(Map<String, LdapContextFactory> contextFactories, Map<String, LdapUserMapping> userMappings) {
+  public LdapUsersProvider(Map<String, LdapContextFactory> contextFactories, 
+      Map<String, LdapUserMapping> userMappings) {
     this.contextFactories = contextFactories;
     this.userMappings = userMappings;
   }
@@ -58,11 +59,12 @@ public class LdapUsersProvider extends ExternalUsersProvider {
    * @return details for specified user, or null if such user doesn't exist
    * @throws SonarException if unable to retrieve details
    */
-  public UserDetails doGetUserDetails(String username) {
-    LOG.debug("Requesting details for user {}", username);
+  public UserDetails doGetUserDetails(Context context) {
     // If there are no userMappings available, we can not retrieve user details.
+    String username = context.getUsername();
+    LOG.debug("Requesting details for user {}", username);
     if (userMappings.isEmpty()) {
-      String errorMessage = "Unable to retrieve details for user " + username + ": No user mapping found.";
+      String errorMessage = "Unable to retrieve user details: No user mappings found.";
       LOG.debug(errorMessage);
       throw new SonarException(errorMessage);
     }
@@ -71,8 +73,9 @@ public class LdapUsersProvider extends ExternalUsersProvider {
     for (String serverKey : userMappings.keySet()) {
       SearchResult searchResult = null;
       try {
-        searchResult = userMappings.get(serverKey).createSearch(contextFactories.get(serverKey), username)
-            .returns(userMappings.get(serverKey).getEmailAttribute(), userMappings.get(serverKey).getRealNameAttribute())
+        LdapUserMapping ldapUserMapping = userMappings.get(serverKey);
+        searchResult = ldapUserMapping.createSearch(contextFactories.get(serverKey), username)
+            .returns(ldapUserMapping.getEmailAttribute(), ldapUserMapping.getRealNameAttribute())
             .findUnique();
       } catch (NamingException e) {
         // just in case if Sonar silently swallowed exception

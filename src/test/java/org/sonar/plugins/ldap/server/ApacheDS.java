@@ -223,7 +223,7 @@ public class ApacheDS {
       new ModificationItem(DirContext.ADD_ATTRIBUTE, disabled2)
     };
 
-    Hashtable env = new Hashtable();
+    Hashtable<String,String> env = new Hashtable<String,String>();
     env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
     env.put(Context.PROVIDER_URL, getUrl());
 
