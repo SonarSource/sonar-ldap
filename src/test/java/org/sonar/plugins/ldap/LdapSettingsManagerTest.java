@@ -24,8 +24,14 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.sonar.api.config.Settings;
 import org.sonar.api.utils.SonarException;
+import org.sonar.plugins.ldap.LdapAutodiscovery.LdapSrvRecord;
+
+import java.util.Arrays;
+import java.util.Collections;
 
 import static org.fest.assertions.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class LdapSettingsManagerTest {
 
@@ -36,10 +42,10 @@ public class LdapSettingsManagerTest {
   public void shouldFailWhenNoLdapUrl() throws Exception {
     Settings settings = generateMultipleLdapSettingsWithUserAndGroupMapping();
     settings.removeProperty("ldap.example.url");
-    LdapSettingsManager settingsManager = new LdapSettingsManager(settings);
+    LdapSettingsManager settingsManager = new LdapSettingsManager(settings, new LdapAutodiscovery());
 
     thrown.expect(SonarException.class);
-    thrown.expectMessage("The property 'ldap.example.url' property is empty and SonarQube is not able to auto-discover any LDAP server.");
+    thrown.expectMessage("The property 'ldap.example.url' property is empty while it is mandatory.");
     settingsManager.getContextFactories();
   }
 
@@ -47,12 +53,19 @@ public class LdapSettingsManagerTest {
   public void shouldFailWhenMixingSingleAndMultipleConfiguration() throws Exception {
     Settings settings = generateMultipleLdapSettingsWithUserAndGroupMapping();
     settings.setProperty("ldap.url", "ldap://foo");
-    LdapSettingsManager settingsManager = new LdapSettingsManager(settings);
+    LdapSettingsManager settingsManager = new LdapSettingsManager(settings, new LdapAutodiscovery());
 
     thrown.expect(SonarException.class);
     thrown
-        .expectMessage("When defining multiple LDAP servers with the property 'ldap.servers', all LDAP properties must be linked to one of those servers. Please remove properties like 'ldap.url', 'ldap.realm', ...");
+      .expectMessage("When defining multiple LDAP servers with the property 'ldap.servers', all LDAP properties must be linked to one of those servers. Please remove properties like 'ldap.url', 'ldap.realm', ...");
     settingsManager.getContextFactories();
+  }
+
+  @Test
+  public void testContextFactoriesWithSingleLdap() throws Exception {
+    LdapSettingsManager settingsManager = new LdapSettingsManager(
+      generateSingleLdapSettingsWithUserAndGroupMapping(), new LdapAutodiscovery());
+    assertThat(settingsManager.getContextFactories().size()).isEqualTo(1);
   }
 
   /**
@@ -62,12 +75,36 @@ public class LdapSettingsManagerTest {
    *             This is not expected.
    */
   @Test
-  public void testContextFactories() throws Exception {
+  public void testContextFactoriesWithMultipleLdap() throws Exception {
     LdapSettingsManager settingsManager = new LdapSettingsManager(
-        generateMultipleLdapSettingsWithUserAndGroupMapping());
+      generateMultipleLdapSettingsWithUserAndGroupMapping(), new LdapAutodiscovery());
     assertThat(settingsManager.getContextFactories().size()).isEqualTo(2);
     // We do it twice to make sure the settings keep the same.
     assertThat(settingsManager.getContextFactories().size()).isEqualTo(2);
+  }
+
+  @Test
+  public void testAutodiscover() throws Exception {
+    LdapAutodiscovery ldapAutodiscovery = mock(LdapAutodiscovery.class);
+    LdapSrvRecord ldap1 = new LdapSrvRecord("ldap://localhost:189", 1, 1);
+    LdapSrvRecord ldap2 = new LdapSrvRecord("ldap://localhost:1899", 1, 1);
+    when(ldapAutodiscovery.getLdapServers("example.org")).thenReturn(Arrays.asList(ldap1, ldap2));
+    LdapSettingsManager settingsManager = new LdapSettingsManager(
+      generateAutodiscoverSettings(), ldapAutodiscovery);
+    assertThat(settingsManager.getContextFactories().size()).isEqualTo(2);
+  }
+
+  @Test
+  public void testAutodiscoverFailed() throws Exception {
+    LdapAutodiscovery ldapAutodiscovery = mock(LdapAutodiscovery.class);
+    when(ldapAutodiscovery.getLdapServers("example.org")).thenReturn(Collections.<LdapSrvRecord>emptyList());
+    LdapSettingsManager settingsManager = new LdapSettingsManager(
+      generateAutodiscoverSettings(), ldapAutodiscovery);
+
+    thrown.expect(SonarException.class);
+    thrown.expectMessage("The property 'ldap.url' property is empty and SonarQube is not able to auto-discover any LDAP server.");
+
+    settingsManager.getContextFactories();
   }
 
   /**
@@ -79,7 +116,7 @@ public class LdapSettingsManagerTest {
   @Test
   public void testUserMappings() throws Exception {
     LdapSettingsManager settingsManager = new LdapSettingsManager(
-        generateMultipleLdapSettingsWithUserAndGroupMapping());
+      generateMultipleLdapSettingsWithUserAndGroupMapping(), new LdapAutodiscovery());
     assertThat(settingsManager.getUserMappings().size()).isEqualTo(2);
     // We do it twice to make sure the settings keep the same.
     assertThat(settingsManager.getUserMappings().size()).isEqualTo(2);
@@ -94,7 +131,7 @@ public class LdapSettingsManagerTest {
   @Test
   public void testGroupMappings() throws Exception {
     LdapSettingsManager settingsManager = new LdapSettingsManager(
-        generateMultipleLdapSettingsWithUserAndGroupMapping());
+      generateMultipleLdapSettingsWithUserAndGroupMapping(), new LdapAutodiscovery());
     assertThat(settingsManager.getGroupMappings().size()).isEqualTo(2);
     // We do it twice to make sure the settings keep the same.
     assertThat(settingsManager.getGroupMappings().size()).isEqualTo(2);
@@ -108,10 +145,10 @@ public class LdapSettingsManagerTest {
   @Test
   public void testEmptySettings() throws Exception {
     LdapSettingsManager settingsManager = new LdapSettingsManager(
-        new Settings());
+      new Settings(), new LdapAutodiscovery());
 
     thrown.expect(SonarException.class);
-    thrown.expectMessage("The property 'ldap.url' property is empty and SonarQube is not able to auto-discover any LDAP server.");
+    thrown.expectMessage("The property 'ldap.url' property is empty and no realm configured to try auto-discovery.");
     settingsManager.getContextFactories();
   }
 
@@ -121,19 +158,44 @@ public class LdapSettingsManagerTest {
     settings.setProperty("ldap.servers", "example,infosupport");
 
     settings.setProperty("ldap.example.url", "/users.example.org.ldif")
-        .setProperty("ldap.example.user.baseDn", "ou=users,dc=example,dc=org")
-        .setProperty("ldap.example.group.baseDn", "ou=groups,dc=example,dc=org")
-        .setProperty("ldap.example.group.request",
-            "(&(objectClass=posixGroup)(memberUid={uid}))");
+      .setProperty("ldap.example.user.baseDn", "ou=users,dc=example,dc=org")
+      .setProperty("ldap.example.group.baseDn", "ou=groups,dc=example,dc=org")
+      .setProperty("ldap.example.group.request",
+        "(&(objectClass=posixGroup)(memberUid={uid}))");
 
     settings.setProperty("ldap.infosupport.url", "/users.infosupport.com.ldif")
-        .setProperty("ldap.infosupport.user.baseDn",
-            "ou=users,dc=infosupport,dc=com")
-        .setProperty("ldap.infosupport.group.baseDn",
-            "ou=groups,dc=infosupport,dc=com")
-        .setProperty("ldap.infosupport.group.request",
-            "(&(objectClass=posixGroup)(memberUid={uid}))");
+      .setProperty("ldap.infosupport.user.baseDn",
+        "ou=users,dc=infosupport,dc=com")
+      .setProperty("ldap.infosupport.group.baseDn",
+        "ou=groups,dc=infosupport,dc=com")
+      .setProperty("ldap.infosupport.group.request",
+        "(&(objectClass=posixGroup)(memberUid={uid}))");
 
     return settings;
   }
+
+  private Settings generateSingleLdapSettingsWithUserAndGroupMapping() {
+    Settings settings = new Settings();
+
+    settings.setProperty("ldap.url", "/users.example.org.ldif")
+      .setProperty("ldap.user.baseDn", "ou=users,dc=example,dc=org")
+      .setProperty("ldap.group.baseDn", "ou=groups,dc=example,dc=org")
+      .setProperty("ldap.group.request",
+        "(&(objectClass=posixGroup)(memberUid={uid}))");
+
+    return settings;
+  }
+
+  private Settings generateAutodiscoverSettings() {
+    Settings settings = new Settings();
+
+    settings.setProperty("ldap.realm", "example.org")
+      .setProperty("ldap.user.baseDn", "ou=users,dc=example,dc=org")
+      .setProperty("ldap.group.baseDn", "ou=groups,dc=example,dc=org")
+      .setProperty("ldap.group.request",
+        "(&(objectClass=posixGroup)(memberUid={uid}))");
+
+    return settings;
+  }
+
 }

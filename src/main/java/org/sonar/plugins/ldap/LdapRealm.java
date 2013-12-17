@@ -19,7 +19,6 @@
  */
 package org.sonar.plugins.ldap;
 
-import org.sonar.api.config.Settings;
 import org.sonar.api.security.ExternalGroupsProvider;
 import org.sonar.api.security.ExternalUsersProvider;
 import org.sonar.api.security.LoginPasswordAuthenticator;
@@ -37,8 +36,8 @@ public class LdapRealm extends SecurityRealm {
   private LdapAuthenticator authenticator;
   private final LdapSettingsManager settingsManager;
 
-  public LdapRealm(Settings settings) {
-    settingsManager = new LdapSettingsManager(settings);
+  public LdapRealm(LdapSettingsManager settingsManager) {
+    this.settingsManager = settingsManager;
   }
 
   @Override

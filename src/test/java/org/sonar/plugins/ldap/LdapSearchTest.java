@@ -46,16 +46,16 @@ public class LdapSearchTest {
 
   @BeforeClass
   public static void init() {
-    contextFactories = new LdapSettingsManager(LdapSettingsFactory.generateSimpleAnonymousAccessSettings(server, null)).getContextFactories();
+    contextFactories = new LdapSettingsManager(LdapSettingsFactory.generateSimpleAnonymousAccessSettings(server, null), new LdapAutodiscovery()).getContextFactories();
   }
 
   @Test
   public void subtreeSearch() throws Exception {
     LdapSearch search = new LdapSearch(contextFactories.values().iterator().next())
-        .setBaseDn("dc=example,dc=org")
-        .setRequest("(objectClass={0})")
-        .setParameters("inetOrgPerson")
-        .returns("objectClass");
+      .setBaseDn("dc=example,dc=org")
+      .setRequest("(objectClass={0})")
+      .setParameters("inetOrgPerson")
+      .returns("objectClass");
 
     assertThat(search.getBaseDn()).isEqualTo("dc=example,dc=org");
     assertThat(search.getScope()).isEqualTo(SearchControls.SUBTREE_SCOPE);
@@ -72,11 +72,11 @@ public class LdapSearchTest {
   @Test
   public void oneLevelSearch() throws Exception {
     LdapSearch search = new LdapSearch(contextFactories.values().iterator().next())
-        .setBaseDn("dc=example,dc=org")
-        .setScope(SearchControls.ONELEVEL_SCOPE)
-        .setRequest("(objectClass={0})")
-        .setParameters("inetOrgPerson")
-        .returns("cn");
+      .setBaseDn("dc=example,dc=org")
+      .setScope(SearchControls.ONELEVEL_SCOPE)
+      .setRequest("(objectClass={0})")
+      .setParameters("inetOrgPerson")
+      .returns("cn");
 
     assertThat(search.getBaseDn()).isEqualTo("dc=example,dc=org");
     assertThat(search.getScope()).isEqualTo(SearchControls.ONELEVEL_SCOPE);
@@ -91,11 +91,11 @@ public class LdapSearchTest {
   @Test
   public void objectSearch() throws Exception {
     LdapSearch search = new LdapSearch(contextFactories.values().iterator().next())
-        .setBaseDn("cn=bind,ou=users,dc=example,dc=org")
-        .setScope(SearchControls.OBJECT_SCOPE)
-        .setRequest("(objectClass={0})")
-        .setParameters("uidObject")
-        .returns("uid");
+      .setBaseDn("cn=bind,ou=users,dc=example,dc=org")
+      .setScope(SearchControls.OBJECT_SCOPE)
+      .setRequest("(objectClass={0})")
+      .setParameters("uidObject")
+      .returns("uid");
 
     assertThat(search.getBaseDn()).isEqualTo("cn=bind,ou=users,dc=example,dc=org");
     assertThat(search.getScope()).isEqualTo(SearchControls.OBJECT_SCOPE);
@@ -103,7 +103,7 @@ public class LdapSearchTest {
     assertThat(search.getParameters()).isEqualTo(new String[] {"uidObject"});
     assertThat(search.getReturningAttributes()).isEqualTo(new String[] {"uid"});
     assertThat(search.toString()).isEqualTo(
-        "LdapSearch{baseDn=cn=bind,ou=users,dc=example,dc=org, scope=object, request=(objectClass={0}), parameters=[uidObject], attributes=[uid]}");
+      "LdapSearch{baseDn=cn=bind,ou=users,dc=example,dc=org, scope=object, request=(objectClass={0}), parameters=[uidObject], attributes=[uid]}");
     assertThat(Iterators.size(Iterators.forEnumeration(search.find()))).isEqualTo(1);
     assertThat(search.findUnique()).isNotNull();
   }

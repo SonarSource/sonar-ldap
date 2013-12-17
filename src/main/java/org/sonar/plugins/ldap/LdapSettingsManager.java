@@ -22,17 +22,20 @@ package org.sonar.plugins.ldap;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sonar.api.ServerExtension;
 import org.sonar.api.config.Settings;
 import org.sonar.api.utils.SonarException;
+import org.sonar.plugins.ldap.LdapAutodiscovery.LdapSrvRecord;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * The LdapSettingsManager will parse the settings.
  * This class is also responsible to cope with multiple ldap servers.
  */
-public class LdapSettingsManager {
+public class LdapSettingsManager implements ServerExtension {
 
   private static final Logger LOG = LoggerFactory.getLogger(LdapSettingsManager.class);
 
@@ -40,6 +43,7 @@ public class LdapSettingsManager {
   private static final String LDAP_PROPERTY_PREFIX = "ldap";
   private static final String DEFAULT_LDAP_SERVER_KEY = "<default>";
   private final Settings settings;
+  private final LdapAutodiscovery ldapAutodiscovery;
   private Map<String, LdapUserMapping> userMappings = null;
   private Map<String, LdapGroupMapping> groupMappings = null;
   private Map<String, LdapContextFactory> contextFactories;
@@ -49,8 +53,9 @@ public class LdapSettingsManager {
    *
    * @param settings The settings to use.
    */
-  public LdapSettingsManager(Settings settings) {
+  public LdapSettingsManager(Settings settings, LdapAutodiscovery ldapAutodiscovery) {
     this.settings = settings;
+    this.ldapAutodiscovery = ldapAutodiscovery;
   }
 
   /**
@@ -140,15 +145,41 @@ public class LdapSettingsManager {
             + "all LDAP properties must be linked to one of those servers. Please remove properties like 'ldap.url', 'ldap.realm', ...");
         }
         for (String serverKey : serverKeys) {
-          LdapContextFactory contextFactory = new LdapContextFactory(settings, LDAP_PROPERTY_PREFIX + "." + serverKey);
-          if (StringUtils.isNotBlank(contextFactory.getProviderUrl())) {
-            contextFactories.put(serverKey, contextFactory);
+          String prefix = LDAP_PROPERTY_PREFIX + "." + serverKey;
+          String ldapUrlKey = prefix + ".url";
+          String ldapUrl = settings.getString(ldapUrlKey);
+          if (StringUtils.isBlank(ldapUrl)) {
+            throw new SonarException("The property '" + ldapUrlKey + "' property is empty while it is mandatory.");
           }
+          LdapContextFactory contextFactory = new LdapContextFactory(settings, prefix, ldapUrl);
+          contextFactories.put(serverKey, contextFactory);
         }
       } else {
-        // Backward compatibility with single server configuration
-        LdapContextFactory contextFactory = new LdapContextFactory(settings, LDAP_PROPERTY_PREFIX);
-        if (StringUtils.isNotBlank(contextFactory.getProviderUrl())) {
+        // Single server configuration
+        String realm = settings.getString(LDAP_PROPERTY_PREFIX + ".realm");
+        String ldapUrlKey = LDAP_PROPERTY_PREFIX + ".url";
+        String ldapUrl = settings.getString(ldapUrlKey);
+        if (ldapUrl == null && realm != null) {
+          LOG.info("Auto discovery mode");
+          List<LdapSrvRecord> ldapServers = ldapAutodiscovery.getLdapServers(realm);
+          if (ldapServers.isEmpty()) {
+            throw new SonarException("The property '" + ldapUrlKey + "' property is empty and SonarQube is not able to auto-discover any LDAP server.");
+          }
+          int index = 1;
+          for (LdapSrvRecord ldapSrvRecord : ldapServers) {
+            if (StringUtils.isNotBlank(ldapSrvRecord.getServerUrl())) {
+              LOG.info("Detected server: " + ldapSrvRecord.getServerUrl());
+              LdapContextFactory contextFactory = new LdapContextFactory(settings, LDAP_PROPERTY_PREFIX, ldapSrvRecord.getServerUrl());
+              contextFactories.put(DEFAULT_LDAP_SERVER_KEY + index, contextFactory);
+              index++;
+            }
+          }
+
+        } else {
+          if (StringUtils.isBlank(ldapUrl)) {
+            throw new SonarException("The property '" + ldapUrlKey + "' property is empty and no realm configured to try auto-discovery.");
+          }
+          LdapContextFactory contextFactory = new LdapContextFactory(settings, LDAP_PROPERTY_PREFIX, ldapUrl);
           contextFactories.put(DEFAULT_LDAP_SERVER_KEY, contextFactory);
         }
       }

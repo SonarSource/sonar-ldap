@@ -27,7 +27,9 @@ import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
+
 import java.net.UnknownHostException;
+import java.util.Arrays;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.junit.Assert.fail;
@@ -64,18 +66,21 @@ public class LdapAutodiscoveryTest {
     Attribute attribute = mock(Attribute.class);
     NamingEnumeration namingEnumeration = mock(NamingEnumeration.class);
 
-    when(context.getAttributes(Mockito.anyString(), Mockito.<String[]> anyObject())).thenReturn(attributes);
+    when(context.getAttributes(Mockito.anyString(), Mockito.<String[]>anyObject())).thenReturn(attributes);
     when(attributes.get(Mockito.eq("srv"))).thenReturn(attribute);
     when(attribute.getAll()).thenReturn(namingEnumeration);
     when(namingEnumeration.hasMore()).thenReturn(true, true, true, true, true, false);
     when(namingEnumeration.next())
-        .thenReturn("10 40 389 ldap5.example.org.")
-        .thenReturn("0 10 389 ldap3.example.org")
-        .thenReturn("0 60 389 ldap1.example.org")
-        .thenReturn("0 30 389 ldap2.example.org")
-        .thenReturn("10 60 389 ldap4.example.org");
+      .thenReturn("10 40 389 ldap5.example.org.")
+      .thenReturn("0 10 389 ldap3.example.org")
+      .thenReturn("0 60 389 ldap1.example.org")
+      .thenReturn("0 30 389 ldap2.example.org")
+      .thenReturn("10 60 389 ldap4.example.org");
 
-    assertThat(LdapAutodiscovery.getLdapServer(context, "example.org.")).isEqualTo("ldap://ldap1.example.org:389");
+    assertThat(new LdapAutodiscovery().getLdapServers(context, "example.org.")).onProperty("serverUrl")
+      .isEqualTo(
+        Arrays.asList("ldap://ldap1.example.org:389", "ldap://ldap2.example.org:389", "ldap://ldap3.example.org:389", "ldap://ldap4.example.org:389",
+          "ldap://ldap5.example.org:389"));
   }
 
 }

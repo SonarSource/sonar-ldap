@@ -31,7 +31,9 @@ import java.util.List;
 public class LdapPlugin extends SonarPlugin {
 
   public List getExtensions() {
-    return ImmutableList.of(LdapRealm.class);
+    return ImmutableList.of(LdapRealm.class,
+      LdapSettingsManager.class,
+      LdapAutodiscovery.class);
   }
 
 }

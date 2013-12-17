@@ -39,8 +39,8 @@ public class LdapRealmTest {
   @Test
   public void normal() {
     Settings settings = new Settings()
-        .setProperty("ldap.url", server.getUrl());
-    LdapRealm realm = new LdapRealm(settings);
+      .setProperty("ldap.url", server.getUrl());
+    LdapRealm realm = new LdapRealm(new LdapSettingsManager(settings, new LdapAutodiscovery()));
     assertThat(realm.getName()).isEqualTo("LDAP");
     realm.init();
     assertThat(realm.getLoginPasswordAuthenticator()).isInstanceOf(LoginPasswordAuthenticator.class).isInstanceOf(LdapAuthenticator.class);
@@ -51,9 +51,9 @@ public class LdapRealmTest {
   @Test
   public void noConnection() {
     Settings settings = new Settings()
-        .setProperty("ldap.url", "ldap://no-such-host")
-        .setProperty("ldap.group.baseDn", "cn=groups,dc=example,dc=org");
-    LdapRealm realm = new LdapRealm(settings);
+      .setProperty("ldap.url", "ldap://no-such-host")
+      .setProperty("ldap.group.baseDn", "cn=groups,dc=example,dc=org");
+    LdapRealm realm = new LdapRealm(new LdapSettingsManager(settings, new LdapAutodiscovery()));
     assertThat(realm.getName()).isEqualTo("LDAP");
     try {
       realm.init();

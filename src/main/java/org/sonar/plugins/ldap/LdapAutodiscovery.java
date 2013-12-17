@@ -19,9 +19,11 @@
  */
 package org.sonar.plugins.ldap;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sonar.api.ServerExtension;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -32,16 +34,18 @@ import javax.naming.directory.InitialDirContext;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * @author Evgeny Mandrikov
  */
-public final class LdapAutodiscovery {
+public class LdapAutodiscovery implements ServerExtension {
 
   private static final Logger LOG = LoggerFactory.getLogger(LdapAutodiscovery.class);
-
-  private LdapAutodiscovery() {
-  }
 
   /**
    * Get the DNS domain name (eg: example.org).
@@ -82,27 +86,25 @@ public final class LdapAutodiscovery {
   }
 
   /**
-   * Get LDAP server from DNS.
+   * Get LDAP server(s) from DNS.
    *
    * @param domain DNS domain
-   * @return LDAP server or null if unable to determine
+   * @return LDAP server(s) or empty if unable to determine
    */
-  public static String getLdapServer(String domain) {
+  public List<LdapSrvRecord> getLdapServers(String domain) {
     try {
-      return getLdapServer(new InitialDirContext(), domain);
+      return getLdapServers(new InitialDirContext(), domain);
     } catch (NamingException e) {
-      LOG.error("Unable to determine LDAP server from DNS", e);
-      return null;
+      LOG.error("Unable to determine LDAP server(s) from DNS", e);
+      return Collections.emptyList();
     }
   }
 
-  static String getLdapServer(DirContext context, String domain) throws NamingException {
+  List<LdapSrvRecord> getLdapServers(DirContext context, String domain) throws NamingException {
     Attributes lSrvAttrs = context.getAttributes("dns:/_ldap._tcp." + domain, new String[] {"srv"});
     Attribute serversAttribute = lSrvAttrs.get("srv");
     NamingEnumeration<?> lEnum = serversAttribute.getAll();
-    String server = null;
-    int currentPriority = 0;
-    int currentWeight = 0;
+    SortedSet<LdapSrvRecord> result = new TreeSet<LdapSrvRecord>();
     while (lEnum.hasMore()) {
       String srvRecord = (String) lEnum.next();
       // priority weight port target
@@ -116,17 +118,35 @@ public final class LdapAutodiscovery {
       if (target.endsWith(".")) {
         target = target.substring(0, target.length() - 1);
       }
-
-      if ((server == null) || (priority < currentPriority)) {
-        server = "ldap://" + target + ":" + port;
-        currentPriority = priority;
-        currentWeight = weight;
-      } else if ((priority == currentPriority) && (weight > currentWeight)) {
-        server = "ldap://" + target + ":" + port;
-        currentWeight = weight;
-      }
+      String server = "ldap://" + target + ":" + port;
+      result.add(new LdapSrvRecord(server, priority, weight));
     }
-    return server;
+    return new ArrayList<LdapSrvRecord>(result);
+  }
+
+  @VisibleForTesting
+  public static class LdapSrvRecord implements Comparable<LdapSrvRecord> {
+    private final String serverUrl;
+    private final int priority;
+    private final int weight;
+
+    public LdapSrvRecord(String serverUrl, int priority, int weight) {
+      this.serverUrl = serverUrl;
+      this.priority = priority;
+      this.weight = weight;
+    }
+
+    public int compareTo(LdapSrvRecord o) {
+      if (this.priority == o.priority) {
+        return Integer.valueOf(o.weight).compareTo(this.weight);
+      }
+      return Integer.valueOf(this.priority).compareTo(o.priority);
+    }
+
+    public String getServerUrl() {
+      return serverUrl;
+    }
+
   }
 
 }
