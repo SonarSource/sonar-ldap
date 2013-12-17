@@ -102,7 +102,7 @@ public class LdapSettingsManagerTest {
       generateAutodiscoverSettings(), ldapAutodiscovery);
 
     thrown.expect(SonarException.class);
-    thrown.expectMessage("The property 'ldap.url' property is empty and SonarQube is not able to auto-discover any LDAP server.");
+    thrown.expectMessage("The property 'ldap.url' is empty and SonarQube is not able to auto-discover any LDAP server.");
 
     settingsManager.getContextFactories();
   }
@@ -148,7 +148,7 @@ public class LdapSettingsManagerTest {
       new Settings(), new LdapAutodiscovery());
 
     thrown.expect(SonarException.class);
-    thrown.expectMessage("The property 'ldap.url' property is empty and no realm configured to try auto-discovery.");
+    thrown.expectMessage("The property 'ldap.url' is empty and no realm configured to try auto-discovery.");
     settingsManager.getContextFactories();
   }
 
