@@ -147,6 +147,18 @@ public class LdapAutodiscovery implements ServerExtension {
       return serverUrl;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+      if (!(obj instanceof LdapSrvRecord)) {
+        return false;
+      }
+      return this.serverUrl.equals(((LdapSrvRecord) obj).serverUrl);
+    }
+
+    @Override
+    public int hashCode() {
+      return this.serverUrl.hashCode();
+    }
   }
 
 }

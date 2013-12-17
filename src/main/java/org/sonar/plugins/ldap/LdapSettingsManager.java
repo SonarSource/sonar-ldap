@@ -140,50 +140,56 @@ public class LdapSettingsManager implements ServerExtension {
       contextFactories = new LinkedHashMap<String, LdapContextFactory>();
       String[] serverKeys = settings.getStringArray(LDAP_SERVERS_PROPERTY);
       if (serverKeys.length > 0) {
-        if (settings.hasKey("ldap.url") || settings.hasKey("ldap.realm")) {
-          throw new SonarException("When defining multiple LDAP servers with the property '" + LDAP_SERVERS_PROPERTY + "', "
-            + "all LDAP properties must be linked to one of those servers. Please remove properties like 'ldap.url', 'ldap.realm', ...");
-        }
-        for (String serverKey : serverKeys) {
-          String prefix = LDAP_PROPERTY_PREFIX + "." + serverKey;
-          String ldapUrlKey = prefix + ".url";
-          String ldapUrl = settings.getString(ldapUrlKey);
-          if (StringUtils.isBlank(ldapUrl)) {
-            throw new SonarException("The property '" + ldapUrlKey + "' property is empty while it is mandatory.");
-          }
-          LdapContextFactory contextFactory = new LdapContextFactory(settings, prefix, ldapUrl);
-          contextFactories.put(serverKey, contextFactory);
-        }
+        initMultiLdapConfiguration(serverKeys);
       } else {
-        // Single server configuration
-        String realm = settings.getString(LDAP_PROPERTY_PREFIX + ".realm");
-        String ldapUrlKey = LDAP_PROPERTY_PREFIX + ".url";
-        String ldapUrl = settings.getString(ldapUrlKey);
-        if (ldapUrl == null && realm != null) {
-          LOG.info("Auto discovery mode");
-          List<LdapSrvRecord> ldapServers = ldapAutodiscovery.getLdapServers(realm);
-          if (ldapServers.isEmpty()) {
-            throw new SonarException("The property '" + ldapUrlKey + "' property is empty and SonarQube is not able to auto-discover any LDAP server.");
-          }
-          int index = 1;
-          for (LdapSrvRecord ldapSrvRecord : ldapServers) {
-            if (StringUtils.isNotBlank(ldapSrvRecord.getServerUrl())) {
-              LOG.info("Detected server: " + ldapSrvRecord.getServerUrl());
-              LdapContextFactory contextFactory = new LdapContextFactory(settings, LDAP_PROPERTY_PREFIX, ldapSrvRecord.getServerUrl());
-              contextFactories.put(DEFAULT_LDAP_SERVER_KEY + index, contextFactory);
-              index++;
-            }
-          }
-
-        } else {
-          if (StringUtils.isBlank(ldapUrl)) {
-            throw new SonarException("The property '" + ldapUrlKey + "' property is empty and no realm configured to try auto-discovery.");
-          }
-          LdapContextFactory contextFactory = new LdapContextFactory(settings, LDAP_PROPERTY_PREFIX, ldapUrl);
-          contextFactories.put(DEFAULT_LDAP_SERVER_KEY, contextFactory);
-        }
+        initSimpleLdapConfiguration();
       }
     }
     return contextFactories;
+  }
+
+  private void initSimpleLdapConfiguration() {
+    String realm = settings.getString(LDAP_PROPERTY_PREFIX + ".realm");
+    String ldapUrlKey = LDAP_PROPERTY_PREFIX + ".url";
+    String ldapUrl = settings.getString(ldapUrlKey);
+    if (ldapUrl == null && realm != null) {
+      LOG.info("Auto discovery mode");
+      List<LdapSrvRecord> ldapServers = ldapAutodiscovery.getLdapServers(realm);
+      if (ldapServers.isEmpty()) {
+        throw new SonarException(String.format("The property '%s' is empty and SonarQube is not able to auto-discover any LDAP server.", ldapUrlKey));
+      }
+      int index = 1;
+      for (LdapSrvRecord ldapSrvRecord : ldapServers) {
+        if (StringUtils.isNotBlank(ldapSrvRecord.getServerUrl())) {
+          LOG.info("Detected server: " + ldapSrvRecord.getServerUrl());
+          LdapContextFactory contextFactory = new LdapContextFactory(settings, LDAP_PROPERTY_PREFIX, ldapSrvRecord.getServerUrl());
+          contextFactories.put(DEFAULT_LDAP_SERVER_KEY + index, contextFactory);
+          index++;
+        }
+      }
+    } else {
+      if (StringUtils.isBlank(ldapUrl)) {
+        throw new SonarException(String.format("The property '%s' is empty and no realm configured to try auto-discovery.", ldapUrlKey));
+      }
+      LdapContextFactory contextFactory = new LdapContextFactory(settings, LDAP_PROPERTY_PREFIX, ldapUrl);
+      contextFactories.put(DEFAULT_LDAP_SERVER_KEY, contextFactory);
+    }
+  }
+
+  private void initMultiLdapConfiguration(String[] serverKeys) {
+    if (settings.hasKey("ldap.url") || settings.hasKey("ldap.realm")) {
+      throw new SonarException("When defining multiple LDAP servers with the property '" + LDAP_SERVERS_PROPERTY + "', "
+        + "all LDAP properties must be linked to one of those servers. Please remove properties like 'ldap.url', 'ldap.realm', ...");
+    }
+    for (String serverKey : serverKeys) {
+      String prefix = LDAP_PROPERTY_PREFIX + "." + serverKey;
+      String ldapUrlKey = prefix + ".url";
+      String ldapUrl = settings.getString(ldapUrlKey);
+      if (StringUtils.isBlank(ldapUrl)) {
+        throw new SonarException(String.format("The property '%s' property is empty while it is mandatory.", ldapUrlKey));
+      }
+      LdapContextFactory contextFactory = new LdapContextFactory(settings, prefix, ldapUrl);
+      contextFactories.put(serverKey, contextFactory);
+    }
   }
 }

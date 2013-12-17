@@ -21,6 +21,7 @@ package org.sonar.plugins.ldap;
 
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.sonar.plugins.ldap.LdapAutodiscovery.LdapSrvRecord;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -57,6 +58,14 @@ public class LdapAutodiscoveryTest {
   @Test
   public void testGetDnsDomainDn() {
     assertThat(LdapAutodiscovery.getDnsDomainDn("example.org")).isEqualTo("dc=example,dc=org");
+  }
+
+  @Test
+  public void testEqualsAndHashCode() {
+    assertThat(new LdapSrvRecord("http://foo:389", 1, 1)).isEqualTo(new LdapSrvRecord("http://foo:389", 2, 0));
+    assertThat(new LdapSrvRecord("http://foo:389", 1, 1)).isNotEqualTo(new LdapSrvRecord("http://foo:388", 1, 1));
+
+    assertThat(new LdapSrvRecord("http://foo:389", 1, 1).hashCode()).isEqualTo(new LdapSrvRecord("http://foo:389", 1, 1).hashCode());
   }
 
   @Test
