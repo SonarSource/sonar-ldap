@@ -59,7 +59,7 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
    */
   public Collection<String> doGetGroups(String username) {
     checkPrerequisites(username);
-    HashSet<String> groups = Sets.newHashSet();
+    Set<String> groups = Sets.newHashSet();
     List<SonarException> sonarExceptions = new ArrayList<SonarException>();
     for (String serverKey : userMappings.keySet()) {
       if (!groupMappings.containsKey(serverKey)) {
@@ -71,8 +71,8 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
       if (searchResult != null) {
         try {
           NamingEnumeration<SearchResult> result = groupMappings
-              .get(serverKey)
-              .createSearch(contextFactories.get(serverKey), searchResult).find();
+            .get(serverKey)
+            .createSearch(contextFactories.get(serverKey), searchResult).find();
           groups.addAll(mapGroups(serverKey, result));
           // if no exceptions occur, we found the user and his groups and mapped his details.
           break;
@@ -109,8 +109,8 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
       LOG.debug("Requesting groups for user {}", username);
 
       searchResult = userMappings.get(serverKey).createSearch(contextFactories.get(serverKey), username)
-          .returns(groupMappings.get(serverKey).getRequiredUserAttributes())
-          .findUnique();
+        .returns(groupMappings.get(serverKey).getRequiredUserAttributes())
+        .findUnique();
     } catch (NamingException e) {
       // just in case if Sonar silently swallowed exception
       LOG.debug(e.getMessage(), e);
@@ -127,8 +127,8 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
    * @return A {@link Collection} of groups the user is member of.
    * @throws NamingException
    */
-  private Collection<? extends String> mapGroups(String serverKey, NamingEnumeration<SearchResult> searchResult) throws NamingException {
-    HashSet<String> groups = new HashSet<String>();
+  private Collection<String> mapGroups(String serverKey, NamingEnumeration<SearchResult> searchResult) throws NamingException {
+    Set<String> groups = new HashSet<String>();
     while (searchResult.hasMoreElements()) {
       SearchResult obj = (SearchResult) searchResult.nextElement();
       Attributes attributes = obj.getAttributes();
