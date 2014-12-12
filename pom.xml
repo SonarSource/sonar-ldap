@@ -13,7 +13,7 @@
 
   <name>Sonar LDAP Plugin</name>
   <description>Delegates authentication to LDAP.</description>
-  <url>http://docs.codehaus.org/display/SONAR/LDAP+Plugin</url>
+  <url>http://docs.sonarqube.org/display/SONAR/LDAP+Plugin</url>
   <inceptionYear>2009</inceptionYear>
   <organization>
     <name>SonarSource</name>
