@@ -106,7 +106,7 @@ public class LdapSettingsManager implements ServerExtension {
       String[] serverKeys = settings.getStringArray(LDAP_SERVERS_PROPERTY);
       if (serverKeys.length > 0) {
         for (String serverKey : serverKeys) {
-          LdapGroupMapping groupMapping = new LdapGroupMapping(settings, LDAP_PROPERTY_PREFIX + "." + serverKey);
+          LdapGroupMapping groupMapping = new LdapGroupMapping(settings, LDAP_PROPERTY_PREFIX, serverKey, serverKeys);
           if (StringUtils.isNotBlank(groupMapping.getBaseDn())) {
             LOG.info("Group mapping for server {}: {}", serverKey, groupMapping);
             groupMappings.put(serverKey, groupMapping);
@@ -116,7 +116,7 @@ public class LdapSettingsManager implements ServerExtension {
         }
       } else {
         // Backward compatibility with single server configuration
-        LdapGroupMapping groupMapping = new LdapGroupMapping(settings, LDAP_PROPERTY_PREFIX);
+        LdapGroupMapping groupMapping = new LdapGroupMapping(settings, LDAP_PROPERTY_PREFIX, null, null);
         if (StringUtils.isNotBlank(groupMapping.getBaseDn())) {
           LOG.info("Group mapping: {}", groupMapping);
           groupMappings.put(DEFAULT_LDAP_SERVER_KEY, groupMapping);

@@ -20,6 +20,7 @@
 package org.sonar.plugins.ldap;
 
 import com.google.common.base.Objects;
+
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.config.Settings;
@@ -30,6 +31,8 @@ import javax.naming.directory.Attribute;
 import javax.naming.directory.SearchResult;
 
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Evgeny Mandrikov
@@ -45,11 +48,13 @@ public class LdapGroupMapping {
   private final String idAttribute;
   private final String request;
   private final String[] requiredUserAttributes;
+  private final String[] groupRequestServersOverride;
 
   /**
    * Constructs mapping from Sonar settings.
    */
-  public LdapGroupMapping(Settings settings, String settingsPrefix) {
+  public LdapGroupMapping(Settings settings, String settingsRootKey, String serverKey, String[] availableServers) {  
+    String settingsPrefix = settingsRootKey + (serverKey != null ? "." + serverKey : "");
     this.baseDn = settings.getString(settingsPrefix + ".group.baseDn");
     this.idAttribute = StringUtils.defaultString(settings.getString(settingsPrefix + ".group.idAttribute"), DEFAULT_ID_ATTRIBUTE);
 
@@ -73,6 +78,21 @@ public class LdapGroupMapping {
       req = StringUtils.replace(req, "{" + requiredUserAttributes[i] + "}", "{" + i + "}");
     }
     this.request = req;
+    
+    String groupSearchPropertyName = settingsPrefix + ".group.searchServers";
+    String[] groupSearchServers = settings.getStringArray(groupSearchPropertyName);
+    if (groupSearchServers.length > 0) {
+      Set<String> available = new HashSet<String>(Arrays.asList(availableServers));
+      Set<String> configured = new HashSet<String>(Arrays.asList(groupSearchServers));
+      configured.removeAll(available);
+      if (!configured.isEmpty())
+      {
+        throw new SonarException(String.format("The property '%s' property contains server names not configured.", groupSearchPropertyName));
+      }
+      this.groupRequestServersOverride = groupSearchServers;
+    } else {
+      this.groupRequestServersOverride = null;
+    }
   }
 
   /**
@@ -139,6 +159,13 @@ public class LdapGroupMapping {
    */
   public String[] getRequiredUserAttributes() {
     return requiredUserAttributes;
+  }
+  
+  /**
+   * List of servers to search groups from.
+   */
+  public String[] getGroupRequestServersOverride() {
+    return groupRequestServersOverride;
   }
 
   @Override
