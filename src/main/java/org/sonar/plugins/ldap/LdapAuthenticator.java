@@ -42,7 +42,7 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
   private final Map<String, LdapContextFactory> contextFactories;
   private final Map<String, LdapUserMapping> userMappings;
 
-  public LdapAuthenticator(Map<String, LdapContextFactory> contextFactories, Map<String, LdapUserMapping> userMappings) {
+    public LdapAuthenticator(Map<String, LdapContextFactory> contextFactories, Map<String, LdapUserMapping> userMappings) {
     this.contextFactories = contextFactories;
     this.userMappings = userMappings;
   }
@@ -60,13 +60,16 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
   public boolean authenticate(String login, String password) {
     for (String ldapKey : userMappings.keySet()) {
       final String principal;
-      if (contextFactories.get(ldapKey).isSasl()) {
+        LdapContextFactory ldapContextFactory = contextFactories.get(ldapKey);
+        if (ldapContextFactory.isSasl()) {
         principal = login;
       } else {
         final SearchResult result;
         try {
-          result = userMappings.get(ldapKey).createSearch(contextFactories.get(ldapKey), login).findUnique();
+          LdapUserMapping ldapUserMapping = userMappings.get(ldapKey);
+          result = ldapUserMapping.createSearch(ldapContextFactory, login).find(ldapUserMapping.getFindMode());
         } catch (NamingException e) {
+            e.printStackTrace();
           LOG.debug("User {} not found in server {}: {}", new Object[] {login, ldapKey, e.getMessage()});
           continue;
         }
@@ -77,7 +80,7 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
         principal = result.getNameInNamespace();
       }
       boolean passwordValid;
-      if (contextFactories.get(ldapKey).isGssapi()) {
+      if (ldapContextFactory.isGssapi()) {
         passwordValid = checkPasswordUsingGssapi(principal, password, ldapKey);
       }
       passwordValid = checkPasswordUsingBind(principal, password, ldapKey);

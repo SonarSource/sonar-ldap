@@ -38,7 +38,7 @@ public class LdapUserMappingTest {
       "baseDn=null," +
       " request=(&(objectClass=inetOrgPerson)(uid={0}))," +
       " realNameAttribute=cn," +
-      " emailAttribute=mail}");
+      " emailAttribute=mail, findMode=FIND_UNIQUE}");
   }
 
   @Test
@@ -59,7 +59,7 @@ public class LdapUserMappingTest {
       "baseDn=cn=users," +
       " request=(&(objectClass=user)(sAMAccountName={0}))," +
       " realNameAttribute=cn," +
-      " emailAttribute=mail}");
+      " emailAttribute=mail, findMode=FIND_UNIQUE}");
   }
 
   @Test
