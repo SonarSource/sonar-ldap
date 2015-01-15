@@ -31,7 +31,8 @@ import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.ldap.InitialLdapContext;
-
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -43,7 +44,7 @@ public class LdapContextFactory {
 
   private static final String DEFAULT_AUTHENTICATION = "simple";
   private static final String DEFAULT_FACTORY = "com.sun.jndi.ldap.LdapCtxFactory";
-  private static final String DEFAULT_REFERRAL = "follow";
+  private static final String DEFAULT_REFERRAL = "throw";
 
   @VisibleForTesting
   static final String GSSAPI_METHOD = "GSSAPI";
@@ -68,6 +69,8 @@ public class LdapContextFactory {
   private final String username;
   private final String password;
   private final String realm;
+  private final LdapReferralHandling referralHandling;
+  private final List<String> referralFilterList = new ArrayList<>();
 
   public LdapContextFactory(Settings settings, String settingsPrefix, String ldapUrl) {
     this.authentication = StringUtils.defaultString(settings.getString(settingsPrefix + ".authentication"), DEFAULT_AUTHENTICATION);
@@ -76,6 +79,15 @@ public class LdapContextFactory {
     this.providerUrl = ldapUrl;
     this.username = settings.getString(settingsPrefix + ".bindDn");
     this.password = settings.getString(settingsPrefix + ".bindPassword");
+
+    String ldapReferralHandlingStr = StringUtils.defaultString(settings.getString(settingsPrefix + ".referralHandling"), LdapReferralHandling.ALLOW_ALL.toString());
+    ldapReferralHandlingStr = ldapReferralHandlingStr.toUpperCase().trim();
+    this.referralHandling = LdapReferralHandling.valueOf(ldapReferralHandlingStr);
+
+    String ldapReferralFilterRegExStr = StringUtils.defaultString(settings.getString(settingsPrefix + ".referralFilter"), null);
+    if (ldapReferralFilterRegExStr != null) {
+      this.referralFilterList.add(ldapReferralFilterRegExStr);
+    }
   }
 
   /**
@@ -110,6 +122,8 @@ public class LdapContextFactory {
     env.put(Context.INITIAL_CONTEXT_FACTORY, factory);
     env.put(Context.PROVIDER_URL, providerUrl);
     env.put(Context.REFERRAL, DEFAULT_REFERRAL);
+    //env.put(Context.REFERRAL, "ignore");
+
     if (principal != null) {
       env.put(Context.SECURITY_PRINCIPAL, principal);
     }
@@ -123,8 +137,8 @@ public class LdapContextFactory {
 
   public boolean isSasl() {
     return DIGEST_MD5_METHOD.equals(authentication) ||
-      CRAM_MD5_METHOD.equals(authentication) ||
-      GSSAPI_METHOD.equals(authentication);
+        CRAM_MD5_METHOD.equals(authentication) ||
+        GSSAPI_METHOD.equals(authentication);
   }
 
   public boolean isGssapi() {
@@ -154,15 +168,26 @@ public class LdapContextFactory {
     return providerUrl;
   }
 
+
+  public LdapReferralHandling getReferralHandling() {
+    return referralHandling;
+  }
+
+  public List<String> getReferralFilterList() {
+    return referralFilterList;
+  }
+
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("url", providerUrl)
-      .add("authentication", authentication)
-      .add("factory", factory)
-      .add("bindDn", username)
-      .add("realm", realm)
-      .toString();
+        .add("url", providerUrl)
+        .add("authentication", authentication)
+        .add("factory", factory)
+        .add("bindDn", username)
+        .add("realm", realm)
+        .add("referralHandling", referralHandling)
+        .add("referralFilter", referralFilterList)
+        .toString();
   }
 
 }

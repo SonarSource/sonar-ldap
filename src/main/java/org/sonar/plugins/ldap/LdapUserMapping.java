@@ -39,6 +39,7 @@ public class LdapUserMapping {
   private final String request;
   private final String realNameAttribute;
   private final String emailAttribute;
+  private final SingleEntryFindMode findMode;
 
   /**
    * Constructs mapping from Sonar settings.
@@ -67,12 +68,17 @@ public class LdapUserMapping {
       // For backward compatibility with plugin versions lower than 1.2
       LoggerFactory.getLogger(LdapGroupMapping.class)
           .warn("Properties '" + settingsPrefix + ".user.objectClass' and '" + settingsPrefix + ".user.loginAttribute' are deprecated" +
-            " and should be replaced by single property '" + settingsPrefix + ".user.request' with value: " + req);
+              " and should be replaced by single property '" + settingsPrefix + ".user.request' with value: " + req);
     } else {
       req = StringUtils.defaultString(settings.getString(settingsPrefix + ".user.request"), DEFAULT_REQUEST);
     }
     req = StringUtils.replace(req, "{login}", "{0}");
     this.request = req;
+
+    String userFindModeStr = StringUtils.defaultString(settings.getString(settingsPrefix + ".user.FindMode"), SingleEntryFindMode.FIND_UNIQUE.toString());
+    userFindModeStr = userFindModeStr.toUpperCase().trim();
+    this.findMode = SingleEntryFindMode.valueOf(userFindModeStr);
+
   }
 
   /**
@@ -117,6 +123,10 @@ public class LdapUserMapping {
     return emailAttribute;
   }
 
+  public SingleEntryFindMode getFindMode() {
+    return findMode;
+  }
+
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
@@ -124,6 +134,7 @@ public class LdapUserMapping {
         .add("request", getRequest())
         .add("realNameAttribute", getRealNameAttribute())
         .add("emailAttribute", getEmailAttribute())
+        .add("findMode", findMode)
         .toString();
   }
 
