@@ -13,7 +13,12 @@
   <artifactId>it-ldap</artifactId>
   <version>1.0-SNAPSHOT</version>
   <inceptionYear>2009</inceptionYear>
-  <name>LDAP Plugin Integration Tests</name>
+  <name>SonarQube LDAP Plugin :: Integration Tests</name>
+
+  <organization>
+    <name>SonarSource</name>
+    <url>http://www.sonarsource.com</url>
+  </organization>
 
   <properties>
     <surefire.argLine>-server</surefire.argLine>

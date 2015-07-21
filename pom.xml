@@ -120,22 +120,6 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- OpenDS -->
-    <!--
-    <dependency>
-        <groupId>org.opends</groupId>
-        <artifactId>opends</artifactId>
-        <version>${version.org.opends}</version>
-        <scope>test</scope>
-    </dependency>
-
-    <dependency>
-        <groupId>berkeleydb</groupId>
-        <artifactId>je</artifactId>
-        <version>3.2.76</version>
-        <scope>test</scope>
-    </dependency>
-    -->
   </dependencies>
 
 </project>
