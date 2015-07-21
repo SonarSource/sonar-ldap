@@ -1,5 +1,5 @@
 /*
- * Sonar LDAP Plugin
+ * SonarQube LDAP Plugin
  * Copyright (C) 2009 SonarSource
  * dev@sonar.codehaus.org
  *
@@ -17,7 +17,6 @@
  * License along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
  */
-
 package org.sonar.plugins.ldap;
 
 import com.google.common.collect.ImmutableList;

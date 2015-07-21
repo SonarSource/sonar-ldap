@@ -1,5 +1,5 @@
 /*
- * Sonar LDAP Plugin
+ * SonarQube LDAP Plugin
  * Copyright (C) 2009 SonarSource
  * dev@sonar.codehaus.org
  *

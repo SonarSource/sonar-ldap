@@ -11,7 +11,7 @@
   <version>1.5-SNAPSHOT</version>
   <packaging>sonar-plugin</packaging>
 
-  <name>Sonar LDAP Plugin</name>
+  <name>SonarQube LDAP Plugin</name>
   <description>Delegates authentication to LDAP.</description>
   <url>http://redirect.sonarsource.com/plugins/ldap.html</url>
   <inceptionYear>2009</inceptionYear>
