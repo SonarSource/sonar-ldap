@@ -22,7 +22,7 @@ package org.sonar.plugins.ldap;
 import org.junit.Test;
 import org.sonar.api.config.Settings;
 
-import static org.fest.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class LdapUserMappingTest {
 

@@ -25,7 +25,7 @@ import org.sonar.api.config.Settings;
 import org.sonar.api.security.UserDetails;
 import org.sonar.plugins.ldap.server.LdapServer;
 
-import static org.fest.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class LdapUsersProviderTest {
   /**

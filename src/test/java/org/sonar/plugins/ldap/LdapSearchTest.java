@@ -20,6 +20,9 @@
 package org.sonar.plugins.ldap;
 
 import com.google.common.collect.Iterators;
+import java.util.Map;
+import javax.naming.NamingException;
+import javax.naming.directory.SearchControls;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -27,12 +30,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.sonar.plugins.ldap.server.LdapServer;
 
-import javax.naming.NamingException;
-import javax.naming.directory.SearchControls;
-
-import java.util.Map;
-
-import static org.fest.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class LdapSearchTest {
 

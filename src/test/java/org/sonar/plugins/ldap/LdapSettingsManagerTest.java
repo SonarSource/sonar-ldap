@@ -19,6 +19,8 @@
  */
 package org.sonar.plugins.ldap;
 
+import java.util.Arrays;
+import java.util.Collections;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -26,10 +28,7 @@ import org.sonar.api.config.Settings;
 import org.sonar.api.utils.SonarException;
 import org.sonar.plugins.ldap.LdapAutodiscovery.LdapSrvRecord;
 
-import java.util.Arrays;
-import java.util.Collections;
-
-import static org.fest.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 

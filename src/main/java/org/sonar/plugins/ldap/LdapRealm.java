@@ -19,12 +19,11 @@
  */
 package org.sonar.plugins.ldap;
 
+import java.util.Map;
 import org.sonar.api.security.ExternalGroupsProvider;
 import org.sonar.api.security.ExternalUsersProvider;
 import org.sonar.api.security.LoginPasswordAuthenticator;
 import org.sonar.api.security.SecurityRealm;
-
-import java.util.Map;
 
 /**
  * @author Evgeny Mandrikov

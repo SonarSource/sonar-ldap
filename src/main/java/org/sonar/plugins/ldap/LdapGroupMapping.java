@@ -20,16 +20,14 @@
 package org.sonar.plugins.ldap;
 
 import com.google.common.base.Objects;
+import java.util.Arrays;
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.SearchResult;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.config.Settings;
 import org.sonar.api.utils.SonarException;
-
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.SearchResult;
-
-import java.util.Arrays;
 
 /**
  * @author Evgeny Mandrikov

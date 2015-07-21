@@ -20,10 +20,9 @@
 
 package org.sonar.plugins.ldap;
 
+import java.util.HashMap;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
-
-import java.util.HashMap;
 
 /**
  * @author Evgeny Mandrikov

@@ -19,20 +19,18 @@
  */
 package org.sonar.plugins.ldap;
 
-import org.junit.Test;
-import org.mockito.Mockito;
-import org.sonar.plugins.ldap.LdapAutodiscovery.LdapSrvRecord;
-
+import java.net.UnknownHostException;
+import java.util.Arrays;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
+import org.junit.Test;
+import org.mockito.Mockito;
+import org.sonar.plugins.ldap.LdapAutodiscovery.LdapSrvRecord;
 
-import java.net.UnknownHostException;
-import java.util.Arrays;
-
-import static org.fest.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -86,7 +84,7 @@ public class LdapAutodiscoveryTest {
       .thenReturn("0 30 389 ldap2.example.org")
       .thenReturn("10 60 389 ldap4.example.org");
 
-    assertThat(new LdapAutodiscovery().getLdapServers(context, "example.org.")).onProperty("serverUrl")
+    assertThat(new LdapAutodiscovery().getLdapServers(context, "example.org.")).extracting("serverUrl")
       .isEqualTo(
         Arrays.asList("ldap://ldap1.example.org:389", "ldap://ldap2.example.org:389", "ldap://ldap3.example.org:389", "ldap://ldap4.example.org:389",
           "ldap://ldap5.example.org:389"));

@@ -19,10 +19,9 @@
  */
 package org.sonar.plugins.ldap;
 
-import org.junit.Test;
-
 import javax.naming.Context;
 import javax.naming.NamingException;
+import org.junit.Test;
 
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;

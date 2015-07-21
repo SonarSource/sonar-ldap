@@ -19,14 +19,13 @@
  */
 package org.sonar.plugins.ldap;
 
+import java.util.Collection;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.sonar.api.config.Settings;
 import org.sonar.plugins.ldap.server.LdapServer;
 
-import java.util.Collection;
-
-import static org.fest.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class LdapGroupsProviderTest {
 

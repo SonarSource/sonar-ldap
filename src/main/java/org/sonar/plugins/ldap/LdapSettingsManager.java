@@ -19,6 +19,9 @@
  */
 package org.sonar.plugins.ldap;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,10 +29,6 @@ import org.sonar.api.ServerExtension;
 import org.sonar.api.config.Settings;
 import org.sonar.api.utils.SonarException;
 import org.sonar.plugins.ldap.LdapAutodiscovery.LdapSrvRecord;
-
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * The LdapSettingsManager will parse the settings.

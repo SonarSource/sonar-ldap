@@ -19,19 +19,17 @@
  */
 package org.sonar.plugins.ldap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.sonar.api.security.ExternalUsersProvider;
-import org.sonar.api.security.UserDetails;
-import org.sonar.api.utils.SonarException;
-
+import java.util.Map;
 import javax.annotation.Nullable;
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.SearchResult;
-
-import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.sonar.api.security.ExternalUsersProvider;
+import org.sonar.api.security.UserDetails;
+import org.sonar.api.utils.SonarException;
 
 /**
  * @author Evgeny Mandrikov

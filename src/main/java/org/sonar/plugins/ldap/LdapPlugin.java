@@ -21,9 +21,8 @@
 package org.sonar.plugins.ldap;
 
 import com.google.common.collect.ImmutableList;
-import org.sonar.api.SonarPlugin;
-
 import java.util.List;
+import org.sonar.api.SonarPlugin;
 
 /**
  * @author Evgeny Mandrikov

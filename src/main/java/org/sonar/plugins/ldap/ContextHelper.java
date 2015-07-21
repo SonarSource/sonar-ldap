@@ -19,12 +19,11 @@
  */
 package org.sonar.plugins.ldap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.annotation.Nullable;
 import javax.naming.Context;
 import javax.naming.NamingException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Evgeny Mandrikov
