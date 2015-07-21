@@ -49,7 +49,7 @@
   </scm>
   <issueManagement>
     <system>JIRA</system>
-    <url>http://jira.codehaus.org/browse/SONARPLUGINS/component/14293</url>
+    <url>http://jira.sonarsource.com/browse/LDAP</url>
   </issueManagement>
   <ciManagement>
     <system>Bamboo</system>
