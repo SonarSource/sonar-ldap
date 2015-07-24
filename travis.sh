@@ -3,8 +3,9 @@
 set -euo pipefail
 
 function installTravisTools {
-  curl -sSL https://raw.githubusercontent.com/sonarsource/travis-utils/v13/install.sh | bash
-  source /tmp/travis-utils/env.sh
+  mkdir ~/.local
+  curl -sSL https://github.com/SonarSource/travis-utils/tarball/v15 | tar zx --strip-components 1 -C ~/.local
+  source ~/.local/bin/install
 }
 
 case "$TESTS" in
@@ -15,11 +16,11 @@ CI)
 
 IT-DEV)
   installTravisTools
-  travis_start_xvfb
+  start_xvfb
 
   mvn install -Dsource.skip=true -Denforcer.skip=true -Danimal.sniffer.skip=true -Dmaven.test.skip=true
 
-  travis_build_green "SonarSource/sonarqube" "master"
+  build_snapshot "SonarSource/sonarqube"
 
   cd it
   mvn -DldapVersion="DEV" -Dsonar.runtimeVersion="DEV" -Dmaven.test.redirectTestOutputToFile=false install
@@ -27,11 +28,9 @@ IT-DEV)
 
 IT-LTS)
   installTravisTools
-  travis_start_xvfb
+  start_xvfb
 
   mvn install -Dsource.skip=true -Denforcer.skip=true -Danimal.sniffer.skip=true -Dmaven.test.skip=true
-
-  travis_download_sonarqube_release "4.5.1"
 
   cd it
   mvn -DldapVersion="DEV" -Dsonar.runtimeVersion="4.5.1" -Dmaven.test.redirectTestOutputToFile=false install
