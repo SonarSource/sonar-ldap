@@ -38,7 +38,7 @@ import org.sonar.wsclient.user.UserParameters;
 import static org.assertj.core.api.Assertions.assertThat;
 
 
-public class LdapTest {
+public class LdapTest extends AbstractTest {
 
   private static final String BASE_DN = "dc=sonarsource,dc=com";
 
@@ -56,7 +56,7 @@ public class LdapTest {
 
     // Start Sonar with LDAP plugin
     OrchestratorBuilder orchestratorBuilder = Orchestrator.builderEnv()
-      .addPlugin("ldap")
+      .addPlugin(ldapPluginLocation())
       .setMainPluginKey("ldap")
       .setServerProperty("sonar.security.savePassword", Boolean.toString(savePasswords))
       // enable ldap

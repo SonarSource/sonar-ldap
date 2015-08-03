@@ -35,7 +35,7 @@ import org.sonar.wsclient.services.UserPropertyQuery;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class MultipleLdapTest {
+public class MultipleLdapTest extends AbstractTest {
 
   private static final String BASE_DN1 = "dc=example,dc=org";
   private static final String BASE_DN2 = "dc=infosupport,dc=com";
@@ -47,7 +47,7 @@ public class MultipleLdapTest {
   @Before
   public void start() {
     OrchestratorBuilder orchestratorBuilder = Orchestrator.builderEnv()
-      .addPlugin("ldap")
+      .addPlugin(ldapPluginLocation())
       .setMainPluginKey("ldap");
 
     // Start LDAP server
