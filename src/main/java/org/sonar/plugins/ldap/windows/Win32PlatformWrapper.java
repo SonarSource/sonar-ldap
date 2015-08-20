@@ -19,10 +19,7 @@
  */
 package org.sonar.plugins.ldap.windows;
 
-import com.sun.jna.platform.win32.Advapi32;
-import com.sun.jna.platform.win32.Advapi32Util;
-import com.sun.jna.platform.win32.Netapi32Util;
-import com.sun.jna.platform.win32.WinNT;
+import com.sun.jna.platform.win32.*;
 
 /**
  * Wrapper class over Win32 APIs
@@ -45,5 +42,10 @@ public class Win32PlatformWrapper {
 
     public Netapi32Util.Group[] getUserGroups(final String userAlias, final String domainName) {
         return Netapi32Util.getUserGroups(userAlias, domainName);
+    }
+
+    public String getLastErrorMessage() {
+        WinNT.HRESULT hr = W32Errors.HRESULT_FROM_WIN32(Kernel32.INSTANCE.GetLastError());
+        return Kernel32Util.formatMessage(hr);
     }
 }

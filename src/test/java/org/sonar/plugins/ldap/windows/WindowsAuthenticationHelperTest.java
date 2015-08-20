@@ -145,11 +145,11 @@ public class WindowsAuthenticationHelperTest {
         Win32Exception win32Exception = Mockito.mock(Win32Exception.class);
         Mockito.when(win32Exception.getMessage()).thenReturn("Win32Exception occurred");
         Mockito.when(win32PlatformWrapper.getAccountByName(null, "domain\\userName")).thenThrow(win32Exception);
-
         WindowsAuthenticationHelper authenticationHelper = new WindowsAuthenticationHelper(win32PlatformWrapper);
 
-        Mockito.verify(win32Exception, Mockito.times(1)).getMessage();
         assertThat(authenticationHelper.getUserDetails("domain\\userName")).isNull();
+
+        Mockito.verify(win32Exception, Mockito.times(1)).getMessage();
         Mockito.verify(win32PlatformWrapper, Mockito.never()).getUserGroups("domain", "userName");
         Mockito.verify(win32PlatformWrapper, Mockito.times(1)).getAccountByName(null, "domain\\userName");
     }
@@ -168,15 +168,16 @@ public class WindowsAuthenticationHelperTest {
 
     private static void runLogonUserTest(final String domainName, final String userDomainNameSeparator,
                                          final String userName, final String password, boolean isUserNameFormatValid,
-                                         boolean isUserValid, boolean expectedIsUserAuthenticated) {
+                                         boolean doesUserExist, boolean expectedIsUserAuthenticated) {
         // Parameters consistency check
-        assertThat(!isUserNameFormatValid && isUserValid).isFalse();
+        assertThat(!isUserNameFormatValid && doesUserExist).isFalse();
 
         String userNameWithDomain = getUserNameWithDomain(domainName, userDomainNameSeparator, userName);
         int expectedInvocationCountGetAccountByName = 0;
         int expectedInvocationCountLogonUser = 0;
+        int expectedInvocationCountGetLastErrorMessage = 0;
         Advapi32Util.Account account = null;
-        if (isUserNameFormatValid && isUserValid) {
+        if (isUserNameFormatValid && doesUserExist) {
             account = new Advapi32Util.Account();
             account.domain = domainName;
             account.name = userName;
@@ -186,14 +187,18 @@ public class WindowsAuthenticationHelperTest {
         if (isUserNameFormatValid) {
             expectedInvocationCountGetAccountByName = 1;
         }
-        if (isUserValid) {
+        if (doesUserExist) {
             expectedInvocationCountLogonUser = 1;
+        }
+        if (isUserNameFormatValid && doesUserExist && !expectedIsUserAuthenticated) {
+            expectedInvocationCountGetLastErrorMessage = 1;
         }
 
         Win32PlatformWrapper win32PlatformWrapper = Mockito.mock(Win32PlatformWrapper.class);
         Mockito.when(win32PlatformWrapper.logonUser(userName, domainName, password, WinBase.LOGON32_LOGON_NETWORK,
                 WinBase.LOGON32_PROVIDER_DEFAULT)).thenReturn(expectedIsUserAuthenticated);
         Mockito.when(win32PlatformWrapper.getAccountByName(null, userNameWithDomain)).thenReturn(account);
+        Mockito.when(win32PlatformWrapper.getLastErrorMessage()).thenReturn("Authentication failed");
         WindowsAuthenticationHelper authenticationHelper = new WindowsAuthenticationHelper(win32PlatformWrapper);
 
         assertThat(authenticationHelper.logonUser(getUserNameWithDomain(domainName, userDomainNameSeparator, userName),
@@ -204,6 +209,8 @@ public class WindowsAuthenticationHelperTest {
                 logonUser(userName, domainName, password, WinBase.LOGON32_LOGON_NETWORK, WinBase.LOGON32_PROVIDER_DEFAULT);
         Mockito.verify(win32PlatformWrapper, Mockito.times(expectedInvocationCountGetAccountByName)).
                 getAccountByName(null, userNameWithDomain);
+        Mockito.verify(win32PlatformWrapper, Mockito.times(expectedInvocationCountGetLastErrorMessage)).
+                getLastErrorMessage();
     }
 
     private static String getUserNameWithDomain(final String domainName, final String separator, final String userName) {

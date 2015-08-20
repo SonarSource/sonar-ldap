@@ -66,8 +66,7 @@ public class WindowsAuthenticationHelper {
                     windowsAccount.getDomainName(), password, WinBase.LOGON32_LOGON_NETWORK,
                     WinBase.LOGON32_PROVIDER_DEFAULT);
             if (!isUserAuthenticated) {
-                WinNT.HRESULT hr = W32Errors.HRESULT_FROM_WIN32(Kernel32.INSTANCE.GetLastError());
-                LOG.debug("User {} is not authenticated : {}", userName, Kernel32Util.formatMessage(hr));
+                LOG.debug("User {} is not authenticated : {}", userName, win32PlatformWrapper.getLastErrorMessage());
             }
         }
 
