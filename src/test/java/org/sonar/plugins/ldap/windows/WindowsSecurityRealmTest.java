@@ -17,19 +17,20 @@
  * License along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
  */
-package org.sonar.plugins.ldap;
+package org.sonar.plugins.ldap.windows;
 
-import com.google.common.collect.ImmutableList;
-import java.util.List;
-import org.sonar.api.SonarPlugin;
+import org.junit.Test;
 
-/**
- * @author Evgeny Mandrikov
- */
-public class LdapPlugin extends SonarPlugin {
+import static org.assertj.core.api.Assertions.assertThat;
 
-  public List getExtensions() {
-    return ImmutableList.of(LdapExtensions.class);
-  }
+public class WindowsSecurityRealmTest {
+    @Test
+    public void normal() {
+        WindowsSecurityRealm windowsSecurityRealm = new WindowsSecurityRealm();
 
+        assertThat(windowsSecurityRealm.getName()).isEqualTo("LDAP");
+        assertThat(windowsSecurityRealm.getLoginPasswordAuthenticator()).isInstanceOf(WindowsAuthenticator.class);
+        assertThat(windowsSecurityRealm.getUsersProvider()).isInstanceOf(WindowsUsersProvider.class);
+        assertThat(windowsSecurityRealm.getGroupsProvider()).isInstanceOf(WindowsGroupsProvider.class);
+    }
 }

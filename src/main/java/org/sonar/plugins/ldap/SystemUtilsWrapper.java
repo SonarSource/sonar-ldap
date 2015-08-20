@@ -19,17 +19,13 @@
  */
 package org.sonar.plugins.ldap;
 
-import com.google.common.collect.ImmutableList;
-import java.util.List;
-import org.sonar.api.SonarPlugin;
+import org.apache.commons.lang.SystemUtils;
 
 /**
- * @author Evgeny Mandrikov
+ * Wrapper class for accessing SystemUtils APIs
  */
-public class LdapPlugin extends SonarPlugin {
-
-  public List getExtensions() {
-    return ImmutableList.of(LdapExtensions.class);
-  }
-
+public class SystemUtilsWrapper {
+    public boolean isOperatingSystemWindows(){
+        return SystemUtils.IS_OS_WINDOWS;
+    }
 }
