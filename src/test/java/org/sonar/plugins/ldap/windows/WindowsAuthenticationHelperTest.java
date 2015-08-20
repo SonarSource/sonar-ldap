@@ -142,10 +142,13 @@ public class WindowsAuthenticationHelperTest {
     @Test
     public void getUserDetailsWhenGetAccountByNameThrowsExceptionTest() {
         Win32PlatformWrapper win32PlatformWrapper = Mockito.mock(Win32PlatformWrapper.class);
-        Mockito.when(win32PlatformWrapper.getAccountByName(null, "domain\\userName")).thenThrow(new Win32Exception(0));
+        Win32Exception win32Exception = Mockito.mock(Win32Exception.class);
+        Mockito.when(win32Exception.getMessage()).thenReturn("Win32Exception occurred");
+        Mockito.when(win32PlatformWrapper.getAccountByName(null, "domain\\userName")).thenThrow(win32Exception);
 
         WindowsAuthenticationHelper authenticationHelper = new WindowsAuthenticationHelper(win32PlatformWrapper);
 
+        Mockito.verify(win32Exception, Mockito.times(1)).getMessage();
         assertThat(authenticationHelper.getUserDetails("domain\\userName")).isNull();
         Mockito.verify(win32PlatformWrapper, Mockito.never()).getUserGroups("domain", "userName");
         Mockito.verify(win32PlatformWrapper, Mockito.times(1)).getAccountByName(null, "domain\\userName");
