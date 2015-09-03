@@ -74,7 +74,7 @@ public class HttpSessionStub implements HttpSession {
     @Override
     public Object getAttribute(String s) {
         if (s != null && !s.isEmpty()) {
-            return sessionAttributes.getOrDefault(s, null);
+            return sessionAttributes.get(s);
         }
 
         return null;
