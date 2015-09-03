@@ -20,13 +20,15 @@
 package org.sonar.plugins.ldap;
 
 import com.google.common.collect.Lists;
+import java.util.List;
 import org.apache.commons.lang.StringUtils;
 import org.sonar.api.ExtensionProvider;
 import org.sonar.api.ServerExtension;
 import org.sonar.api.config.Settings;
+import org.sonar.plugins.ldap.windows.WindowsAuthenticationHelper;
 import org.sonar.plugins.ldap.windows.WindowsSecurityRealm;
-
-import java.util.List;
+import org.sonar.plugins.ldap.windows.servlet.WindowsGroupsProviderFilter;
+import org.sonar.plugins.ldap.windows.servlet.WindowsLogoutFilter;
 
 public class LdapExtensions extends ExtensionProvider implements ServerExtension {
     static final String SONAR_LDAP_WINDOWS_AUTH = "sonar.ldap.windows.auth";
@@ -53,20 +55,19 @@ public class LdapExtensions extends ExtensionProvider implements ServerExtension
         List<Class> extensions = Lists.newArrayList();
         if (isWindowsAuthEnabled()) {
             if (systemUtilsWrapper.isOperatingSystemWindows()) {
-                extensions.add(WindowsSecurityRealm.class);
+                extensions.addAll(getWindowsAuthExtensions());
             } else {
                 throw new IllegalArgumentException(
                         String.format("Windows authentication is enabled, while the OS is not Windows."));
             }
         } else {
-            extensions.add(LdapRealm.class);
-            extensions.add(LdapSettingsManager.class);
-            extensions.add(LdapAutodiscovery.class);
+            extensions.addAll(getLdapExtensions());
         }
+
         return extensions;
     }
 
-    boolean isWindowsAuthEnabled() {
+    private boolean isWindowsAuthEnabled() {
         boolean isWindowsAuthEnabled;
         if (systemUtilsWrapper.isOperatingSystemWindows()) {
             // In Windows OS, Windows authentication is enabled by default.
@@ -77,5 +78,24 @@ public class LdapExtensions extends ExtensionProvider implements ServerExtension
         }
 
         return isWindowsAuthEnabled;
+    }
+
+    private List<Class> getWindowsAuthExtensions() {
+        List<Class> extensions = Lists.newArrayList();
+        extensions.add(WindowsSecurityRealm.class);
+        extensions.add(WindowsAuthenticationHelper.class);
+        extensions.add(WindowsGroupsProviderFilter.class);
+        extensions.add(WindowsLogoutFilter.class);
+
+        return extensions;
+    }
+
+    private List<Class> getLdapExtensions() {
+        List<Class> extensions = Lists.newArrayList();
+        extensions.add(LdapRealm.class);
+        extensions.add(LdapSettingsManager.class);
+        extensions.add(LdapAutodiscovery.class);
+
+        return extensions;
     }
 }

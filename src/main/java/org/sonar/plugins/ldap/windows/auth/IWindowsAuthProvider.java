@@ -17,48 +17,27 @@
  * License along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
  */
-package org.sonar.plugins.ldap.windows;
-
-import com.sun.jna.platform.win32.Advapi32Util;
-import org.apache.commons.lang.NullArgumentException;
+package org.sonar.plugins.ldap.windows.auth;
 
 /**
- * Windows account
+ * A Windows Authentication Provider
  */
-public class WindowsAccount {
-    private final Advapi32Util.Account account;
-
-    public WindowsAccount(final Advapi32Util.Account account) {
-        if (account == null) {
-            throw new NullArgumentException("account");
-        }
-        this.account = account;
-    }
+public interface IWindowsAuthProvider {
+    /**
+     * Tries to login a user to the local computer using a network logon and the default authentication provider
+     *
+     * @param domain   Domain of the user.
+     * @param userName Username of the user.
+     * @param password Password of the user
+     * @return Returns {@link WindowsPrincipal} if user is authenticated successfully, otherwise returns null.
+     */
+    WindowsPrincipal logonDomainUser(final String domain, final String userName, final String password);
 
     /**
-     * Account's domain-name
+     * Looks-up the windows account for the given domain user.
      *
-     * @return {@link String}
+     * @param userName userName of the user. Should be in domain\\user format.
+     * @return {@link WindowsAccount}
      */
-    public String getDomainName() {
-        return account.domain;
-    }
-
-    /**
-     * Account's user name
-     *
-     * @return {@link String}
-     */
-    public String getUserName() {
-        return account.name;
-    }
-
-    /**
-     * Account's fully qualified name
-     *
-     * @return {@link String}
-     */
-    public String getFqn() {
-        return account.fqn;
-    }
+    WindowsAccount lookupAccount(final String userName);
 }

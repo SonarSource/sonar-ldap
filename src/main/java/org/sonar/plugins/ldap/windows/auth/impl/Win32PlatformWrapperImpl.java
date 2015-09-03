@@ -17,35 +17,49 @@
  * License along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
  */
-package org.sonar.plugins.ldap.windows;
+package org.sonar.plugins.ldap.windows.auth.impl;
 
-import com.sun.jna.platform.win32.*;
+import com.sun.jna.platform.win32.Advapi32;
+import com.sun.jna.platform.win32.Advapi32Util;
+import com.sun.jna.platform.win32.Kernel32;
+import com.sun.jna.platform.win32.Kernel32Util;
+import com.sun.jna.platform.win32.W32Errors;
+import com.sun.jna.platform.win32.WinNT;
+import org.sonar.plugins.ldap.windows.auth.IWin32PlatformWrapper;
 
 /**
  * Wrapper class over Win32 APIs
  */
-public class Win32PlatformWrapper {
+public class Win32PlatformWrapperImpl implements IWin32PlatformWrapper {
+    @Override
     public boolean logonUser(final String username, final String domain, final String password,
                              final int logonType, final int logonProvider, WinNT.HANDLEByReference pHandleUser) {
         return Advapi32.INSTANCE.LogonUser(username, domain, password, logonType, logonProvider, pHandleUser);
     }
 
-    public boolean logonUser(final String username, final String domain, final String password,
-                             final int logonType, final int logonProvider) {
-        WinNT.HANDLEByReference pHandleUser = new WinNT.HANDLEByReference();
-        return logonUser(username, domain, password, logonType, logonProvider, pHandleUser);
-    }
-
+    @Override
     public Advapi32Util.Account getAccountByName(final String systemName, final String userName) {
         return Advapi32Util.getAccountByName(systemName, userName);
     }
 
-    public Netapi32Util.Group[] getUserGroups(final String userAlias, final String domainName) {
-        return Netapi32Util.getUserGroups(userAlias, domainName);
+    @Override
+    public Advapi32Util.Account getTokenAccount(final WinNT.HANDLE windowsIdentity) {
+        return Advapi32Util.getTokenAccount(windowsIdentity);
     }
 
+    @Override
+    public Advapi32Util.Account[] getTokenGroups(final WinNT.HANDLE windowsIdentity) {
+        return Advapi32Util.getTokenGroups(windowsIdentity);
+    }
+
+    @Override
     public String getLastErrorMessage() {
         WinNT.HRESULT hr = W32Errors.HRESULT_FROM_WIN32(Kernel32.INSTANCE.GetLastError());
         return Kernel32Util.formatMessage(hr);
+    }
+
+    @Override
+    public void closeHandle(final WinNT.HANDLE identityHandle) {
+        Kernel32.INSTANCE.CloseHandle(identityHandle);
     }
 }

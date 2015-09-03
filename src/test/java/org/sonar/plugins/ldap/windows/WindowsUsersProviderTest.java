@@ -19,9 +19,11 @@
  */
 package org.sonar.plugins.ldap.windows;
 
+import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang.NullArgumentException;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.sonar.api.security.ExternalUsersProvider;
 import org.sonar.api.security.UserDetails;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,7 +41,7 @@ public class WindowsUsersProviderTest {
         this.runDoGetUserDetailsTest(null, null);
         this.runDoGetUserDetailsTest("", null);
         this.runDoGetUserDetailsTest("user", null);
-        this.runDoGetUserDetailsTest("user", expectedUserDetails);
+        this.runDoGetUserDetailsTest("domain\\user", expectedUserDetails);
     }
 
     private void runDoGetUserDetailsTest(String userName, UserDetails expectedUserDetails) {
@@ -47,9 +49,11 @@ public class WindowsUsersProviderTest {
         WindowsAuthenticationHelper windowsAuthenticationHelper = Mockito.mock(WindowsAuthenticationHelper.class);
         Mockito.when(windowsAuthenticationHelper.getUserDetails(userName)).thenReturn(expectedUserDetails);
 
-        WindowsUsersProvider usersProvider = new WindowsUsersProvider(windowsAuthenticationHelper);
+        HttpServletRequest httpServletRequest = Mockito.mock(HttpServletRequest.class);
+        ExternalUsersProvider.Context context = new ExternalUsersProvider.Context(userName, httpServletRequest);
 
-        UserDetails userDetails = usersProvider.doGetUserDetails(userName);
+        WindowsUsersProvider usersProvider = new WindowsUsersProvider(windowsAuthenticationHelper);
+        UserDetails userDetails = usersProvider.doGetUserDetails(context);
 
         if (expectedUserDetails == null) {
             assertThat(userDetails).isNull();

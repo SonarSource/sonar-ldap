@@ -23,6 +23,9 @@ import org.apache.commons.collections.CollectionUtils;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.sonar.api.config.Settings;
+import org.sonar.plugins.ldap.windows.WindowsAuthenticationHelper;
+import org.sonar.plugins.ldap.windows.servlet.WindowsGroupsProviderFilter;
+import org.sonar.plugins.ldap.windows.servlet.WindowsLogoutFilter;
 import org.sonar.plugins.ldap.windows.WindowsSecurityRealm;
 
 import java.util.ArrayList;
@@ -116,6 +119,9 @@ public class LdapExtensionsTest {
     private List<Class> getExpectedWindowsExtensions() {
         List<Class> expectedExtensions = new ArrayList<Class>();
         expectedExtensions.add(WindowsSecurityRealm.class);
+        expectedExtensions.add(WindowsAuthenticationHelper.class);
+        expectedExtensions.add(WindowsGroupsProviderFilter.class);
+        expectedExtensions.add(WindowsLogoutFilter.class);
 
         return expectedExtensions;
     }
