@@ -19,6 +19,11 @@
  */
 package org.sonar.plugins.ldap.windows;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sonar.api.ServerExtension;
 import org.sonar.api.security.UserDetails;
 import org.sonar.plugins.ldap.windows.auth.IWindowsAuthProvider;
@@ -27,17 +32,21 @@ import org.sonar.plugins.ldap.windows.auth.WindowsPrincipal;
 import org.sonar.plugins.ldap.windows.auth.impl.WindowsAuthProviderImpl;
 
 public class WindowsAuthenticationHelper implements ServerExtension {
+    private static final Logger LOG = LoggerFactory.getLogger(WindowsAuthenticationHelper.class);
+
     public static final String WINDOWS_PRINCIPAL = "windows_principal";
     public static final String USER_GROUPS_SYNCHRONIZED = "user_group_synchronized";
 
     private final IWindowsAuthProvider windowsAuthProvider;
+    private final AdConnectionHelper adConnectionHelper;
 
     public WindowsAuthenticationHelper() {
-        this(new WindowsAuthProviderImpl());
+        this(new WindowsAuthProviderImpl(), new AdConnectionHelper());
     }
 
-    WindowsAuthenticationHelper(IWindowsAuthProvider windowsAuthProvider) {
+    WindowsAuthenticationHelper(IWindowsAuthProvider windowsAuthProvider, AdConnectionHelper adConnectionHelper) {
         this.windowsAuthProvider = windowsAuthProvider;
+        this.adConnectionHelper = adConnectionHelper;
     }
 
     /**
@@ -80,12 +89,22 @@ public class WindowsAuthenticationHelper implements ServerExtension {
 
         WindowsAccount windowsAccount = windowsAuthProvider.lookupAccount(userName);
         if (windowsAccount != null) {
-            userDetails = new UserDetails();
-            // Setting the name to User's Fully qualified Name
-            userDetails.setName(windowsAccount.getFqn());
-            // Not getting Email for the user
+            Collection<String> requestedDetails = new ArrayList<String>();
+            requestedDetails.add(AdConnectionHelper.COMMON_NAME_ATTRIBUTE);
+            requestedDetails.add(AdConnectionHelper.MAIL_ATTRIBUTE);
+
+            Map<String, String> adUserDetails = adConnectionHelper.getUserDetails(windowsAccount.getDomainName(),
+                    windowsAccount.getName(), requestedDetails);
+            if (adUserDetails != null) {
+                userDetails = new UserDetails();
+                userDetails.setName(adUserDetails.get(AdConnectionHelper.COMMON_NAME_ATTRIBUTE));
+                userDetails.setEmail(adUserDetails.get(AdConnectionHelper.MAIL_ATTRIBUTE));
+            } else {
+                LOG.debug("Unable to get user details for the user : {}", userName);
+            }
         }
 
         return userDetails;
     }
+
 }

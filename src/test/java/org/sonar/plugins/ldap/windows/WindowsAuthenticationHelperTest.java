@@ -19,8 +19,10 @@
  */
 package org.sonar.plugins.ldap.windows;
 
-import com.sun.jna.platform.win32.Advapi32Util;
-import org.apache.commons.lang.StringUtils;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -31,14 +33,15 @@ import org.sonar.plugins.ldap.windows.auth.WindowsPrincipal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-;
-
 public class WindowsAuthenticationHelperTest {
     private WindowsAuthenticationHelper authenticationHelper;
 
     @Before
     public void initialize() {
-        authenticationHelper = new WindowsAuthenticationHelper();
+        IWindowsAuthProvider windowsAuthProvider = Mockito.mock(IWindowsAuthProvider.class);
+        AdConnectionHelper adConnectionHelper = Mockito.mock(AdConnectionHelper.class);
+        authenticationHelper = new WindowsAuthenticationHelper(windowsAuthProvider,
+                adConnectionHelper);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -60,31 +63,31 @@ public class WindowsAuthenticationHelperTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void getUserDetailsNullCheck() {
-        WindowsAuthenticationHelper authenticationHelper = new WindowsAuthenticationHelper();
         authenticationHelper.getUserDetails(null);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void getUserDetailsEmptyCheck() {
-        WindowsAuthenticationHelper authenticationHelper = new WindowsAuthenticationHelper();
         authenticationHelper.getUserDetails("");
     }
 
-
     @Test
     public void getUserDetailsTests() {
-        runGetUserDetailsTest("domain\\user", true, "domain\\user");
-        runGetUserDetailsTest("domain\\user", false, null);
+        UserDetails expectedUserDetails = new UserDetails();
+        expectedUserDetails.setName("Full Name");
+        expectedUserDetails.setEmail("abc@example.org");
+        runGetUserDetailsTest("domain", "user", true, expectedUserDetails);
+        runGetUserDetailsTest("domain", "user", false, null);
     }
 
-    private static void runLogonUserTest(String domainName, String userName, String password, boolean doesUserExistInDomain,
-                                         final WindowsPrincipal expectedWindowsPrincipal) {
+    private static void runLogonUserTest(String domainName, String userName, String password,
+                                         boolean doesUserExistInDomain, final WindowsPrincipal expectedWindowsPrincipal) {
         int expectedInvocationCountLogonDomainUser = 0;
         if (doesUserExistInDomain) {
             expectedInvocationCountLogonDomainUser = 1;
         }
 
-
+        AdConnectionHelper adConnectionHelper = Mockito.mock(AdConnectionHelper.class);
         IWindowsAuthProvider windowsAuthProvider = Mockito.mock(IWindowsAuthProvider.class);
         if (doesUserExistInDomain) {
             WindowsAccount account = Mockito.mock(WindowsAccount.class);
@@ -101,10 +104,11 @@ public class WindowsAuthenticationHelperTest {
         }
 
 
-        WindowsAuthenticationHelper windowsAuthenticationHelper = new WindowsAuthenticationHelper(windowsAuthProvider);
+        WindowsAuthenticationHelper windowsAuthenticationHelper = new WindowsAuthenticationHelper(windowsAuthProvider,
+                adConnectionHelper);
 
-        WindowsPrincipal windowsPrincipal = windowsAuthenticationHelper.logonUser(getUserNameWithDomain(domainName, "\\", userName),
-                password);
+        WindowsPrincipal windowsPrincipal = windowsAuthenticationHelper.logonUser(
+                getUserNameWithDomain(domainName, "\\", userName), password);
 
         if (expectedWindowsPrincipal == null) {
             assertThat(windowsPrincipal).isNull();
@@ -115,31 +119,37 @@ public class WindowsAuthenticationHelperTest {
                 logonDomainUser(domainName, userName, password);
     }
 
-    private static void runGetUserDetailsTest(String userName, boolean doesUserExist, String expectedFqn) {
-        Advapi32Util.Account account = null;
-        if (expectedFqn != null && !expectedFqn.isEmpty()) {
-            account = new Advapi32Util.Account();
-            account.fqn = expectedFqn;
-        }
-        WindowsAccount windowsAccount = Mockito.mock(WindowsAccount.class);
-        Mockito.when(windowsAccount.getFqn()).thenReturn(expectedFqn);
-
+    private static void runGetUserDetailsTest(String domainName, String userName, boolean doesUserExist,
+                                              UserDetails expectedUserDetails) {
         IWindowsAuthProvider windowsAuthProvider = Mockito.mock(IWindowsAuthProvider.class);
+
+        AdConnectionHelper adConnectionHelper = Mockito.mock(AdConnectionHelper.class);
+        String userNameWithDomain = getUserNameWithDomain(domainName, "\\", userName);
         if (doesUserExist) {
-            Mockito.when(windowsAuthProvider.lookupAccount(userName)).thenReturn(windowsAccount);
+            Map<String, String> attributesUserDetails = new HashMap<String, String>();
+            attributesUserDetails.put(AdConnectionHelper.COMMON_NAME_ATTRIBUTE, expectedUserDetails.getName());
+            attributesUserDetails.put(AdConnectionHelper.MAIL_ATTRIBUTE, expectedUserDetails.getEmail());
+
+            Collection<String> attributeNames = new ArrayList<String>();
+            attributeNames.add(AdConnectionHelper.COMMON_NAME_ATTRIBUTE);
+            attributeNames.add(AdConnectionHelper.MAIL_ATTRIBUTE);
+
+            Mockito.when(adConnectionHelper.getUserDetails(domainName, userName, attributeNames)).
+                    thenReturn(attributesUserDetails);
+
+            WindowsAccount windowsAccount = Mockito.mock(WindowsAccount.class);
+            Mockito.when(windowsAccount.getDomainName()).thenReturn(domainName);
+            Mockito.when(windowsAccount.getName()).thenReturn(userName);
+
+            Mockito.when(windowsAuthProvider.lookupAccount(userNameWithDomain)).thenReturn(windowsAccount);
         }
 
-        WindowsAuthenticationHelper authenticationHelper = new WindowsAuthenticationHelper(windowsAuthProvider);
+        WindowsAuthenticationHelper authenticationHelper = new WindowsAuthenticationHelper(windowsAuthProvider,
+                adConnectionHelper);
 
-        UserDetails expectedUserDetails = null;
-        if (expectedFqn != null && !expectedFqn.isEmpty()) {
-            expectedUserDetails = new UserDetails();
-            expectedUserDetails.setName(expectedFqn);
-        }
+        UserDetails userDetails = authenticationHelper.getUserDetails(userNameWithDomain);
 
-        UserDetails userDetails = authenticationHelper.getUserDetails(userName);
-
-        if (StringUtils.isBlank(expectedFqn)) {
+        if (expectedUserDetails == null) {
             assertThat(userDetails).isNull();
         } else {
             assertThat(userDetails).isNotNull();

@@ -88,7 +88,7 @@ public class WindowsPrincipalTest {
         Mockito.when(win32PlatformWrapper.getTokenGroups(pUserHandle)).thenReturn(accounts);
         WindowsPrincipal windowsPrincipal = new WindowsPrincipal(pUserHandle, win32PlatformWrapper);
 
-        assertAreArraysEqual(windowsPrincipal.getGroups(), getWindowsAccounts(accounts));
+        assertThat(windowsPrincipal.getGroups()).isEqualTo(getWindowsAccounts(accounts));
     }
 
     @Test
@@ -146,15 +146,5 @@ public class WindowsPrincipalTest {
         }
 
         return windowsAccounts;
-    }
-
-    private static void assertAreArraysEqual(WindowsAccount[] actualAccounts,
-                                             WindowsAccount[] expectedAccounts) {
-        assertThat(actualAccounts.length).isEqualTo(expectedAccounts.length);
-        int i = 0;
-        for (WindowsAccount actualAccount : actualAccounts) {
-            assertThat(actualAccount).isEqualToComparingFieldByField(expectedAccounts[i]);
-            i++;
-        }
     }
 }

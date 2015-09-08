@@ -19,6 +19,7 @@
  */
 package org.sonar.plugins.ldap.windows.auth.impl;
 
+import com.google.common.base.Preconditions;
 import com.sun.jna.platform.win32.Advapi32Util;
 import com.sun.jna.platform.win32.Win32Exception;
 import com.sun.jna.platform.win32.WinBase;
@@ -49,9 +50,9 @@ public class WindowsAuthProviderImpl implements IWindowsAuthProvider {
      */
     @Override
     public WindowsPrincipal logonDomainUser(final String domain, final String userName, final String password) {
-        checkStringArgument(domain, "domain");
-        checkStringArgument(userName, "userName");
-        checkStringArgument(password, "password");
+        Preconditions.checkArgument(domain != null && !domain.isEmpty(), "domain is null or empty");
+        Preconditions.checkArgument(userName != null && !userName.isEmpty(), "userName is null or empty");
+        Preconditions.checkArgument(password != null && !password.isEmpty(), "password is null or empty");
 
         final WinNT.HANDLEByReference pHandleUser = new WinNT.HANDLEByReference();
         WindowsPrincipal windowsPrincipal = null;
@@ -76,7 +77,7 @@ public class WindowsAuthProviderImpl implements IWindowsAuthProvider {
      */
     @Override
     public WindowsAccount lookupAccount(final String userName) {
-        checkStringArgument(userName, "userName");
+        Preconditions.checkArgument(userName != null && !userName.isEmpty(), "userName is null or empty");
 
         WindowsAccount windowsAccount = null;
         if (isValidUserNamePattern(userName)) {
@@ -95,12 +96,6 @@ public class WindowsAuthProviderImpl implements IWindowsAuthProvider {
         }
 
         return windowsAccount;
-    }
-
-    private void checkStringArgument(final String argument, final String argumentName) {
-        if (argument == null || argument.isEmpty()) {
-            throw new IllegalArgumentException(String.format("%s is null or empty", argumentName));
-        }
     }
 
     private boolean isValidUserNamePattern(final String userName) {
