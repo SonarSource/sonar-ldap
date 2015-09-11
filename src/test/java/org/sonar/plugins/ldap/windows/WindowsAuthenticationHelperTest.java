@@ -77,6 +77,7 @@ public class WindowsAuthenticationHelperTest {
         expectedUserDetails.setName("Full Name");
         expectedUserDetails.setEmail("abc@example.org");
         runGetUserDetailsTest("domain", "user", true, expectedUserDetails);
+        runGetUserDetailsTest("domain", "user", true, null);
         runGetUserDetailsTest("domain", "user", false, null);
     }
 
@@ -97,12 +98,10 @@ public class WindowsAuthenticationHelperTest {
                     thenReturn(account);
         }
 
-
         if (expectedWindowsPrincipal != null) {
             Mockito.when(windowsAuthProvider.logonDomainUser(domainName, userName, password))
                     .thenReturn(expectedWindowsPrincipal);
         }
-
 
         WindowsAuthenticationHelper windowsAuthenticationHelper = new WindowsAuthenticationHelper(windowsAuthProvider,
                 adConnectionHelper);
@@ -126,23 +125,25 @@ public class WindowsAuthenticationHelperTest {
         AdConnectionHelper adConnectionHelper = Mockito.mock(AdConnectionHelper.class);
         String userNameWithDomain = getUserNameWithDomain(domainName, "\\", userName);
         if (doesUserExist) {
-            Map<String, String> attributesUserDetails = new HashMap<String, String>();
-            attributesUserDetails.put(AdConnectionHelper.COMMON_NAME_ATTRIBUTE, expectedUserDetails.getName());
-            attributesUserDetails.put(AdConnectionHelper.MAIL_ATTRIBUTE, expectedUserDetails.getEmail());
-
-            Collection<String> attributeNames = new ArrayList<String>();
-            attributeNames.add(AdConnectionHelper.COMMON_NAME_ATTRIBUTE);
-            attributeNames.add(AdConnectionHelper.MAIL_ATTRIBUTE);
-
-            Mockito.when(adConnectionHelper.getUserDetails(domainName, userName, attributeNames)).
-                    thenReturn(attributesUserDetails);
-
             WindowsAccount windowsAccount = Mockito.mock(WindowsAccount.class);
             Mockito.when(windowsAccount.getDomainName()).thenReturn(domainName);
             Mockito.when(windowsAccount.getName()).thenReturn(userName);
 
             Mockito.when(windowsAuthProvider.lookupAccount(userNameWithDomain)).thenReturn(windowsAccount);
         }
+
+        Map<String, String> attributesUserDetails = null;
+        if(expectedUserDetails != null){
+            attributesUserDetails = new HashMap<String, String>();
+            attributesUserDetails.put(AdConnectionHelper.COMMON_NAME_ATTRIBUTE, expectedUserDetails.getName());
+            attributesUserDetails.put(AdConnectionHelper.MAIL_ATTRIBUTE, expectedUserDetails.getEmail());
+        }
+
+        Collection<String> attributeNames = new ArrayList<String>();
+        attributeNames.add(AdConnectionHelper.COMMON_NAME_ATTRIBUTE);
+        attributeNames.add(AdConnectionHelper.MAIL_ATTRIBUTE);
+        Mockito.when(adConnectionHelper.getUserDetails(domainName, userName, attributeNames)).
+                thenReturn(attributesUserDetails);
 
         WindowsAuthenticationHelper authenticationHelper = new WindowsAuthenticationHelper(windowsAuthProvider,
                 adConnectionHelper);

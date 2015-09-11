@@ -22,6 +22,7 @@ package org.sonar.plugins.ldap.windows;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
+import org.apache.commons.collections.MapUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.ServerExtension;
@@ -95,7 +96,7 @@ public class WindowsAuthenticationHelper implements ServerExtension {
 
             Map<String, String> adUserDetails = adConnectionHelper.getUserDetails(windowsAccount.getDomainName(),
                     windowsAccount.getName(), requestedDetails);
-            if (adUserDetails != null) {
+            if (MapUtils.isNotEmpty(adUserDetails)) {
                 userDetails = new UserDetails();
                 userDetails.setName(adUserDetails.get(AdConnectionHelper.COMMON_NAME_ATTRIBUTE));
                 userDetails.setEmail(adUserDetails.get(AdConnectionHelper.MAIL_ATTRIBUTE));
@@ -105,6 +106,6 @@ public class WindowsAuthenticationHelper implements ServerExtension {
         }
 
         return userDetails;
-    }
+   }
 
 }
