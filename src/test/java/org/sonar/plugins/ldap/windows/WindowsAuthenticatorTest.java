@@ -19,9 +19,14 @@
  */
 package org.sonar.plugins.ldap.windows;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import org.apache.commons.lang.NullArgumentException;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.sonar.api.security.Authenticator;
+import org.sonar.plugins.ldap.windows.auth.WindowsPrincipal;
+import org.sonar.plugins.ldap.windows.stubs.HttpSessionStub;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -48,21 +53,50 @@ public class WindowsAuthenticatorTest {
     }
 
     private void runAuthenticateTest(final String userName, final String password, boolean expectedIsUserAuthenticated) {
+        WindowsPrincipal expectedWindowsPrincipal = null;
         WindowsAuthenticationHelper windowsAuthenticationHelper = Mockito.mock(WindowsAuthenticationHelper.class);
-        Mockito.when(windowsAuthenticationHelper.logonUser(userName, password)).thenReturn(expectedIsUserAuthenticated);
+        if (expectedIsUserAuthenticated) {
+            expectedWindowsPrincipal = Mockito.mock(WindowsPrincipal.class);
+            Mockito.when(windowsAuthenticationHelper.logonUser(userName, password)).thenReturn(expectedWindowsPrincipal);
+        }
+
+        HttpServletRequest httpServletRequest = getHttpServletRequest();
+        Authenticator.Context context = new Authenticator.Context(userName, password, httpServletRequest);
         WindowsAuthenticator authenticator = new WindowsAuthenticator(windowsAuthenticationHelper);
 
-        boolean isUserAuthenticated = authenticator.authenticate(userName, password);
+        boolean isUserAuthenticated = authenticator.doAuthenticate(context);
+        WindowsPrincipal windowsPrincipal = (WindowsPrincipal) httpServletRequest.getSession().
+                getAttribute(WindowsAuthenticationHelper.WINDOWS_PRINCIPAL);
+
         assertThat(isUserAuthenticated).isEqualTo(expectedIsUserAuthenticated);
         Mockito.verify(windowsAuthenticationHelper, Mockito.times(1)).logonUser(userName, password);
+        if (expectedIsUserAuthenticated) {
+            assertThat(windowsPrincipal).isEqualTo(expectedWindowsPrincipal);
+        } else {
+            assertThat(windowsPrincipal).isNull();
+        }
     }
 
-    private void runAuthenticateNullOrEmptyArgumentTest(final String userName, final String password, boolean expectedIsUserAuthenticated) {
+    private void runAuthenticateNullOrEmptyArgumentTest(final String userName, final String password,
+                                                        boolean expectedIsUserAuthenticated) {
+        HttpServletRequest httpServletRequest = getHttpServletRequest();
+        Authenticator.Context context = new Authenticator.Context(userName, password, httpServletRequest);
+
         WindowsAuthenticationHelper windowsAuthenticationHelper = Mockito.mock(WindowsAuthenticationHelper.class);
         WindowsAuthenticator authenticator = new WindowsAuthenticator(windowsAuthenticationHelper);
 
-        boolean isUserAuthenticated = authenticator.authenticate(userName, password);
+        boolean isUserAuthenticated = authenticator.doAuthenticate(context);
+
         assertThat(isUserAuthenticated).isEqualTo(expectedIsUserAuthenticated);
         Mockito.verify(windowsAuthenticationHelper, Mockito.never()).logonUser(userName, password);
     }
+
+    private HttpServletRequest getHttpServletRequest() {
+        HttpSession httpSession = new HttpSessionStub();
+        HttpServletRequest httpServletRequest = Mockito.mock(HttpServletRequest.class);
+        Mockito.when(httpServletRequest.getSession()).thenReturn(httpSession);
+
+        return httpServletRequest;
+    }
+
 }

@@ -22,9 +22,10 @@ package org.sonar.plugins.ldap.windows;
 import org.apache.commons.lang.NullArgumentException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sonar.api.security.LoginPasswordAuthenticator;
+import org.sonar.api.security.Authenticator;
+import org.sonar.plugins.ldap.windows.auth.WindowsPrincipal;
 
-public class WindowsAuthenticator implements LoginPasswordAuthenticator {
+public class WindowsAuthenticator extends Authenticator {
     private static final Logger LOG = LoggerFactory.getLogger(WindowsAuthenticator.class);
     private final WindowsAuthenticationHelper windowsAuthenticationHelper;
 
@@ -35,19 +36,15 @@ public class WindowsAuthenticator implements LoginPasswordAuthenticator {
         this.windowsAuthenticationHelper = windowsAuthenticationHelper;
     }
 
-    @Override
-    public void init() {
-        // nothing to do
-    }
-
     /**
      * Authenticates the user using Windows LogonUser API
-     *
-     * @param userName The username to use.
-     * @param password The password to use.
      */
     @Override
-    public boolean authenticate(final String userName, final String password) {
+    public boolean doAuthenticate(Context context) {
+
+        final String userName = context.getUsername();
+        final String password = context.getPassword();
+
         if (userName == null || userName.isEmpty()) {
             LOG.debug("Username is blank.");
             return false;
@@ -59,6 +56,15 @@ public class WindowsAuthenticator implements LoginPasswordAuthenticator {
         }
 
         LOG.debug("Authenticating user: {}", userName);
-        return windowsAuthenticationHelper.logonUser(userName, password);
+
+        WindowsPrincipal windowsPrincipal = windowsAuthenticationHelper.logonUser(userName, password);
+        boolean isUserAuthenticated = windowsPrincipal != null;
+
+        if (isUserAuthenticated) {
+            context.getRequest().getSession().setAttribute(WindowsAuthenticationHelper.WINDOWS_PRINCIPAL,
+                    windowsPrincipal);
+        }
+
+        return isUserAuthenticated;
     }
 }

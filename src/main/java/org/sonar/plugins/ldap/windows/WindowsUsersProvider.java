@@ -37,10 +37,11 @@ public class WindowsUsersProvider extends ExternalUsersProvider {
     }
 
     /**
-     * @return details for the specified user, or null if the user doesn't exist
+     * @return details for the user specified in {@link Context}, or null if the user doesn't exist
      */
     @Override
-    public UserDetails doGetUserDetails(final String userName) {
+    public UserDetails doGetUserDetails(Context context) {
+        final String userName = context.getUsername();
         if (userName == null || userName.isEmpty()) {
             LOG.debug("Username is blank.");
             return null;

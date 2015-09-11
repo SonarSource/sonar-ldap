@@ -19,7 +19,9 @@
  */
 package org.sonar.plugins.ldap.windows;
 
-import org.sonar.api.security.*;
+import org.sonar.api.security.Authenticator;
+import org.sonar.api.security.ExternalUsersProvider;
+import org.sonar.api.security.SecurityRealm;
 
 public class WindowsSecurityRealm extends SecurityRealm {
 
@@ -28,18 +30,14 @@ public class WindowsSecurityRealm extends SecurityRealm {
 
     private final WindowsAuthenticator windowsAuthenticator;
     private final WindowsUsersProvider windowsUsersProvider;
-    private final WindowsGroupsProvider windowsGroupsProvider;
 
-    public WindowsSecurityRealm() {
-        WindowsAuthenticationHelper windowsAuthenticationHelper = new WindowsAuthenticationHelper();
-
+    public WindowsSecurityRealm(WindowsAuthenticationHelper windowsAuthenticationHelper) {
         this.windowsAuthenticator = new WindowsAuthenticator(windowsAuthenticationHelper);
         this.windowsUsersProvider = new WindowsUsersProvider(windowsAuthenticationHelper);
-        this.windowsGroupsProvider = new WindowsGroupsProvider(windowsAuthenticationHelper);
     }
 
     @Override
-    public LoginPasswordAuthenticator getLoginPasswordAuthenticator() {
+    public Authenticator doGetAuthenticator() {
         return windowsAuthenticator;
     }
 
@@ -49,12 +47,8 @@ public class WindowsSecurityRealm extends SecurityRealm {
     }
 
     @Override
-    public ExternalGroupsProvider getGroupsProvider() {
-        return windowsGroupsProvider;
-    }
-
-    @Override
     public String getName() {
         return NAME;
     }
 }
+

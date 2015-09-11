@@ -17,20 +17,25 @@
  * License along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
  */
-package org.sonar.plugins.ldap.windows;
+package org.sonar.plugins.ldap.windows.auth;
 
-import org.junit.Test;
+import com.sun.jna.platform.win32.Advapi32Util;
+import com.sun.jna.platform.win32.WinNT;
 
-import static org.assertj.core.api.Assertions.assertThat;
+/**
+ * A Win32 platform APIs wrapper
+ */
+public interface IWin32PlatformWrapper {
+    boolean logonUser(final String username, final String domain, final String password,
+                      final int logonType, final int logonProvider, WinNT.HANDLEByReference pHandleUser);
 
-public class WindowsSecurityRealmTest {
-    @Test
-    public void normal() {
-        WindowsAuthenticationHelper windowsAuthenticationHelper = new WindowsAuthenticationHelper();
-        WindowsSecurityRealm windowsSecurityRealm = new WindowsSecurityRealm(windowsAuthenticationHelper);
+    Advapi32Util.Account getAccountByName(final String systemName, final String userName);
 
-        assertThat(windowsSecurityRealm.getName()).isEqualTo("LDAP");
-        assertThat(windowsSecurityRealm.doGetAuthenticator()).isInstanceOf(WindowsAuthenticator.class);
-        assertThat(windowsSecurityRealm.getUsersProvider()).isInstanceOf(WindowsUsersProvider.class);
-    }
+    Advapi32Util.Account getTokenAccount(final WinNT.HANDLE windowsIdentity);
+
+    Advapi32Util.Account[] getTokenGroups(final WinNT.HANDLE windowsIdentity);
+
+    String getLastErrorMessage();
+
+    void closeHandle(final WinNT.HANDLE identityHandle);
 }

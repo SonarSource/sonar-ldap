@@ -19,26 +19,35 @@
  */
 package org.sonar.plugins.ldap.windows;
 
-import com.sun.jna.platform.win32.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.sonar.api.security.UserDetails;
-
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Map;
+import org.apache.commons.collections.MapUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.sonar.api.ServerExtension;
+import org.sonar.api.security.UserDetails;
+import org.sonar.plugins.ldap.windows.auth.IWindowsAuthProvider;
+import org.sonar.plugins.ldap.windows.auth.WindowsAccount;
+import org.sonar.plugins.ldap.windows.auth.WindowsPrincipal;
+import org.sonar.plugins.ldap.windows.auth.impl.WindowsAuthProviderImpl;
 
-public class WindowsAuthenticationHelper {
+public class WindowsAuthenticationHelper implements ServerExtension {
     private static final Logger LOG = LoggerFactory.getLogger(WindowsAuthenticationHelper.class);
-    private Win32PlatformWrapper win32PlatformWrapper;
+
+    public static final String WINDOWS_PRINCIPAL = "windows_principal";
+    public static final String USER_GROUPS_SYNCHRONIZED = "user_group_synchronized";
+
+    private final IWindowsAuthProvider windowsAuthProvider;
+    private final AdConnectionHelper adConnectionHelper;
 
     public WindowsAuthenticationHelper() {
-        this(new Win32PlatformWrapper());
+        this(new WindowsAuthProviderImpl(), new AdConnectionHelper());
     }
 
-    WindowsAuthenticationHelper(Win32PlatformWrapper win32PlatformWrapper) {
-        this.win32PlatformWrapper = win32PlatformWrapper;
+    WindowsAuthenticationHelper(IWindowsAuthProvider windowsAuthProvider, AdConnectionHelper adConnectionHelper) {
+        this.windowsAuthProvider = windowsAuthProvider;
+        this.adConnectionHelper = adConnectionHelper;
     }
 
     /**
@@ -46,9 +55,9 @@ public class WindowsAuthenticationHelper {
      *
      * @param userName Username of the user. Should be in domain\\user format
      * @param password Password of the user
-     * @return Returns true if user is authenticated successfully, otherwise returns false.
+     * @return Returns {@link WindowsPrincipal} if user is authenticated successfully, otherwise returns null.
      */
-    public boolean logonUser(final String userName, final String password) {
+    public WindowsPrincipal logonUser(final String userName, final String password) {
         if (userName == null || userName.isEmpty()) {
             throw new IllegalArgumentException("username is null or empty");
         }
@@ -57,97 +66,46 @@ public class WindowsAuthenticationHelper {
             throw new IllegalArgumentException("password is null or empty");
         }
 
-        boolean isUserAuthenticated = false;
-
-        WindowsAccount windowsAccount = lookupAccount(userName);
+        WindowsPrincipal windowsPrincipal = null;
+        WindowsAccount windowsAccount = windowsAuthProvider.lookupAccount(userName);
         if (windowsAccount != null) {
-            // Logon to the local machine using the default logon provider: Negotiate and NTLM
-            isUserAuthenticated = win32PlatformWrapper.logonUser(windowsAccount.getUserName(),
-                    windowsAccount.getDomainName(), password, WinBase.LOGON32_LOGON_NETWORK,
-                    WinBase.LOGON32_PROVIDER_DEFAULT);
-            if (!isUserAuthenticated) {
-                LOG.debug("User {} is not authenticated : {}", userName, win32PlatformWrapper.getLastErrorMessage());
-            }
+            windowsPrincipal = windowsAuthProvider.logonDomainUser(windowsAccount.getDomainName(),
+                    windowsAccount.getName(), password);
         }
 
-        return isUserAuthenticated;
-    }
-
-    /**
-     * Fetches the group information for the given domain user. Note that it doesn't fetch the groups information
-     * across domains in the forest.
-     *
-     * @param userName The username of the user. Should be in domain\\user format.
-     * @return {@link Collection} of domain groups of which the user is part of.
-     */
-    public Collection<String> getGroups(final String userName) {
-        if (userName == null || userName.isEmpty()) {
-            throw new IllegalArgumentException("userName should not be null or empty");
-        }
-        Collection<String> groups = new ArrayList<String>();
-
-        WindowsAccount windowsAccount = lookupAccount(userName);
-        if (windowsAccount != null) {
-            Netapi32Util.Group[] userGroups = win32PlatformWrapper.getUserGroups(windowsAccount.getUserName(), windowsAccount.getDomainName());
-            if (userGroups != null) {
-                for (int i = 0; i < userGroups.length; i++) {
-                    String group = windowsAccount.getDomainName() + "\\" + userGroups[i].name;
-                    groups.add(group.toLowerCase());
-                }
-            }
-        }
-
-        return groups;
+        return windowsPrincipal;
     }
 
     /**
      * Gets the {@link UserDetails} for the given domain user.
      *
      * @param userName The user name of the user. Should be in domain\\user format
-     * @return {@link UserDetails} for the given domain user
+     * @return {@link UserDetails} for the given domain user or null if the domain user is not found
      */
     public UserDetails getUserDetails(final String userName) {
         if (userName == null || userName.isEmpty()) {
             throw new IllegalArgumentException("userName is null or empty.");
         }
-
         UserDetails userDetails = null;
 
-        WindowsAccount windowsAccount = lookupAccount(userName);
+        WindowsAccount windowsAccount = windowsAuthProvider.lookupAccount(userName);
         if (windowsAccount != null) {
-            userDetails = new UserDetails();
-            // Setting the name to User's Fully qualified Name
-            userDetails.setName(windowsAccount.getFqn());
-            // Not getting Email for the user
+            Collection<String> requestedDetails = new ArrayList<String>();
+            requestedDetails.add(AdConnectionHelper.COMMON_NAME_ATTRIBUTE);
+            requestedDetails.add(AdConnectionHelper.MAIL_ATTRIBUTE);
+
+            Map<String, String> adUserDetails = adConnectionHelper.getUserDetails(windowsAccount.getDomainName(),
+                    windowsAccount.getName(), requestedDetails);
+            if (MapUtils.isNotEmpty(adUserDetails)) {
+                userDetails = new UserDetails();
+                userDetails.setName(adUserDetails.get(AdConnectionHelper.COMMON_NAME_ATTRIBUTE));
+                userDetails.setEmail(adUserDetails.get(AdConnectionHelper.MAIL_ATTRIBUTE));
+            } else {
+                LOG.debug("Unable to get user details for the user : {}", userName);
+            }
         }
 
         return userDetails;
-    }
+   }
 
-    private WindowsAccount lookupAccount(final String userName) {
-        WindowsAccount windowsAccount = null;
-
-        if (isValidUserNamePattern(userName)) {
-            try {
-                Advapi32Util.Account account = win32PlatformWrapper.getAccountByName(null, userName);
-                if (account != null) {
-                    windowsAccount = new WindowsAccount(account);
-                } else {
-                    LOG.debug("User {} is not found.", userName);
-                }
-            } catch (Win32Exception e) {
-                LOG.debug("User {} is not found: {}", userName, e.getMessage());
-            }
-        } else {
-            LOG.debug("Invalid user-name format for the user: {}. Expected format: domain\\user.", userName);
-        }
-
-        return windowsAccount;
-    }
-
-    private boolean isValidUserNamePattern(final String userName) {
-        Pattern userNamePattern = Pattern.compile("(\\w+)\\\\(\\w+)");
-        Matcher parts = userNamePattern.matcher(userName);
-        return parts.matches();
-    }
 }

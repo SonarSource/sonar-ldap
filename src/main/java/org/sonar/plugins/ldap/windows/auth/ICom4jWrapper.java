@@ -17,20 +17,23 @@
  * License along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
  */
-package org.sonar.plugins.ldap.windows;
+package org.sonar.plugins.ldap.windows.auth;
 
-import org.junit.Test;
+import com4j.Com4jObject;
+import com4j.Variant;
+import com4j.typelibs.ado20._Command;
+import com4j.typelibs.ado20._Connection;
 
-import static org.assertj.core.api.Assertions.assertThat;
+/* A Com4J api wrapper*/
+public interface ICom4jWrapper {
 
-public class WindowsSecurityRealmTest {
-    @Test
-    public void normal() {
-        WindowsAuthenticationHelper windowsAuthenticationHelper = new WindowsAuthenticationHelper();
-        WindowsSecurityRealm windowsSecurityRealm = new WindowsSecurityRealm(windowsAuthenticationHelper);
+    _Command createCommand();
 
-        assertThat(windowsSecurityRealm.getName()).isEqualTo("LDAP");
-        assertThat(windowsSecurityRealm.doGetAuthenticator()).isInstanceOf(WindowsAuthenticator.class);
-        assertThat(windowsSecurityRealm.getUsersProvider()).isInstanceOf(WindowsUsersProvider.class);
-    }
+    _Connection createConnection();
+
+    <T extends Com4jObject> T getObject(Class<T> primaryInterface, String fileName, String progId);
+
+    Variant getMissing();
+
+    void cleanUp();
 }

@@ -19,19 +19,17 @@
  */
 package org.sonar.plugins.ldap.windows;
 
-import com.sun.jna.platform.win32.Advapi32Util;
-import com.sun.jna.platform.win32.Netapi32Util;
-import com.sun.jna.platform.win32.Win32Exception;
-import com.sun.jna.platform.win32.WinBase;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.sonar.api.security.UserDetails;
-
-import java.util.ArrayList;
-import java.util.Collection;
+import org.sonar.plugins.ldap.windows.auth.IWindowsAuthProvider;
+import org.sonar.plugins.ldap.windows.auth.WindowsAccount;
+import org.sonar.plugins.ldap.windows.auth.WindowsPrincipal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,7 +38,10 @@ public class WindowsAuthenticationHelperTest {
 
     @Before
     public void initialize() {
-        authenticationHelper = new WindowsAuthenticationHelper();
+        IWindowsAuthProvider windowsAuthProvider = Mockito.mock(IWindowsAuthProvider.class);
+        AdConnectionHelper adConnectionHelper = Mockito.mock(AdConnectionHelper.class);
+        authenticationHelper = new WindowsAuthenticationHelper(windowsAuthProvider,
+                adConnectionHelper);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -54,163 +55,107 @@ public class WindowsAuthenticationHelperTest {
     }
 
     @Test
-    public void logonUserForInvalidUserNameFormatTests() {
-        runLogonUserTest(null, "\\", "", "secret", false, false, false);
-        runLogonUserTest(null, "\\", null, "secret", false, false, false);
-        runLogonUserTest("", "\\", null, "secret", false, false, false);
-        runLogonUserTest("", "\\", "", "secret", false, false, false);
-        runLogonUserTest("user", "@", "domain", "secret", false, false, false);
-        runLogonUserTest("user@domain", "", "", "secret", false, false, false);
-        runLogonUserTest("domain", "\\", "user\\other-format", "secret", false, false, false);
-    }
-
-    @Test
-    public void logonUserForValidUserNameTests() {
-        runLogonUserTest("domain", "\\", "user", "secret", true, true, true);
-        runLogonUserTest("domain", "\\", "user", "invalid-secret", true, true, false);
-    }
-
-    @Test
-    public void logonUserWhenAccountLookupReturnsNull() {
-        runLogonUserTest("domain", "\\", "invalidUser", "secret", true, false, false);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void getGroupsNullArgumentCheck() {
-        authenticationHelper.getGroups(null);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void getGroupsBlankArgumentCheck() {
-        authenticationHelper.getGroups("");
-    }
-
-    @Test
-    public void getGroupsInvalidUserName() {
-        runGetGroupsTest(null, "\\", "", false, false, null);
-        runGetGroupsTest(null, "\\", null, false, false, null);
-        runGetGroupsTest("", "\\", null, false, false, null);
-        runGetGroupsTest("", "\\", "", false, false, null);
-        runGetGroupsTest("user", "@", "domain", false, false, null);
-        runGetGroupsTest("user@domain", "", "", false, false, null);
-        runGetGroupsTest("domain", "\\", "user\\other-format", false, false, null);
-    }
-
-    @Test
-    public void getGroupsWhenAccountLookupReturnsNull() {
-        runGetGroupsTest("domain", "\\", "otherUser", true, false, null);
-    }
-
-    @Test
-    public void getGroupsForValidUserNameTests() {
-
-        DomainGroup domainGroup1 = new DomainGroup();
-        domainGroup1.setDomainName("Domain1");
-        domainGroup1.setGroupName("Group1");
-
-        DomainGroup domainGroup2 = new DomainGroup();
-        domainGroup2.setDomainName("Domain1");
-        domainGroup2.setGroupName("Group2");
-
-        DomainGroup[] userWithNoDomainGroup = new DomainGroup[]{};
-        DomainGroup[] userWithOneDomainGroup = new DomainGroup[]{domainGroup1};
-        DomainGroup[] userWithTwoDomainGroups = new DomainGroup[]{domainGroup1, domainGroup2};
-
-        runGetGroupsTest("Domain1", "\\", "userWithNoDomainGroup", true, true, userWithNoDomainGroup);
-        runGetGroupsTest("Domain1", "\\", "userWithOneGroup", true, true, userWithOneDomainGroup);
-        runGetGroupsTest("Domain1", "\\", "userWithTwoDomainGroups", true, true, userWithTwoDomainGroups);
+    public void logonUserTests() {
+        runLogonUserTest("domain", "user", "secret", true, Mockito.mock(WindowsPrincipal.class));
+        runLogonUserTest("domain", "user", "secret", false, null);
+        runLogonUserTest("domain", "user", "invalid-secret", true, null);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void getUserDetailsNullCheck() {
-        WindowsAuthenticationHelper authenticationHelper = new WindowsAuthenticationHelper();
         authenticationHelper.getUserDetails(null);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void getUserDetailsEmptyCheck() {
-        WindowsAuthenticationHelper authenticationHelper = new WindowsAuthenticationHelper();
         authenticationHelper.getUserDetails("");
     }
 
     @Test
-    public void getUserDetailsForValidUserNamePatternTests() {
-        runGetUserDetailsForValidUserNameTest("domain\\user", "domain\\user");
-        runGetUserDetailsForValidUserNameTest("domain\\invalidUser", null);
+    public void getUserDetailsTests() {
+        UserDetails expectedUserDetails = new UserDetails();
+        expectedUserDetails.setName("Full Name");
+        expectedUserDetails.setEmail("abc@example.org");
+        runGetUserDetailsTest("domain", "user", true, expectedUserDetails);
+        runGetUserDetailsTest("domain", "user", true, null);
+        runGetUserDetailsTest("domain", "user", false, null);
     }
 
-    @Test
-    public void getUserDetailsWhenGetAccountByNameThrowsExceptionTest() {
-        Win32PlatformWrapper win32PlatformWrapper = Mockito.mock(Win32PlatformWrapper.class);
-        Win32Exception win32Exception = Mockito.mock(Win32Exception.class);
-        Mockito.when(win32Exception.getMessage()).thenReturn("Win32Exception occurred");
-        Mockito.when(win32PlatformWrapper.getAccountByName(null, "domain\\userName")).thenThrow(win32Exception);
-        WindowsAuthenticationHelper authenticationHelper = new WindowsAuthenticationHelper(win32PlatformWrapper);
-
-        assertThat(authenticationHelper.getUserDetails("domain\\userName")).isNull();
-
-        Mockito.verify(win32Exception, Mockito.times(1)).getMessage();
-        Mockito.verify(win32PlatformWrapper, Mockito.never()).getUserGroups("domain", "userName");
-        Mockito.verify(win32PlatformWrapper, Mockito.times(1)).getAccountByName(null, "domain\\userName");
-    }
-
-    @Test
-    public void getUserDetailsWhenGetAccountByNameReturnsNullTest() {
-        Win32PlatformWrapper win32PlatformWrapper = Mockito.mock(Win32PlatformWrapper.class);
-        Mockito.when(win32PlatformWrapper.getAccountByName(null, "domain\\userName")).thenReturn(null);
-
-        WindowsAuthenticationHelper authenticationHelper = new WindowsAuthenticationHelper(win32PlatformWrapper);
-
-        assertThat(authenticationHelper.getUserDetails("domain\\userName")).isNull();
-        Mockito.verify(win32PlatformWrapper, Mockito.never()).getUserGroups("domain", "userName");
-        Mockito.verify(win32PlatformWrapper, Mockito.times(1)).getAccountByName(null, "domain\\userName");
-    }
-
-    private static void runLogonUserTest(final String domainName, final String userDomainNameSeparator,
-                                         final String userName, final String password, boolean isUserNameFormatValid,
-                                         boolean doesUserExist, boolean expectedIsUserAuthenticated) {
-        // Parameters consistency check
-        assertThat(!isUserNameFormatValid && doesUserExist).isFalse();
-
-        String userNameWithDomain = getUserNameWithDomain(domainName, userDomainNameSeparator, userName);
-        int expectedInvocationCountGetAccountByName = 0;
-        int expectedInvocationCountLogonUser = 0;
-        int expectedInvocationCountGetLastErrorMessage = 0;
-        Advapi32Util.Account account = null;
-        if (isUserNameFormatValid && doesUserExist) {
-            account = new Advapi32Util.Account();
-            account.domain = domainName;
-            account.name = userName;
-            account.fqn = userNameWithDomain;
+    private static void runLogonUserTest(String domainName, String userName, String password,
+                                         boolean doesUserExistInDomain, final WindowsPrincipal expectedWindowsPrincipal) {
+        int expectedInvocationCountLogonDomainUser = 0;
+        if (doesUserExistInDomain) {
+            expectedInvocationCountLogonDomainUser = 1;
         }
 
-        if (isUserNameFormatValid) {
-            expectedInvocationCountGetAccountByName = 1;
+        AdConnectionHelper adConnectionHelper = Mockito.mock(AdConnectionHelper.class);
+        IWindowsAuthProvider windowsAuthProvider = Mockito.mock(IWindowsAuthProvider.class);
+        if (doesUserExistInDomain) {
+            WindowsAccount account = Mockito.mock(WindowsAccount.class);
+            Mockito.when(account.getDomainName()).thenReturn(domainName);
+            Mockito.when(account.getName()).thenReturn(userName);
+            Mockito.when(windowsAuthProvider.lookupAccount(getUserNameWithDomain(domainName, "\\", userName))).
+                    thenReturn(account);
         }
+
+        if (expectedWindowsPrincipal != null) {
+            Mockito.when(windowsAuthProvider.logonDomainUser(domainName, userName, password))
+                    .thenReturn(expectedWindowsPrincipal);
+        }
+
+        WindowsAuthenticationHelper windowsAuthenticationHelper = new WindowsAuthenticationHelper(windowsAuthProvider,
+                adConnectionHelper);
+
+        WindowsPrincipal windowsPrincipal = windowsAuthenticationHelper.logonUser(
+                getUserNameWithDomain(domainName, "\\", userName), password);
+
+        if (expectedWindowsPrincipal == null) {
+            assertThat(windowsPrincipal).isNull();
+        } else {
+            assertThat(windowsPrincipal).isEqualTo(expectedWindowsPrincipal);
+        }
+        Mockito.verify(windowsAuthProvider, Mockito.times(expectedInvocationCountLogonDomainUser)).
+                logonDomainUser(domainName, userName, password);
+    }
+
+    private static void runGetUserDetailsTest(String domainName, String userName, boolean doesUserExist,
+                                              UserDetails expectedUserDetails) {
+        IWindowsAuthProvider windowsAuthProvider = Mockito.mock(IWindowsAuthProvider.class);
+
+        AdConnectionHelper adConnectionHelper = Mockito.mock(AdConnectionHelper.class);
+        String userNameWithDomain = getUserNameWithDomain(domainName, "\\", userName);
         if (doesUserExist) {
-            expectedInvocationCountLogonUser = 1;
+            WindowsAccount windowsAccount = Mockito.mock(WindowsAccount.class);
+            Mockito.when(windowsAccount.getDomainName()).thenReturn(domainName);
+            Mockito.when(windowsAccount.getName()).thenReturn(userName);
+
+            Mockito.when(windowsAuthProvider.lookupAccount(userNameWithDomain)).thenReturn(windowsAccount);
         }
-        if (isUserNameFormatValid && doesUserExist && !expectedIsUserAuthenticated) {
-            expectedInvocationCountGetLastErrorMessage = 1;
+
+        Map<String, String> attributesUserDetails = null;
+        if(expectedUserDetails != null){
+            attributesUserDetails = new HashMap<String, String>();
+            attributesUserDetails.put(AdConnectionHelper.COMMON_NAME_ATTRIBUTE, expectedUserDetails.getName());
+            attributesUserDetails.put(AdConnectionHelper.MAIL_ATTRIBUTE, expectedUserDetails.getEmail());
         }
 
-        Win32PlatformWrapper win32PlatformWrapper = Mockito.mock(Win32PlatformWrapper.class);
-        Mockito.when(win32PlatformWrapper.logonUser(userName, domainName, password, WinBase.LOGON32_LOGON_NETWORK,
-                WinBase.LOGON32_PROVIDER_DEFAULT)).thenReturn(expectedIsUserAuthenticated);
-        Mockito.when(win32PlatformWrapper.getAccountByName(null, userNameWithDomain)).thenReturn(account);
-        Mockito.when(win32PlatformWrapper.getLastErrorMessage()).thenReturn("Authentication failed");
-        WindowsAuthenticationHelper authenticationHelper = new WindowsAuthenticationHelper(win32PlatformWrapper);
+        Collection<String> attributeNames = new ArrayList<String>();
+        attributeNames.add(AdConnectionHelper.COMMON_NAME_ATTRIBUTE);
+        attributeNames.add(AdConnectionHelper.MAIL_ATTRIBUTE);
+        Mockito.when(adConnectionHelper.getUserDetails(domainName, userName, attributeNames)).
+                thenReturn(attributesUserDetails);
 
-        assertThat(authenticationHelper.logonUser(getUserNameWithDomain(domainName, userDomainNameSeparator, userName),
-                password)).isEqualTo(expectedIsUserAuthenticated);
+        WindowsAuthenticationHelper authenticationHelper = new WindowsAuthenticationHelper(windowsAuthProvider,
+                adConnectionHelper);
 
+        UserDetails userDetails = authenticationHelper.getUserDetails(userNameWithDomain);
 
-        Mockito.verify(win32PlatformWrapper, Mockito.times(expectedInvocationCountLogonUser)).
-                logonUser(userName, domainName, password, WinBase.LOGON32_LOGON_NETWORK, WinBase.LOGON32_PROVIDER_DEFAULT);
-        Mockito.verify(win32PlatformWrapper, Mockito.times(expectedInvocationCountGetAccountByName)).
-                getAccountByName(null, userNameWithDomain);
-        Mockito.verify(win32PlatformWrapper, Mockito.times(expectedInvocationCountGetLastErrorMessage)).
-                getLastErrorMessage();
+        if (expectedUserDetails == null) {
+            assertThat(userDetails).isNull();
+        } else {
+            assertThat(userDetails).isNotNull();
+            assertThat(userDetails).isEqualToComparingFieldByField(expectedUserDetails);
+        }
     }
 
     private static String getUserNameWithDomain(final String domainName, final String separator, final String userName) {
@@ -228,118 +173,4 @@ public class WindowsAuthenticationHelperTest {
         return userNameWithDomain;
     }
 
-    private static Collection<String> getUserGroups(DomainGroup[] domainGroups) {
-        Collection<String> userGroups = new ArrayList<String>();
-        if (domainGroups != null) {
-            for (DomainGroup domainGroup : domainGroups) {
-                String group = domainGroup.getDomainName() + "\\" + domainGroup.getGroupName();
-                userGroups.add(group.toLowerCase());
-            }
-        }
-        return userGroups;
-    }
-
-    private static void runGetGroupsTest(final String domainName, final String separator, final String userAlias,
-                                         boolean isUserNameFormatValid, boolean isUserValid,
-                                         DomainGroup[] domainGroups) {
-        // Parameters consistency check
-        assertThat(!isUserNameFormatValid && isUserValid).isFalse();
-
-        int expectedInvocationCountGetAccountByName = 0;
-        int expectedInvocationCountGetGroups = 0;
-        if (isUserNameFormatValid) {
-            expectedInvocationCountGetAccountByName = 1;
-        }
-        if (isUserValid) {
-            expectedInvocationCountGetGroups = 1;
-        }
-
-        Collection<String> expectedUserGroups = getUserGroups(domainGroups);
-        String userNameWithDomain = getUserNameWithDomain(domainName, separator, userAlias);
-        Advapi32Util.Account account = null;
-        if (isUserNameFormatValid && isUserValid) {
-            account = new Advapi32Util.Account();
-            account.domain = domainName;
-            account.name = userAlias;
-            account.fqn = userNameWithDomain;
-        }
-
-        Win32PlatformWrapper win32PlatformWrapper = Mockito.mock(Win32PlatformWrapper.class);
-        Mockito.when(win32PlatformWrapper.getUserGroups(userAlias, domainName)).
-                thenReturn(getNetApi32UtilGroups(domainGroups));
-        Mockito.when(win32PlatformWrapper.getAccountByName(null, userNameWithDomain)).thenReturn(account);
-
-        WindowsAuthenticationHelper authenticationHelper = new WindowsAuthenticationHelper(win32PlatformWrapper);
-        Collection<String> actualUserGroups = authenticationHelper.getGroups(userNameWithDomain);
-
-        assertThat(CollectionUtils.isEqualCollection(actualUserGroups, expectedUserGroups)).isTrue();
-        Mockito.verify(win32PlatformWrapper, Mockito.times(expectedInvocationCountGetAccountByName)).
-                getAccountByName(null, userNameWithDomain);
-        Mockito.verify(win32PlatformWrapper, Mockito.times(expectedInvocationCountGetGroups)).
-                getUserGroups(userAlias, domainName);
-    }
-
-    private static Netapi32Util.Group[] getNetApi32UtilGroups(DomainGroup[] domainGroups) {
-        if (domainGroups != null) {
-            Netapi32Util.Group[] groups = new Netapi32Util.Group[domainGroups.length];
-            for (int i = 0; i < domainGroups.length; i++) {
-                Netapi32Util.Group netapi32UtilGroup = new Netapi32Util.Group();
-                netapi32UtilGroup.name = domainGroups[i].getGroupName();
-
-                groups[i] = netapi32UtilGroup;
-            }
-            return groups;
-        }
-
-        return null;
-    }
-
-    private static void runGetUserDetailsForValidUserNameTest(String userName, String expectedFqn) {
-        Advapi32Util.Account account = null;
-        if (expectedFqn != null && !expectedFqn.isEmpty()) {
-            account = new Advapi32Util.Account();
-            account.fqn = expectedFqn;
-        }
-
-        Win32PlatformWrapper win32PlatformWrapper = Mockito.mock(Win32PlatformWrapper.class);
-        Mockito.when(win32PlatformWrapper.getAccountByName(null, userName)).thenReturn(account);
-
-        WindowsAuthenticationHelper authenticationHelper = new WindowsAuthenticationHelper(win32PlatformWrapper);
-
-        UserDetails expectedUserDetails = null;
-        if (expectedFqn != null && !expectedFqn.isEmpty()) {
-            expectedUserDetails = new UserDetails();
-            expectedUserDetails.setName(expectedFqn);
-        }
-
-        UserDetails userDetails = authenticationHelper.getUserDetails(userName);
-
-        if (StringUtils.isBlank(expectedFqn)) {
-            assertThat(userDetails).isNull();
-        } else {
-            assertThat(userDetails).isNotNull();
-            assertThat(userDetails).isEqualToComparingFieldByField(expectedUserDetails);
-        }
-    }
-
-    class DomainGroup {
-        private String domainName;
-        private String groupName;
-
-        public String getDomainName() {
-            return domainName;
-        }
-
-        public void setDomainName(String domainName) {
-            this.domainName = domainName;
-        }
-
-        public String getGroupName() {
-            return groupName;
-        }
-
-        public void setGroupName(String groupName) {
-            this.groupName = groupName;
-        }
-    }
 }
