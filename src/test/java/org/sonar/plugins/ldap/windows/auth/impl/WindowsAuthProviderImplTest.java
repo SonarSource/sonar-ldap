@@ -100,21 +100,10 @@ public class WindowsAuthProviderImplTest {
     }
 
     @Test
-    public void lookupAccountInvalidUserNames() {
-        runLookupAccountTest(null, "\\", "", false, null);
-        runLookupAccountTest(null, "\\", null, false, null);
-        runLookupAccountTest("", "\\", null, false, null);
-        runLookupAccountTest("", "\\", "", false, null);
-        runLookupAccountTest("user", "@", "domain", false, null);
-        runLookupAccountTest("user@domain", "", "", false, null);
-        runLookupAccountTest("domain", "\\", "user\\other-format", false, null);
-    }
-
-    @Test
-    public void lookupAccountValidUserNames() {
-        WindowsAccount windowsAccount = new WindowsAccount(getAdvapi32UtilAccount("domain", "\\", "user"));
-        runLookupAccountTest("domain", "\\", "user", true, windowsAccount);
-        runLookupAccountTest("domain", "\\", "user", true, null);
+    public void lookupAccountTests() {
+        WindowsAccount windowsAccount = new WindowsAccount(getAdvapi32UtilAccount("domain", "\\", "user1"));
+        runLookupAccountTest("domain", "\\", "user1", true, windowsAccount);
+        runLookupAccountTest("domain", "\\", "user2", true, null);
     }
 
     @Test

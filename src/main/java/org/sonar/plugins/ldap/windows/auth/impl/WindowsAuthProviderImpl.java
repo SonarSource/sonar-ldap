@@ -80,27 +80,18 @@ public class WindowsAuthProviderImpl implements IWindowsAuthProvider {
         Preconditions.checkArgument(userName != null && !userName.isEmpty(), "userName is null or empty");
 
         WindowsAccount windowsAccount = null;
-        if (isValidUserNamePattern(userName)) {
-            try {
-                Advapi32Util.Account account = win32PlatformWrapper.getAccountByName(null, userName);
-                if (account != null) {
-                    windowsAccount = new WindowsAccount(account);
-                } else {
-                    LOG.debug("User {} is not found.", userName);
-                }
-            } catch (Win32Exception e) {
-                LOG.debug("User {} is not found: {}", userName, e.getMessage());
+        try {
+            Advapi32Util.Account account = win32PlatformWrapper.getAccountByName(null, userName);
+            if (account != null) {
+                windowsAccount = new WindowsAccount(account);
+            } else {
+                LOG.debug("User {} is not found.", userName);
             }
-        } else {
-            LOG.debug("Invalid user-name format for the user: {}. Expected format: domain\\user.", userName);
+        } catch (Win32Exception e) {
+            LOG.debug("User {} is not found: {}", userName, e.getMessage());
         }
 
-        return windowsAccount;
-    }
 
-    private boolean isValidUserNamePattern(final String userName) {
-        Pattern userNamePattern = Pattern.compile("(\\w+)\\\\(\\w+)");
-        Matcher parts = userNamePattern.matcher(userName);
-        return parts.matches();
+        return windowsAccount;
     }
 }
