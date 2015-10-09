@@ -17,19 +17,23 @@
  * License along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
  */
-package org.sonar.plugins.ldap;
+package org.sonar.plugins.ldap.windows.auth;
 
-import com.google.common.collect.ImmutableList;
-import java.util.List;
-import org.sonar.api.SonarPlugin;
+import com4j.Com4jObject;
+import com4j.Variant;
+import com4j.typelibs.ado20._Command;
+import com4j.typelibs.ado20._Connection;
 
-/**
- * @author Evgeny Mandrikov
- */
-public class LdapPlugin extends SonarPlugin {
+/* A Com4J api wrapper*/
+public interface ICom4jWrapper {
 
-  public List getExtensions() {
-    return ImmutableList.of(LdapExtensions.class);
-  }
+  _Command createCommand();
 
+  _Connection createConnection();
+
+  <T extends Com4jObject> T getObject(Class<T> primaryInterface, String fileName, String progId);
+
+  Variant getMissing();
+
+  void cleanUp();
 }

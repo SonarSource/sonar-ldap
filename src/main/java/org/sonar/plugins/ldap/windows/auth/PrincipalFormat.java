@@ -17,19 +17,16 @@
  * License along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
  */
-package org.sonar.plugins.ldap;
+package org.sonar.plugins.ldap.windows.auth;
 
-import com.google.common.collect.ImmutableList;
-import java.util.List;
-import org.sonar.api.SonarPlugin;
+public enum PrincipalFormat {
+  /** User Principal Name
+   *  E.g. user@domain
+   */
+  UPN,
 
-/**
- * @author Evgeny Mandrikov
- */
-public class LdapPlugin extends SonarPlugin {
-
-  public List getExtensions() {
-    return ImmutableList.of(LdapExtensions.class);
-  }
-
+  /** User Logon Name
+   * E.g. user
+   */
+  ULN;
 }
