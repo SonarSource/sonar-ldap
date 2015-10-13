@@ -105,6 +105,7 @@ public class LdapContextFactory {
       // Enable connection pooling
       env.put(SUN_CONNECTION_POOLING_PROPERTY, "true");
     }
+    env.put("java.naming.ldap.attributes.binary", "objectSid objectGUID");
     env.put(Context.INITIAL_CONTEXT_FACTORY, factory);
     env.put(Context.PROVIDER_URL, providerUrl);
     env.put(Context.REFERRAL, DEFAULT_REFERRAL);
