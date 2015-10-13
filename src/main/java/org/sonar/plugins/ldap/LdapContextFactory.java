@@ -21,11 +21,18 @@ package org.sonar.plugins.ldap;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
+
+import java.security.PrivilegedAction;
 import java.util.Properties;
 import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.ldap.InitialLdapContext;
+import javax.security.auth.Subject;
+import javax.security.auth.login.Configuration;
+import javax.security.auth.login.LoginContext;
+import javax.security.auth.login.LoginException;
+
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,7 +87,13 @@ public class LdapContextFactory {
    * Returns {@code InitialDirContext} for Bind user.
    */
   public InitialDirContext createBindContext() throws NamingException {
-    return createInitialDirContext(username, password, true);
+      if (isGssapi()) {
+    	  LOG.debug("LDAP connection using Gssapi with username {}", username);
+          return createInitialDirContextUsingGssapi(username, password, true);
+        } else {
+        	LOG.debug("LDAP connection with default bind with username {}", username);
+          return createInitialDirContext(username, password, true);
+  	  }	  
   }
 
   /**
@@ -91,6 +104,41 @@ public class LdapContextFactory {
     return createInitialDirContext(principal, credentials, false);
   }
 
+  private InitialDirContext createInitialDirContextUsingGssapi(String principal, String credentials, final boolean pooling) throws NamingException {
+	  Configuration.setConfiguration(new Krb5LoginConfiguration());
+	  //Configuration.getConfiguration();
+	  InitialDirContext initialDirContext = null;
+	  LoginContext lc = null;
+	  try {
+		  lc = new LoginContext(getClass().getName(), new CallbackHandlerImpl(principal, credentials));
+		  lc.login();
+		  
+		  initialDirContext = Subject.doAs(lc.getSubject(), new PrivilegedAction<InitialDirContext>() {
+			  @Override
+			  public InitialDirContext run(){
+				  // TODO Auto-generated method stub
+				  try {
+					  return new InitialLdapContext(getEnvironment(null, null, pooling), null);
+				  } catch (NamingException e) {
+					  // TODO Auto-generated catch block
+					  e.printStackTrace();
+				  }
+				  return null;
+			  }
+		  });
+	  } catch (LoginException e) {
+		    // Bad username: Client not found in Kerberos database
+		    // Bad password: Integrity check on decrypted field failed
+			throw new NamingException(e.getMessage());
+	  }
+	  
+	  if (initialDirContext == null) {
+		  throw new NamingException("Problem occured");
+	  }
+	  
+	  return initialDirContext;
+  }
+  
   private InitialDirContext createInitialDirContext(String principal, String credentials, boolean pooling) throws NamingException {
     return new InitialLdapContext(getEnvironment(principal, credentials, pooling), null);
   }
