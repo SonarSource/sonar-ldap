@@ -77,8 +77,9 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
       boolean passwordValid;
       if (contextFactories.get(ldapKey).isGssapi()) {
         passwordValid = checkPasswordUsingGssapi(principal, password, ldapKey);
-      }
-      passwordValid = checkPasswordUsingBind(principal, password, ldapKey);
+      } else {
+		passwordValid = checkPasswordUsingBind(principal, password, ldapKey);
+	  }
       if (passwordValid) {
         return true;
       }
