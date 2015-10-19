@@ -27,6 +27,7 @@ import java.util.Map;
 import javax.annotation.CheckForNull;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import org.apache.commons.lang.StringUtils;
 import org.sonar.api.ServerExtension;
 import org.sonar.api.security.UserDetails;
 import org.sonar.api.utils.log.Logger;
@@ -41,7 +42,9 @@ import waffle.windows.auth.IWindowsIdentity;
 import waffle.windows.auth.WindowsAccount;
 import waffle.windows.auth.impl.WindowsAuthProviderImpl;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.commons.lang.StringUtils.isNotEmpty;
 
 public class WindowsAuthenticationHelper implements ServerExtension {
   public static final String SSO_PRINCIPAL_KEY = NegotiateSecurityFilter.class.getName() + ".PRINCIPAL";
@@ -132,14 +135,10 @@ public class WindowsAuthenticationHelper implements ServerExtension {
   /**
    * Authenticates the user using Windows LogonUser API
    */
-  public WindowsPrincipal logonUser(final String userName, final String password) {
-    if (userName == null || userName.isEmpty()) {
-      throw new IllegalArgumentException("userName is null or empty.");
-    }
-
-    if (password == null || password.isEmpty()) {
-      throw new IllegalArgumentException("password is null or empty.");
-    }
+  @CheckForNull
+  public WindowsPrincipal logonUser(String userName, String password) {
+    checkArgument(isNotEmpty(userName), "userName is null or empty.");
+    checkArgument(isNotEmpty(password), "password is null or empty.");
 
     LOG.debug("Authenticating user: {}", userName);
 
@@ -166,6 +165,7 @@ public class WindowsAuthenticationHelper implements ServerExtension {
    *
    * @return {@link UserDetails} for the given {@link WindowsPrincipal} or null if it is not found.
    */
+  @CheckForNull
   public UserDetails getSsoUserDetails(HttpServletRequest request) {
     checkNotNull(request, "request is null");
 
@@ -179,11 +179,9 @@ public class WindowsAuthenticationHelper implements ServerExtension {
    * @param userName The user name of the user.
    * @return {@link UserDetails} for the given domain user or null if the domain user is not found
    */
-  public UserDetails getUserDetails(final String userName) {
-    if (userName == null || userName.isEmpty()) {
-      throw new IllegalArgumentException("userName is null or empty.");
-    }
-
+  @CheckForNull
+  public UserDetails getUserDetails(String userName) {
+    checkArgument(isNotEmpty(userName), "userName is null or empty.");
     IWindowsAccount windowsAccount = getWindowsAccount(userName);
     return windowsAccount != null ? getSsoUserDetails(windowsAccount) : null;
   }
@@ -246,7 +244,6 @@ public class WindowsAuthenticationHelper implements ServerExtension {
     Collection<String> requestedDetails = new ArrayList<>();
     requestedDetails.add(AdConnectionHelper.COMMON_NAME_ATTRIBUTE);
     requestedDetails.add(AdConnectionHelper.MAIL_ATTRIBUTE);
-
     return adConnectionHelper.getUserDetails(domainName, name, requestedDetails);
   }
 

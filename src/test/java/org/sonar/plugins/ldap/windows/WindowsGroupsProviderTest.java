@@ -22,7 +22,6 @@ package org.sonar.plugins.ldap.windows;
 import java.util.ArrayList;
 import java.util.Collection;
 import javax.servlet.http.HttpServletRequest;
-import org.apache.commons.lang.NullArgumentException;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.sonar.api.security.ExternalGroupsProvider;
@@ -35,7 +34,7 @@ import static org.mockito.Mockito.when;
 
 public class WindowsGroupsProviderTest {
 
-  @Test(expected = NullArgumentException.class)
+  @Test(expected = NullPointerException.class)
   public void nullArgumentCheck() {
     new WindowsGroupsProvider(null);
   }

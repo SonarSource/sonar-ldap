@@ -29,28 +29,28 @@ import org.sonar.plugins.ldap.windows.auth.ICom4jWrapper;
 
 public class Com4jWrapper implements ICom4jWrapper {
 
-    @Override
-    public _Command createCommand() {
-        return ClassFactory.createCommand();
-    }
+  @Override
+  public _Command createCommand() {
+    return ClassFactory.createCommand();
+  }
 
-    @Override
-    public _Connection createConnection() {
-        return ClassFactory.createConnection();
-    }
+  @Override
+  public _Connection createConnection() {
+    return ClassFactory.createConnection();
+  }
 
-    @Override
-    public <T extends Com4jObject> T getObject(Class<T> primaryInterface, String fileName, String progId) {
-        return COM4J.getObject(primaryInterface, fileName, progId);
-    }
+  @Override
+  public <T extends Com4jObject> T getObject(Class<T> primaryInterface, String fileName, String progId) {
+    return COM4J.getObject(primaryInterface, fileName, progId);
+  }
 
-    @Override
-    public Variant getMissing() {
-        return Variant.getMissing();
-    }
+  @Override
+  public Variant getMissing() {
+    return Variant.getMissing();
+  }
 
-    @Override
-    public void cleanUp() {
-        COM4J.cleanUp();
-    }
+  @Override
+  public void cleanUp() {
+    COM4J.cleanUp();
+  }
 }

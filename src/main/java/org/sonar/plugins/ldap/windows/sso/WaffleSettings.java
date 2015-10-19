@@ -47,7 +47,7 @@ public class WaffleSettings implements FilterConfig {
     this.filterName = filterName;
     this.servletContext = servletContext;
 
-    initParams = new HashMap<String, String>();
+    initParams = new HashMap<>();
     // allowGuestLogin is enabled by default. Explicitly disabling the guest login.
     initParams.put(ALLOW_GUEST_LOGIN, ALLOW_GUEST_LOGIN_VALUE);
     initParams.put(SECURITY_FILTER_PROVIDERS, SECURITY_FILTER_PROVIDERS_VALUE);
@@ -73,6 +73,6 @@ public class WaffleSettings implements FilterConfig {
 
   @Override
   public Enumeration<String> getInitParameterNames() {
-    return new Vector<String>(initParams.keySet()).elements();
+    return new Vector<>(initParams.keySet()).elements();
   }
 }

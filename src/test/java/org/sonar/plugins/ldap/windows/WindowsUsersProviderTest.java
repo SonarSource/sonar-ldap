@@ -20,7 +20,6 @@
 package org.sonar.plugins.ldap.windows;
 
 import javax.servlet.http.HttpServletRequest;
-import org.apache.commons.lang.NullArgumentException;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -30,9 +29,9 @@ import org.sonar.api.security.UserDetails;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class WindowsUsersProviderTest {
-  @Test(expected = NullArgumentException.class)
+  @Test(expected = NullPointerException.class)
   public void nullArgumentCheckOnConstructor() {
-    WindowsUsersProvider usersProvider = new WindowsUsersProvider(null);
+    new WindowsUsersProvider(null);
   }
 
   @Test

@@ -19,12 +19,13 @@
  */
 package org.sonar.plugins.ldap.windows;
 
-import org.apache.commons.lang.NullArgumentException;
 import org.apache.commons.lang.StringUtils;
 import org.sonar.api.security.ExternalUsersProvider;
 import org.sonar.api.security.UserDetails;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class WindowsUsersProvider extends ExternalUsersProvider {
   private static final Logger LOG = Loggers.get(WindowsUsersProvider.class);
@@ -32,10 +33,7 @@ public class WindowsUsersProvider extends ExternalUsersProvider {
   private final WindowsAuthenticationHelper windowsAuthenticationHelper;
 
   public WindowsUsersProvider(WindowsAuthenticationHelper windowsAuthenticationHelper) {
-    if (windowsAuthenticationHelper == null) {
-      throw new NullArgumentException("windowsAuthenticationHelper");
-    }
-
+    checkNotNull(windowsAuthenticationHelper, "null windowsAuthenticationHelper");
     this.windowsAuthenticationHelper = windowsAuthenticationHelper;
   }
 
@@ -44,7 +42,7 @@ public class WindowsUsersProvider extends ExternalUsersProvider {
    */
   @Override
   public UserDetails doGetUserDetails(Context context) {
-    UserDetails userDetails = null;
+    UserDetails userDetails;
 
     final String userName = context.getUsername();
     if (StringUtils.isBlank(userName)) {

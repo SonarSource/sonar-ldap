@@ -19,9 +19,9 @@
  */
 package org.sonar.plugins.ldap.windows;
 
+import com.google.common.base.Preconditions;
 import java.util.Collection;
 import javax.annotation.ParametersAreNonnullByDefault;
-import org.apache.commons.lang.NullArgumentException;
 import org.sonar.api.security.ExternalGroupsProvider;
 import waffle.servlet.WindowsPrincipal;
 
@@ -29,9 +29,7 @@ public class WindowsGroupsProvider extends ExternalGroupsProvider {
   private final WindowsAuthenticationHelper windowsAuthenticationHelper;
 
   public WindowsGroupsProvider(WindowsAuthenticationHelper windowsAuthenticationHelper) {
-    if (windowsAuthenticationHelper == null) {
-      throw new NullArgumentException("windowsAuthenticationHelper");
-    }
+    Preconditions.checkNotNull(windowsAuthenticationHelper);
     this.windowsAuthenticationHelper = windowsAuthenticationHelper;
   }
 
@@ -44,10 +42,10 @@ public class WindowsGroupsProvider extends ExternalGroupsProvider {
   @Override
   public Collection<String> doGetGroups(Context context) {
     WindowsPrincipal windowsPrincipal = windowsAuthenticationHelper.getWindowsPrincipal(context.getRequest(),
-            WindowsAuthenticationHelper.BASIC_AUTH_PRINCIPAL_KEY) ;
+      WindowsAuthenticationHelper.BASIC_AUTH_PRINCIPAL_KEY);
     if (windowsPrincipal == null) {
       windowsPrincipal = windowsAuthenticationHelper.getWindowsPrincipal(context.getRequest(),
-              WindowsAuthenticationHelper.SSO_PRINCIPAL_KEY);
+        WindowsAuthenticationHelper.SSO_PRINCIPAL_KEY);
     }
 
     return windowsPrincipal != null ? windowsAuthenticationHelper.getUserGroups(windowsPrincipal) : null;
