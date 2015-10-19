@@ -25,6 +25,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.sonar.api.config.Settings;
+import org.sonar.api.utils.System2;
 import org.sonar.plugins.ldap.windows.WindowsAuthenticationHelper;
 import org.sonar.plugins.ldap.windows.WindowsSecurityRealm;
 import org.sonar.plugins.ldap.windows.auth.WindowsAuthSettings;
@@ -73,19 +74,19 @@ public class LdapExtensionsTest {
   public void getExtensionsThrowsException() {
     Settings settings = new Settings();
     settings.setProperty(WindowsAuthSettings.SONAR_WINDOWS_AUTH, "true");
-    SystemUtilsWrapper systemUtilsWrapper = Mockito.mock(SystemUtilsWrapper.class);
-    Mockito.when(systemUtilsWrapper.isOperatingSystemWindows()).thenReturn(false);
+    System2 system2 = Mockito.mock(System2.class);
+    Mockito.when(system2.isOsWindows()).thenReturn(false);
 
-    LdapExtensions ldapExtensions = new LdapExtensions(settings, systemUtilsWrapper);
+    LdapExtensions ldapExtensions = new LdapExtensions(settings, system2);
 
     ldapExtensions.getExtensions();
   }
 
   private void runGetExtensionsDefaultTest(boolean isOperatingSystemWindows, List<Class> expectedExtensions) {
     Settings settings = new Settings();
-    SystemUtilsWrapper systemUtilsWrapper = Mockito.mock(SystemUtilsWrapper.class);
-    Mockito.when(systemUtilsWrapper.isOperatingSystemWindows()).thenReturn(isOperatingSystemWindows);
-    LdapExtensions ldapExtensions = new LdapExtensions(settings, systemUtilsWrapper);
+    System2 system2 = Mockito.mock(System2.class);
+    Mockito.when(system2.isOsWindows()).thenReturn(isOperatingSystemWindows);
+    LdapExtensions ldapExtensions = new LdapExtensions(settings, system2);
 
     List<Class> extensions = ldapExtensions.getExtensions();
 
@@ -97,10 +98,10 @@ public class LdapExtensionsTest {
     Settings settings = new Settings();
     settings.setProperty(WindowsAuthSettings.SONAR_WINDOWS_AUTH, windowsAuthSettingValue);
 
-    SystemUtilsWrapper systemUtilsWrapper = Mockito.mock(SystemUtilsWrapper.class);
-    Mockito.when(systemUtilsWrapper.isOperatingSystemWindows()).thenReturn(isOperatingSystemWindows);
+    System2 system2 = Mockito.mock(System2.class);
+    Mockito.when(system2.isOsWindows()).thenReturn(isOperatingSystemWindows);
 
-    LdapExtensions ldapExtensions = new LdapExtensions(settings, systemUtilsWrapper);
+    LdapExtensions ldapExtensions = new LdapExtensions(settings, system2);
 
     List<Class> extensions = ldapExtensions.getExtensions();
 

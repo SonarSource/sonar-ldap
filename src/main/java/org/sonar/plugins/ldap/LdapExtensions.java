@@ -25,6 +25,7 @@ import org.apache.commons.lang.StringUtils;
 import org.sonar.api.ExtensionProvider;
 import org.sonar.api.ServerExtension;
 import org.sonar.api.config.Settings;
+import org.sonar.api.utils.System2;
 import org.sonar.plugins.ldap.windows.WindowsAuthenticationHelper;
 import org.sonar.plugins.ldap.windows.WindowsSecurityRealm;
 import org.sonar.plugins.ldap.windows.auth.WindowsAuthSettings;
@@ -34,15 +35,15 @@ import org.sonar.plugins.ldap.windows.sso.servlet.SsoValidationFilter;
 
 public class LdapExtensions extends ExtensionProvider implements ServerExtension {
   private final Settings settings;
-  private final SystemUtilsWrapper systemUtilsWrapper;
+  private final System2 system2;
 
   public LdapExtensions(Settings settings) {
-    this(settings, new SystemUtilsWrapper());
+    this(settings, new System2());
   }
 
-  LdapExtensions(Settings settings, SystemUtilsWrapper systemUtilsWrapper) {
+  LdapExtensions(Settings settings, System2 system2) {
     this.settings = settings;
-    this.systemUtilsWrapper = systemUtilsWrapper;
+    this.system2 = system2;
   }
 
   @Override
@@ -53,7 +54,7 @@ public class LdapExtensions extends ExtensionProvider implements ServerExtension
   List<Class> getExtensions() {
     List<Class> extensions = Lists.newArrayList();
     if (isWindowsAuthEnabled()) {
-      if (systemUtilsWrapper.isOperatingSystemWindows()) {
+      if (system2.isOsWindows()) {
         extensions.addAll(getWindowsAuthExtensions());
       } else {
         throw new IllegalArgumentException("Windows authentication is enabled, while the OS is not Windows.");
@@ -67,7 +68,7 @@ public class LdapExtensions extends ExtensionProvider implements ServerExtension
 
   private boolean isWindowsAuthEnabled() {
     boolean isWindowsAuthEnabled;
-    if (systemUtilsWrapper.isOperatingSystemWindows()) {
+    if (system2.isOsWindows()) {
       // In Windows OS, Windows authentication is enabled by default.
       isWindowsAuthEnabled = Boolean.parseBoolean(StringUtils.defaultString(
         settings.getString(WindowsAuthSettings.SONAR_WINDOWS_AUTH),
