@@ -99,7 +99,7 @@ public class AdConnectionHelper {
     Preconditions.checkArgument(requestedDetails != null && !requestedDetails.isEmpty(),
       "requestedDetails is null or empty");
 
-    Map<String, String> userDetails = new HashMap<String, String>();
+    Map<String, String> userDetails = new HashMap<>();
     _Connection connection = null;
     _Recordset recordSet = null;
     try {
@@ -225,7 +225,7 @@ public class AdConnectionHelper {
 
   private Map<String, String> getUserDetailsFromRecordSet(final _Recordset recordSet, final String userName,
     final String domainName, final Collection<String> requestedDetails) {
-    Map<String, String> userDetails = new HashMap<String, String>();
+    Map<String, String> userDetails = new HashMap<>();
 
     if (recordSet.eof()) {
       LOG.debug(userName + " not found in the domain " + domainName);

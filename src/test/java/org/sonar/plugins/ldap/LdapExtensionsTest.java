@@ -19,9 +19,8 @@
  */
 package org.sonar.plugins.ldap;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import org.apache.commons.collections.CollectionUtils;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.sonar.api.config.Settings;
@@ -82,7 +81,7 @@ public class LdapExtensionsTest {
     ldapExtensions.getExtensions();
   }
 
-  private void runGetExtensionsDefaultTest(boolean isOperatingSystemWindows, List<Class> expectedExtensions) {
+  private void runGetExtensionsDefaultTest(boolean isOperatingSystemWindows, List<Class<?>> expectedExtensions) {
     Settings settings = new Settings();
     System2 system2 = Mockito.mock(System2.class);
     Mockito.when(system2.isOsWindows()).thenReturn(isOperatingSystemWindows);
@@ -90,11 +89,10 @@ public class LdapExtensionsTest {
 
     List<Class> extensions = ldapExtensions.getExtensions();
 
-    assertThat(extensions).isNotNull();
-    assertThat(CollectionUtils.isEqualCollection(extensions, expectedExtensions)).isTrue();
+    assertThat(extensions).isNotNull().hasSameElementsAs(expectedExtensions);
   }
 
-  private void runGetExtensionsTest(String windowsAuthSettingValue, boolean isOperatingSystemWindows, List<Class> expectedExtensions) {
+  private void runGetExtensionsTest(String windowsAuthSettingValue, boolean isOperatingSystemWindows, List<Class<?>> expectedExtensions) {
     Settings settings = new Settings();
     settings.setProperty(WindowsAuthSettings.SONAR_WINDOWS_AUTH, windowsAuthSettingValue);
 
@@ -104,29 +102,20 @@ public class LdapExtensionsTest {
     LdapExtensions ldapExtensions = new LdapExtensions(settings, system2);
 
     List<Class> extensions = ldapExtensions.getExtensions();
-
-    assertThat(extensions).isNotNull();
-    assertThat(CollectionUtils.isEqualCollection(extensions, expectedExtensions)).isTrue();
+    assertThat(extensions).isNotNull().hasSameElementsAs(expectedExtensions);
   }
 
-  private List<Class> getExpectedLdapExtensions() {
-    List<Class> expectedExtensions = new ArrayList<Class>();
-    expectedExtensions.add(LdapRealm.class);
-    expectedExtensions.add(LdapSettingsManager.class);
-    expectedExtensions.add(LdapAutodiscovery.class);
-
-    return expectedExtensions;
+  private List<Class<?>> getExpectedLdapExtensions() {
+    return Arrays.asList(LdapRealm.class, LdapSettingsManager.class, LdapAutodiscovery.class);
   }
 
-  private List<Class> getExpectedWindowsExtensions() {
-    List<Class> expectedExtensions = new ArrayList<Class>();
-    expectedExtensions.add(WindowsSecurityRealm.class);
-    expectedExtensions.add(WindowsAuthenticationHelper.class);
-    expectedExtensions.add(WindowsAuthSettings.class);
-    expectedExtensions.add(SsoAuthenticationFilter.class);
-    expectedExtensions.add(SsoValidationFilter.class);
-    expectedExtensions.add(WindowsLogoutFilter.class);
-
-    return expectedExtensions;
+  private List<Class<?>> getExpectedWindowsExtensions() {
+    return Arrays.asList(
+      WindowsSecurityRealm.class,
+      WindowsAuthenticationHelper.class,
+      WindowsAuthSettings.class,
+      SsoAuthenticationFilter.class,
+      SsoValidationFilter.class,
+      WindowsLogoutFilter.class);
   }
 }

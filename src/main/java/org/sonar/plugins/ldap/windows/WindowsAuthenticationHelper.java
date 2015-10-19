@@ -25,13 +25,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
+import javax.annotation.CheckForNull;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import org.apache.commons.collections.MapUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.sonar.api.ServerExtension;
 import org.sonar.api.security.UserDetails;
+import org.sonar.api.utils.log.Logger;
+import org.sonar.api.utils.log.Loggers;
 import org.sonar.plugins.ldap.windows.auth.PrincipalFormat;
 import org.sonar.plugins.ldap.windows.auth.WindowsAuthSettings;
 import waffle.servlet.NegotiateSecurityFilter;
@@ -46,7 +46,7 @@ public class WindowsAuthenticationHelper implements ServerExtension {
   public static final String SSO_PRINCIPAL_KEY = NegotiateSecurityFilter.class.getName() + ".PRINCIPAL";
   public static final String BASIC_AUTH_PRINCIPAL_KEY = "ldap.windows.Principal";
 
-  private static final Logger LOG = LoggerFactory.getLogger(WindowsAuthenticationHelper.class);
+  private static final Logger LOG = Loggers.get(WindowsAuthenticationHelper.class);
 
   private final AdConnectionHelper adConnectionHelper;
   private final IWindowsAuthProvider windowsAuthProvider;
@@ -197,7 +197,7 @@ public class WindowsAuthenticationHelper implements ServerExtension {
 
     LOG.debug("Getting groups for user: {}", windowsPrincipal.getName());
 
-    HashSet<String> groups = new HashSet<String>();
+    HashSet<String> groups = new HashSet<>();
     Map<String, WindowsAccount> groupsMap = windowsPrincipal.getGroups();
     for (WindowsAccount windowsAccount : groupsMap.values()) {
       if (windowsAccount != null) {
@@ -218,7 +218,7 @@ public class WindowsAuthenticationHelper implements ServerExtension {
     userDetails.setUserId(windowsAccountName);
 
     Map<String, String> adUserDetails = getAdUserDetails(windowsAccount.getDomain(), windowsAccount.getName());
-    if (MapUtils.isNotEmpty(adUserDetails)) {
+    if (!adUserDetails.isEmpty()) {
       userDetails.setName(adUserDetails.get(AdConnectionHelper.COMMON_NAME_ATTRIBUTE));
       userDetails.setEmail(adUserDetails.get(AdConnectionHelper.MAIL_ATTRIBUTE));
     } else {
@@ -228,6 +228,7 @@ public class WindowsAuthenticationHelper implements ServerExtension {
     return userDetails;
   }
 
+  @CheckForNull
   private IWindowsAccount getWindowsAccount(String userName) {
     IWindowsAccount windowsAccount = null;
     try {
@@ -241,7 +242,7 @@ public class WindowsAuthenticationHelper implements ServerExtension {
   }
 
   private Map<String, String> getAdUserDetails(String domainName, String name) {
-    Collection<String> requestedDetails = new ArrayList<String>();
+    Collection<String> requestedDetails = new ArrayList<>();
     requestedDetails.add(AdConnectionHelper.COMMON_NAME_ATTRIBUTE);
     requestedDetails.add(AdConnectionHelper.MAIL_ATTRIBUTE);
 
@@ -249,7 +250,7 @@ public class WindowsAuthenticationHelper implements ServerExtension {
   }
 
   private String getWindowsAccountName(WindowsAccount windowsAccount, boolean isGroup) {
-    String windowsAccountName = null;
+    String windowsAccountName;
 
     PrincipalFormat principalFormat = isGroup ? settings.getUserGroupFormat() : settings.getUserIdFormat();
     switch (principalFormat) {

@@ -26,7 +26,6 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import org.apache.commons.collections.CollectionUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -500,7 +499,7 @@ public class WindowsAuthenticationHelperTest {
     if (expectedGroups == null) {
       assertThat(groups).isNull();
     } else {
-      assertThat(CollectionUtils.isEqualCollection(groups, expectedGroups)).isTrue();
+      assertThat(groups).hasSameElementsAs(expectedGroups);
     }
   }
 

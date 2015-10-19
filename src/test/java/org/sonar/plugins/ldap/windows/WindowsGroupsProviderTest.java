@@ -22,7 +22,6 @@ package org.sonar.plugins.ldap.windows;
 import java.util.ArrayList;
 import java.util.Collection;
 import javax.servlet.http.HttpServletRequest;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.NullArgumentException;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -31,22 +30,24 @@ import waffle.servlet.WindowsPrincipal;
 import waffle.windows.auth.WindowsAccount;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class WindowsGroupsProviderTest {
 
   @Test(expected = NullArgumentException.class)
   public void nullArgumentCheck() {
-    WindowsGroupsProvider groupsProvider = new WindowsGroupsProvider(null);
+    new WindowsGroupsProvider(null);
   }
 
   @Test
   public void doGetGroupsTests() {
-    Collection<WindowsAccount> groups = new ArrayList<WindowsAccount>();
+    Collection<WindowsAccount> groups = new ArrayList<>();
     WindowsAccount windowsAccount = Mockito.mock(WindowsAccount.class);
-    Mockito.when(windowsAccount.getFqn()).thenReturn("group1");
+    when(windowsAccount.getFqn()).thenReturn("group1");
     groups.add(windowsAccount);
 
-    Collection<String> expectedGroups = new ArrayList<String>();
+    Collection<String> expectedGroups = new ArrayList<>();
     expectedGroups.add("group1");
 
     this.runDoGetGroupsTest(true, false, null, null);
@@ -65,7 +66,7 @@ public class WindowsGroupsProviderTest {
     int getUserGroupsInvCount = 0;
     if (doesUserExist) {
       windowsPrincipal = Mockito.mock(WindowsPrincipal.class);
-      getUserGroupsInvCount=1;
+      getUserGroupsInvCount = 1;
     }
 
     HttpServletRequest httpServletRequest = Mockito.mock(HttpServletRequest.class);
@@ -77,9 +78,9 @@ public class WindowsGroupsProviderTest {
     }
 
     WindowsAuthenticationHelper windowsAuthenticationHelper = Mockito.mock(WindowsAuthenticationHelper.class);
-    Mockito.when(windowsAuthenticationHelper.getWindowsPrincipal(httpServletRequest, windowsPrincipalKey)).thenReturn(windowsPrincipal);
+    when(windowsAuthenticationHelper.getWindowsPrincipal(httpServletRequest, windowsPrincipalKey)).thenReturn(windowsPrincipal);
     if (doesUserExist) {
-      Mockito.when(windowsAuthenticationHelper.getUserGroups(windowsPrincipal)).thenReturn(expectedGroups);
+      when(windowsAuthenticationHelper.getUserGroups(windowsPrincipal)).thenReturn(expectedGroups);
     }
 
     WindowsGroupsProvider groupsProvider = new WindowsGroupsProvider(windowsAuthenticationHelper);
@@ -88,12 +89,11 @@ public class WindowsGroupsProviderTest {
 
     if (expectedGroups == null) {
       assertThat(groups).isNull();
-      Mockito.verify(windowsAuthenticationHelper, Mockito.times(getUserGroupsInvCount)).getUserGroups(windowsPrincipal);
+      verify(windowsAuthenticationHelper, Mockito.times(getUserGroupsInvCount)).getUserGroups(windowsPrincipal);
 
     } else {
-      assertThat(groups).isNotNull();
-      assertThat(CollectionUtils.isEqualCollection(groups, expectedGroups)).isTrue();
-      Mockito.verify(windowsAuthenticationHelper, Mockito.times(getUserGroupsInvCount)).getUserGroups(windowsPrincipal);
+      assertThat(groups).isNotNull().hasSameElementsAs(expectedGroups);
+      verify(windowsAuthenticationHelper, Mockito.times(getUserGroupsInvCount)).getUserGroups(windowsPrincipal);
     }
   }
 }
