@@ -35,8 +35,8 @@ import org.sonar.wsclient.services.UserPropertyCreateQuery;
 import org.sonar.wsclient.services.UserPropertyQuery;
 import org.sonar.wsclient.user.UserParameters;
 
+import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
-
 
 public class LdapTest extends AbstractTest {
 
@@ -215,7 +215,7 @@ public class LdapTest extends AbstractTest {
   }
 
   private static void importLdif(String ldifName) {
-    String resourceName = "/ldif/" + ldifName + ".ldif";
+    String resourceName = format("/ldif/%s.ldif", ldifName);
     try {
       ldapServer.importLdif(LdapTest.class.getResourceAsStream(resourceName));
     } catch (Exception e) {
@@ -224,11 +224,7 @@ public class LdapTest extends AbstractTest {
   }
 
   private static void executeSelenese(String name) {
-    String path = "/selenium/";
-    if (!orchestrator.getServer().version().isGreaterThanOrEquals("5.1")) {
-      path += "before5.1/";
-    }
-    orchestrator.executeSelenese(Selenese.builder().setHtmlTestsInClasspath("ldap", path + name + ".html").build());
+    orchestrator.executeSelenese(Selenese.builder().setHtmlTestsInClasspath("ldap", format("/selenium/%s.html", name)).build());
   }
 
   private static String AUTHORIZED = "authorized";
