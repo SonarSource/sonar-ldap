@@ -8,6 +8,10 @@ function installTravisTools {
   source ~/.local/bin/install
 }
 
+installTravisTools
+# temporary build of parent 24 as long as it's not available in maven central repository
+build "SonarSource/parent-oss" "24"
+
 case "$TESTS" in
 
 CI)
@@ -15,7 +19,6 @@ CI)
   ;;
 
 IT-DEV)
-  installTravisTools
   start_xvfb
 
   mvn install -Dsource.skip=true -Denforcer.skip=true -Danimal.sniffer.skip=true -Dmaven.test.skip=true
@@ -27,7 +30,6 @@ IT-DEV)
   ;;
 
 IT-LTS)
-  installTravisTools
   start_xvfb
 
   mvn install -Dsource.skip=true -Denforcer.skip=true -Danimal.sniffer.skip=true -Dmaven.test.skip=true

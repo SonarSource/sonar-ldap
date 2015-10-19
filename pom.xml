@@ -2,17 +2,17 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.codehaus.sonar-plugins</groupId>
+    <groupId>org.sonarsource.parent</groupId>
     <artifactId>parent</artifactId>
-    <version>19</version>
+    <version>24</version>
   </parent>
 
+  <groupId>org.sonarsource.ldap</groupId>
   <artifactId>sonar-ldap-plugin</artifactId>
   <version>1.5-SNAPSHOT</version>
   <packaging>sonar-plugin</packaging>
-
   <name>SonarQube LDAP Plugin</name>
-  <description>Delegates authentication to LDAP.</description>
+  <description>Delegates authentication to LDAP</description>
   <url>http://redirect.sonarsource.com/plugins/ldap.html</url>
   <inceptionYear>2009</inceptionYear>
   <organization>
@@ -40,24 +40,21 @@
       <timezone>+1</timezone>
     </contributor>
   </contributors>
-
   <scm>
     <connection>scm:git:git@github.com:SonarCommunity/sonar-ldap.git</connection>
     <developerConnection>scm:git:git@github.com:SonarCommunity/sonar-ldap.git</developerConnection>
     <url>https://github.com/SonarCommunity/sonar-ldap</url>
-    <tag>HEAD</tag>
   </scm>
   <issueManagement>
     <system>JIRA</system>
     <url>http://jira.sonarsource.com/browse/LDAP</url>
   </issueManagement>
   <ciManagement>
-    <system>Bamboo</system>
-    <url>http://ci.codehaus.org/browse/SONAR-LDAP</url>
+    <system>Travis</system>
+    <url>https://travis-ci.org/SonarCommunity/sonar-ldap</url>
   </ciManagement>
 
   <properties>
-    <sonar.version>5.2-SNAPSHOT</sonar.version>
     <sonar.pluginName>LDAP</sonar.pluginName>
     <sonar.pluginClass>org.sonar.plugins.ldap.LdapPlugin</sonar.pluginClass>
 
@@ -72,9 +69,9 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.codehaus.sonar</groupId>
+      <groupId>org.sonarsource.sonarqube</groupId>
       <artifactId>sonar-plugin-api</artifactId>
-      <version>${sonar.version}</version>
+      <version>5.2-RC2</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -125,14 +122,10 @@
       <version>1.8.0</version>
     </dependency>
     <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-      <version>1.2.17</version>
-    </dependency>
-    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>1.7.12</version>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
