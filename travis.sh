@@ -29,13 +29,4 @@ IT-DEV)
   mvn -DldapVersion="DEV" -Dsonar.runtimeVersion="DEV" -Dmaven.test.redirectTestOutputToFile=false install
   ;;
 
-IT-LTS)
-  start_xvfb
-
-  mvn install -Dsource.skip=true -Denforcer.skip=true -Danimal.sniffer.skip=true -Dmaven.test.skip=true
-
-  cd it
-  mvn -DldapVersion="DEV" -Dsonar.runtimeVersion="4.5.1" -Dmaven.test.redirectTestOutputToFile=false install
-  ;;
-
 esac
