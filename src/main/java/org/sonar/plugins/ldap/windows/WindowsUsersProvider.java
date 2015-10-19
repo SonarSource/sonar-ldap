@@ -21,13 +21,13 @@ package org.sonar.plugins.ldap.windows;
 
 import org.apache.commons.lang.NullArgumentException;
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.sonar.api.security.ExternalUsersProvider;
 import org.sonar.api.security.UserDetails;
+import org.sonar.api.utils.log.Logger;
+import org.sonar.api.utils.log.Loggers;
 
 public class WindowsUsersProvider extends ExternalUsersProvider {
-  private static final Logger LOG = LoggerFactory.getLogger(WindowsUsersProvider.class);
+  private static final Logger LOG = Loggers.get(WindowsUsersProvider.class);
 
   private final WindowsAuthenticationHelper windowsAuthenticationHelper;
 

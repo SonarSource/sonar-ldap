@@ -42,6 +42,7 @@ import waffle.windows.auth.IWindowsIdentity;
 import waffle.windows.auth.WindowsAccount;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 public class WindowsAuthenticationHelperTest {
   private WindowsAuthenticationHelper authenticationHelper;
@@ -51,21 +52,21 @@ public class WindowsAuthenticationHelperTest {
 
   @Before
   public void initialize() {
-    windowsAuthProvider = Mockito.mock(IWindowsAuthProvider.class);
-    adConnectionHelper = Mockito.mock(AdConnectionHelper.class);
+    windowsAuthProvider = mock(IWindowsAuthProvider.class);
+    adConnectionHelper = mock(AdConnectionHelper.class);
     windowsAuthSettings = new WindowsAuthSettings(new Settings());
 
     authenticationHelper = new WindowsAuthenticationHelper(windowsAuthSettings, windowsAuthProvider, adConnectionHelper);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = NullPointerException.class)
   public void isUserAuthenticatedNullArgCheck() {
     authenticationHelper.isUserSsoAuthenticated(null);
   }
 
   @Test
   public void isUserAuthenticatedNullHttpSessionTest() {
-    HttpServletRequest servletRequest = Mockito.mock(HttpServletRequest.class);
+    HttpServletRequest servletRequest = mock(HttpServletRequest.class);
     assertThat(authenticationHelper.isUserSsoAuthenticated(servletRequest)).isFalse();
   }
 
@@ -73,27 +74,27 @@ public class WindowsAuthenticationHelperTest {
   public void isUserSsoAuthenticatedTests() {
     runIsUserSsoAuthenticated(null, false);
     runIsUserSsoAuthenticated(new Object(), false);
-    runIsUserSsoAuthenticated(Mockito.mock(WindowsPrincipal.class), true);
+    runIsUserSsoAuthenticated(mock(WindowsPrincipal.class), true);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = NullPointerException.class)
   public void getWindowsPrincipalHttpServletRequestNullArgCheck() {
     authenticationHelper.getWindowsPrincipal(null, WindowsAuthenticationHelper.SSO_PRINCIPAL_KEY);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = NullPointerException.class)
   public void getWindowsPrincipalWindowsPrincipalNullArgCheck() {
-    authenticationHelper.getWindowsPrincipal(Mockito.mock(HttpServletRequest.class), null);
+    authenticationHelper.getWindowsPrincipal(mock(HttpServletRequest.class), null);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = NullPointerException.class)
   public void getWindowsPrincipalWindowsPrincipalEmptyArgCheck() {
-    authenticationHelper.getWindowsPrincipal(Mockito.mock(HttpServletRequest.class), null);
+    authenticationHelper.getWindowsPrincipal(mock(HttpServletRequest.class), null);
   }
 
   @Test
   public void getWindowsPrincipalNullHttpSessionTest() {
-    HttpServletRequest servletRequest = Mockito.mock(HttpServletRequest.class);
+    HttpServletRequest servletRequest = mock(HttpServletRequest.class);
     assertThat(authenticationHelper.getWindowsPrincipal(servletRequest, WindowsAuthenticationHelper.SSO_PRINCIPAL_KEY)).isNull();
     assertThat(authenticationHelper.getWindowsPrincipal(servletRequest, WindowsAuthenticationHelper.BASIC_AUTH_PRINCIPAL_KEY)).isNull();
   }
@@ -106,27 +107,27 @@ public class WindowsAuthenticationHelperTest {
     runGetWindowsPrincipal(WindowsAuthenticationHelper.SSO_PRINCIPAL_KEY, new Object(), null);
     runGetWindowsPrincipal(WindowsAuthenticationHelper.BASIC_AUTH_PRINCIPAL_KEY, new Object(), null);
 
-    WindowsPrincipal windowsPrincipal = Mockito.mock(WindowsPrincipal.class);
+    WindowsPrincipal windowsPrincipal = mock(WindowsPrincipal.class);
     runGetWindowsPrincipal(WindowsAuthenticationHelper.SSO_PRINCIPAL_KEY, windowsPrincipal, windowsPrincipal);
     runGetWindowsPrincipal(WindowsAuthenticationHelper.BASIC_AUTH_PRINCIPAL_KEY, windowsPrincipal, windowsPrincipal);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = NullPointerException.class)
   public void setWindowsPrincipalNullHttpServletRequestCheck() {
-    authenticationHelper.setWindowsPrincipalForBasicAuth(null, Mockito.mock(WindowsPrincipal.class));
+    authenticationHelper.setWindowsPrincipalForBasicAuth(null, mock(WindowsPrincipal.class));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = NullPointerException.class)
   public void setWindowsPrincipalNullWindowsPrincipalCheck() {
-    authenticationHelper.setWindowsPrincipalForBasicAuth(Mockito.mock(HttpServletRequest.class), null);
+    authenticationHelper.setWindowsPrincipalForBasicAuth(mock(HttpServletRequest.class), null);
   }
 
   @Test
   public void setWindowsPrincipalTests() {
-    WindowsPrincipal windowsPrincipal = Mockito.mock(WindowsPrincipal.class);
+    WindowsPrincipal windowsPrincipal = mock(WindowsPrincipal.class);
     HttpSession httpSession = new HttpSessionStub();
 
-    HttpServletRequest httpServletRequest = Mockito.mock(HttpServletRequest.class);
+    HttpServletRequest httpServletRequest = mock(HttpServletRequest.class);
     Mockito.when(httpServletRequest.getSession()).thenReturn(httpSession);
 
     authenticationHelper.setWindowsPrincipalForBasicAuth(httpServletRequest, windowsPrincipal);
@@ -134,7 +135,7 @@ public class WindowsAuthenticationHelperTest {
     assertThat(httpSession.getAttribute(WindowsAuthenticationHelper.BASIC_AUTH_PRINCIPAL_KEY)).isEqualTo(windowsPrincipal);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = NullPointerException.class)
   public void removeWindowsPrincipalForBasicAuthNullArgCheck() {
     authenticationHelper.removeWindowsPrincipalForBasicAuth(null);
   }
@@ -145,7 +146,7 @@ public class WindowsAuthenticationHelperTest {
     runRemoveWindowsPrincipalForBasicAuth(false);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = NullPointerException.class)
   public void removeWindowsPrincipalForSsoNullArgCheck() {
     authenticationHelper.removeWindowsPrincipalForSso(null);
   }
@@ -172,7 +173,7 @@ public class WindowsAuthenticationHelperTest {
     runLogonUserTest("DOMAIN\\User", "invalid-secret", false);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = NullPointerException.class)
   public void getUserDetailsFromHttpServletRequestNullCheck() {
     authenticationHelper.getSsoUserDetails((HttpServletRequest) null);
   }
@@ -213,7 +214,7 @@ public class WindowsAuthenticationHelperTest {
     String domainName = "Domain";
     String userNameWithDomain = getAccountNameWithDomain(domainName, "\\", userName);
 
-    Win32Exception win32Exception = Mockito.mock(Win32Exception.class);
+    Win32Exception win32Exception = mock(Win32Exception.class);
     IWindowsAccount windowsAccount = getIWindowsAccount(domainName, userName);
 
     assertThat(authenticationHelper.getUserDetails(userNameWithDomain)).isNull();
@@ -259,7 +260,7 @@ public class WindowsAuthenticationHelperTest {
     runGetUserDetailsFromWindowsAccountTest(windowsAccount, PrincipalFormat.UPN, true, expectedUserDetailsUpnDownCase);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = NullPointerException.class)
   public void getUserGroupsNullArgumentCheck() {
     authenticationHelper.getUserGroups(null);
   }
@@ -351,10 +352,10 @@ public class WindowsAuthenticationHelperTest {
   private void runRemoveWindowsPrincipalForBasicAuth(boolean isAttributePresent){
     HttpSession httpSession = new HttpSessionStub();
     if(isAttributePresent) {
-      httpSession.setAttribute(WindowsAuthenticationHelper.BASIC_AUTH_PRINCIPAL_KEY, Mockito.mock(WindowsPrincipal.class));
+      httpSession.setAttribute(WindowsAuthenticationHelper.BASIC_AUTH_PRINCIPAL_KEY, mock(WindowsPrincipal.class));
     }
 
-    HttpServletRequest httpServletRequest = Mockito.mock(HttpServletRequest.class);
+    HttpServletRequest httpServletRequest = mock(HttpServletRequest.class);
     Mockito.when(httpServletRequest.getSession()).thenReturn(httpSession);
 
     authenticationHelper.removeWindowsPrincipalForBasicAuth(httpServletRequest);
@@ -365,10 +366,10 @@ public class WindowsAuthenticationHelperTest {
   private void runRemoveWindowsPrincipalForSsoTests(boolean isAttributePresent) {
     HttpSession httpSession = new HttpSessionStub();
     if (isAttributePresent) {
-      httpSession.setAttribute(WindowsAuthenticationHelper.SSO_PRINCIPAL_KEY, Mockito.mock(WindowsPrincipal.class));
+      httpSession.setAttribute(WindowsAuthenticationHelper.SSO_PRINCIPAL_KEY, mock(WindowsPrincipal.class));
     }
 
-    HttpServletRequest httpServletRequest = Mockito.mock(HttpServletRequest.class);
+    HttpServletRequest httpServletRequest = mock(HttpServletRequest.class);
     Mockito.when(httpServletRequest.getSession()).thenReturn(httpSession);
 
     authenticationHelper.removeWindowsPrincipalForSso(httpServletRequest);
@@ -378,10 +379,10 @@ public class WindowsAuthenticationHelperTest {
 
   private void runLogonUserTest(String userName, String password, boolean isLogonUserSuccessful) {
     IWindowsIdentity windowsIdentity = null;
-    Win32Exception win32Exception = Mockito.mock(Win32Exception.class);
+    Win32Exception win32Exception = mock(Win32Exception.class);
 
     if (isLogonUserSuccessful) {
-      windowsIdentity = Mockito.mock(IWindowsIdentity.class);
+      windowsIdentity = mock(IWindowsIdentity.class);
       Mockito.when(windowsIdentity.getFqn()).thenReturn(userName);
       Mockito.when(windowsIdentity.getGroups()).thenReturn(new IWindowsAccount[0]);
       Mockito.when(windowsAuthProvider.logonUser(userName, password)).thenReturn(windowsIdentity);
@@ -423,7 +424,7 @@ public class WindowsAuthenticationHelperTest {
     String userNameWithDomain = getAccountNameWithDomain(domainName, "\\", userName);
     WindowsAuthenticationHelper authenticationHelper = getWindowsAuthHelperForGetUserDetailsTest(domainName, userName,
       doesUserExist, expectedUserDetails);
-    WindowsPrincipal windowsPrincipal = Mockito.mock(WindowsPrincipal.class);
+    WindowsPrincipal windowsPrincipal = mock(WindowsPrincipal.class);
     Mockito.when(windowsPrincipal.getName()).thenReturn(userNameWithDomain);
     HttpServletRequest servletRequest = WindowsAuthTestHelper.getHttpServletRequest(WindowsAuthenticationHelper.SSO_PRINCIPAL_KEY, windowsPrincipal);
 
@@ -439,12 +440,12 @@ public class WindowsAuthenticationHelperTest {
 
   private static WindowsAuthenticationHelper getWindowsAuthHelperForGetUserDetailsTest(String domainName, String userName,
     boolean doesUserExist, UserDetails expectedUserDetails) {
-    IWindowsAuthProvider windowsAuthProvider = Mockito.mock(IWindowsAuthProvider.class);
+    IWindowsAuthProvider windowsAuthProvider = mock(IWindowsAuthProvider.class);
 
-    AdConnectionHelper adConnectionHelper = Mockito.mock(AdConnectionHelper.class);
+    AdConnectionHelper adConnectionHelper = mock(AdConnectionHelper.class);
     String userNameWithDomain = getAccountNameWithDomain(domainName, "\\", userName);
     if (doesUserExist) {
-      IWindowsAccount windowsAccount = Mockito.mock(IWindowsAccount.class);
+      IWindowsAccount windowsAccount = mock(IWindowsAccount.class);
       Mockito.when(windowsAccount.getDomain()).thenReturn(domainName);
       Mockito.when(windowsAccount.getName()).thenReturn(userName);
 
@@ -522,7 +523,7 @@ public class WindowsAuthenticationHelperTest {
   }
 
   private static WindowsAccount getWindowsAccount(String domainName, String accountName) {
-    WindowsAccount windowsAccount = Mockito.mock(WindowsAccount.class);
+    WindowsAccount windowsAccount = mock(WindowsAccount.class);
     Mockito.when(windowsAccount.getFqn()).thenReturn(domainName + "\\" + accountName);
     Mockito.when(windowsAccount.getName()).thenReturn(accountName);
     Mockito.when(windowsAccount.getDomain()).thenReturn(domainName);
@@ -531,7 +532,7 @@ public class WindowsAuthenticationHelperTest {
   }
 
   private static IWindowsAccount getIWindowsAccount(String domainName, String accountName) {
-    IWindowsAccount windowsAccount = Mockito.mock(IWindowsAccount.class);
+    IWindowsAccount windowsAccount = mock(IWindowsAccount.class);
     Mockito.when(windowsAccount.getFqn()).thenReturn(domainName + "\\" + accountName);
     Mockito.when(windowsAccount.getName()).thenReturn(accountName);
     Mockito.when(windowsAccount.getDomain()).thenReturn(domainName);

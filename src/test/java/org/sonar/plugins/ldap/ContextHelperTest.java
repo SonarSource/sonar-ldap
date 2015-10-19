@@ -33,7 +33,7 @@ public class ContextHelperTest {
     Context context = mock(Context.class);
     doThrow(new NamingException()).when(context).close();
     ContextHelper.close(context, true);
-    ContextHelper.closeQuetly(context);
+    ContextHelper.closeQuietly(context);
   }
 
   @Test(expected = NamingException.class)
@@ -46,7 +46,7 @@ public class ContextHelperTest {
   @Test
   public void normal() throws NamingException {
     ContextHelper.close(null, true);
-    ContextHelper.closeQuetly(null);
+    ContextHelper.closeQuietly(null);
     ContextHelper.close(mock(Context.class), true);
   }
 

@@ -56,7 +56,7 @@ import java.util.Map;
  */
 public class ApacheDS {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ApacheDS.class);
+  private static final Logger LOG = Loggers.get(ApacheDS.class);
 
   public static ApacheDS start(String baseDn, String workDir) throws Exception {
     return new ApacheDS(baseDn)

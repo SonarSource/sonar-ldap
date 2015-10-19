@@ -19,7 +19,6 @@
  */
 package org.sonar.plugins.ldap.windows;
 
-import com.google.common.base.Preconditions;
 import com.sun.jna.platform.win32.Win32Exception;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -41,6 +40,8 @@ import waffle.windows.auth.IWindowsAuthProvider;
 import waffle.windows.auth.IWindowsIdentity;
 import waffle.windows.auth.WindowsAccount;
 import waffle.windows.auth.impl.WindowsAuthProviderImpl;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class WindowsAuthenticationHelper implements ServerExtension {
   public static final String SSO_PRINCIPAL_KEY = NegotiateSecurityFilter.class.getName() + ".PRINCIPAL";
@@ -67,7 +68,7 @@ public class WindowsAuthenticationHelper implements ServerExtension {
    * Checks if the request has valid {@link WindowsPrincipal}
    */
   public boolean isUserSsoAuthenticated(HttpServletRequest request) {
-    Preconditions.checkArgument(request != null, "request is null");
+    checkNotNull(request, "request is null");
 
     return getWindowsPrincipal(request, WindowsAuthenticationHelper.SSO_PRINCIPAL_KEY) != null;
   }
@@ -76,8 +77,8 @@ public class WindowsAuthenticationHelper implements ServerExtension {
    * Returns {@link WindowsPrincipal} from given {@link HttpServletRequest}
    */
   public WindowsPrincipal getWindowsPrincipal(HttpServletRequest request, String windowsPrincipalKey) {
-    Preconditions.checkArgument(request != null, "request is null");
-    Preconditions.checkArgument(windowsPrincipalKey != null, "windowsPrincipalKey is null");
+    checkNotNull(request, "request is null");
+    checkNotNull(windowsPrincipalKey, "windowsPrincipalKey is null");
 
     WindowsPrincipal windowsPrincipal = null;
     HttpSession session = request.getSession();
@@ -95,8 +96,8 @@ public class WindowsAuthenticationHelper implements ServerExtension {
    * Sets {@link WindowsPrincipal} in {@link HttpSession} of given {@link HttpServletRequest}
    */
   public void setWindowsPrincipalForBasicAuth(HttpServletRequest request, WindowsPrincipal windowsPrincipal) {
-    Preconditions.checkArgument(request != null, "request is null");
-    Preconditions.checkArgument(windowsPrincipal != null, "windowsPrincipal is null");
+    checkNotNull(request, "request is null");
+    checkNotNull(windowsPrincipal, "windowsPrincipal is null");
 
     HttpSession session = request.getSession();
     if (session != null) {
@@ -108,7 +109,7 @@ public class WindowsAuthenticationHelper implements ServerExtension {
    * Removes basic auth principal key from{@link HttpSession} of given {@link HttpServletRequest}
    */
   public void removeWindowsPrincipalForBasicAuth(HttpServletRequest request) {
-    Preconditions.checkArgument(request != null, "request is null");
+    checkNotNull(request, "request is null");
 
     HttpSession session = request.getSession();
     if (session != null) {
@@ -120,7 +121,7 @@ public class WindowsAuthenticationHelper implements ServerExtension {
    * Removes sso principal key from {@link HttpSession} of given {@link HttpServletRequest}
    */
   public void removeWindowsPrincipalForSso(HttpServletRequest request) {
-    Preconditions.checkArgument(request != null, "request is null");
+    checkNotNull(request, "request is null");
 
     HttpSession session = request.getSession();
     if (session != null) {
@@ -166,7 +167,7 @@ public class WindowsAuthenticationHelper implements ServerExtension {
    * @return {@link UserDetails} for the given {@link WindowsPrincipal} or null if it is not found.
    */
   public UserDetails getSsoUserDetails(HttpServletRequest request) {
-    Preconditions.checkArgument(request != null, "request is null");
+    checkNotNull(request, "request is null");
 
     WindowsPrincipal windowsPrincipal = getWindowsPrincipal(request, WindowsAuthenticationHelper.SSO_PRINCIPAL_KEY);
     return windowsPrincipal != null ? getUserDetails(windowsPrincipal.getName()) : null;
@@ -193,7 +194,7 @@ public class WindowsAuthenticationHelper implements ServerExtension {
    * @return A {@link Collection} of groups the user is member of.
    */
   public Collection<String> getUserGroups(WindowsPrincipal windowsPrincipal) {
-    Preconditions.checkArgument(windowsPrincipal != null, "windowsPrincipal is null");
+    checkNotNull(windowsPrincipal, "windowsPrincipal is null");
 
     LOG.debug("Getting groups for user: {}", windowsPrincipal.getName());
 

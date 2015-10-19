@@ -19,7 +19,6 @@
  */
 package org.sonar.plugins.ldap.windows;
 
-import com.google.common.base.Preconditions;
 import com4j.ComException;
 import com4j.typelibs.activeDirectory.IADs;
 import com4j.typelibs.ado20.Field;
@@ -31,13 +30,15 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.sonar.api.utils.log.Logger;
+import org.sonar.api.utils.log.Loggers;
 import org.sonar.plugins.ldap.windows.auth.ICom4jWrapper;
 import org.sonar.plugins.ldap.windows.auth.impl.Com4jWrapper;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 public class AdConnectionHelper {
-  private static final Logger LOG = LoggerFactory.getLogger(AdConnectionHelper.class);
+  private static final Logger LOG = Loggers.get(AdConnectionHelper.class);
 
   /**
    * Active directory service object provider
@@ -94,9 +95,9 @@ public class AdConnectionHelper {
    */
   public Map<String, String> getUserDetails(final String domainName, final String userName,
     final Collection<String> requestedDetails) {
-    Preconditions.checkArgument(domainName != null && !domainName.isEmpty(), "domainName is null or empty");
-    Preconditions.checkArgument(userName != null && !userName.isEmpty(), "userName is null or empty");
-    Preconditions.checkArgument(requestedDetails != null && !requestedDetails.isEmpty(),
+    checkArgument(StringUtils.isNotEmpty(domainName), "domainName is null or empty");
+    checkArgument(StringUtils.isNotEmpty(userName), "userName is null or empty");
+    checkArgument(requestedDetails != null && !requestedDetails.isEmpty(),
       "requestedDetails is null or empty");
 
     Map<String, String> userDetails = new HashMap<>();
@@ -146,13 +147,12 @@ public class AdConnectionHelper {
    */
   String getDefaultNamingContext(String domainName) {
     String defaultNamingContext = null;
-    IADs rootDse = null;
+    IADs rootDse;
     try {
       rootDse = com4jWrapper.getObject(IADs.class, String.format("GC://%s/%s", domainName, ROOT_DSE), null);
       defaultNamingContext = (String) rootDse.get(DEFAULT_NAMING_CONTEXT_STR);
     } catch (ComException comException) {
-      LOG.debug("Unable to get {} for domain: {}: {}", DEFAULT_NAMING_CONTEXT_STR, domainName,
-        comException.getMessage());
+      LOG.debug("Unable to get {} for domain: {}: {}", DEFAULT_NAMING_CONTEXT_STR, domainName, comException.getMessage());
     }
 
     return defaultNamingContext;
@@ -228,7 +228,7 @@ public class AdConnectionHelper {
     Map<String, String> userDetails = new HashMap<>();
 
     if (recordSet.eof()) {
-      LOG.debug(userName + " not found in the domain " + domainName);
+      LOG.debug("{} not found in the domain {}", userName, domainName);
       return null;
     } else {
       Fields userData = recordSet.fields();

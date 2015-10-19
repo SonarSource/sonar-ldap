@@ -19,6 +19,7 @@
  */
 package org.sonar.plugins.ldap;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import java.util.Arrays;
 import javax.naming.NamingException;
@@ -141,7 +142,7 @@ public class LdapGroupMapping {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("baseDn", getBaseDn())
         .add("idAttribute", getIdAttribute())
         .add("requiredUserAttributes", Arrays.toString(getRequiredUserAttributes()))

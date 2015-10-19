@@ -19,17 +19,14 @@
  */
 package org.sonar.plugins.ldap;
 
-import com.google.common.collect.ImmutableList;
+import java.util.Arrays;
 import java.util.List;
 import org.sonar.api.SonarPlugin;
 
-/**
- * @author Evgeny Mandrikov
- */
 public class LdapPlugin extends SonarPlugin {
 
   public List getExtensions() {
-    return ImmutableList.of(LdapExtensions.class);
+    return Arrays.asList(LdapExtensions.class);
   }
 
 }

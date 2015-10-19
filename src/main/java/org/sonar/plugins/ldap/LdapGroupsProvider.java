@@ -30,17 +30,17 @@ import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.SearchResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.sonar.api.security.ExternalGroupsProvider;
 import org.sonar.api.utils.SonarException;
+import org.sonar.api.utils.log.Logger;
+import org.sonar.api.utils.log.Loggers;
 
 /**
  * @author Evgeny Mandrikov
  */
 public class LdapGroupsProvider extends ExternalGroupsProvider {
 
-  private static final Logger LOG = LoggerFactory.getLogger(LdapGroupsProvider.class);
+  private static final Logger LOG = Loggers.get(LdapGroupsProvider.class);
 
   private final Map<String, LdapContextFactory> contextFactories;
   private final Map<String, LdapUserMapping> userMappings;
@@ -58,7 +58,7 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
   public Collection<String> doGetGroups(String username) {
     checkPrerequisites(username);
     Set<String> groups = Sets.newHashSet();
-    List<SonarException> sonarExceptions = new ArrayList<SonarException>();
+    List<SonarException> sonarExceptions = new ArrayList<>();
     for (String serverKey : userMappings.keySet()) {
       if (!groupMappings.containsKey(serverKey)) {
         // No group mapping for this ldap instance.
@@ -126,9 +126,9 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
    * @throws NamingException
    */
   private Collection<String> mapGroups(String serverKey, NamingEnumeration<SearchResult> searchResult) throws NamingException {
-    Set<String> groups = new HashSet<String>();
+    Set<String> groups = new HashSet<>();
     while (searchResult.hasMoreElements()) {
-      SearchResult obj = (SearchResult) searchResult.nextElement();
+      SearchResult obj = searchResult.nextElement();
       Attributes attributes = obj.getAttributes();
       String groupId = (String) attributes.get(groupMappings.get(serverKey).getIdAttribute()).get();
       groups.add(groupId);

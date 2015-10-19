@@ -27,16 +27,16 @@ import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.sonar.api.security.LoginPasswordAuthenticator;
+import org.sonar.api.utils.log.Logger;
+import org.sonar.api.utils.log.Loggers;
 
 /**
  * @author Evgeny Mandrikov
  */
 public class LdapAuthenticator implements LoginPasswordAuthenticator {
 
-  private static final Logger LOG = LoggerFactory.getLogger(LdapAuthenticator.class);
+  private static final Logger LOG = Loggers.get(LdapAuthenticator.class);
   private final Map<String, LdapContextFactory> contextFactories;
   private final Map<String, LdapUserMapping> userMappings;
 
@@ -65,11 +65,11 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
         try {
           result = userMappings.get(ldapKey).createSearch(contextFactories.get(ldapKey), login).findUnique();
         } catch (NamingException e) {
-          LOG.debug("User {} not found in server {}: {}", new Object[] {login, ldapKey, e.getMessage()});
+          LOG.debug("User {} not found in server {}: {}", login, ldapKey, e.getMessage());
           continue;
         }
         if (result == null) {
-          LOG.debug("User {} not found in " + ldapKey, login);
+          LOG.debug("User {} not found in {}", login, ldapKey);
           continue;
         }
         principal = result.getNameInNamespace();
@@ -100,7 +100,7 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
       LOG.debug("Password not valid for user {} in server {}: {}", new Object[] {principal, ldapKey, e.getMessage()});
       return false;
     } finally {
-      ContextHelper.closeQuetly(context);
+      ContextHelper.closeQuietly(context);
     }
   }
 
@@ -114,7 +114,7 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
     } catch (LoginException e) {
       // Bad username: Client not found in Kerberos database
       // Bad password: Integrity check on decrypted field failed
-      LOG.debug("Password not valid for {} in server {}: {}", new Object[] {principal, ldapKey, e.getMessage()});
+      LOG.debug("Password not valid for {} in server {}: {}", principal, ldapKey, e.getMessage());
       return false;
     }
     try {

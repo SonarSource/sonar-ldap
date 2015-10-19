@@ -27,8 +27,8 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.sonar.api.utils.log.Logger;
+import org.sonar.api.utils.log.Loggers;
 import org.sonar.api.web.ServletFilter;
 import org.sonar.plugins.ldap.windows.WindowsAuthenticationHelper;
 import org.sonar.plugins.ldap.windows.auth.WindowsAuthSettings;
@@ -41,7 +41,7 @@ public class SsoAuthenticationFilter extends ServletFilter {
   private final NegotiateSecurityFilter negotiateSecurityFilter;
   private final FilterChain ssoFilterChain;
 
-  private static final Logger LOG = LoggerFactory.getLogger(SsoAuthenticationFilter.class);
+  private static final Logger LOG = Loggers.get(SsoAuthenticationFilter.class);
 
   public SsoAuthenticationFilter(WindowsAuthSettings windowsAuthSettings, WindowsAuthenticationHelper authenticationHelper) {
 

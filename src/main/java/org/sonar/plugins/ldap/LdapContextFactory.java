@@ -20,6 +20,7 @@
 package org.sonar.plugins.ldap;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import java.util.Properties;
 import javax.naming.Context;
@@ -27,17 +28,17 @@ import javax.naming.NamingException;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.ldap.InitialLdapContext;
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.sonar.api.config.Settings;
 import org.sonar.api.utils.SonarException;
+import org.sonar.api.utils.log.Logger;
+import org.sonar.api.utils.log.Loggers;
 
 /**
  * @author Evgeny Mandrikov
  */
 public class LdapContextFactory {
 
-  private static final Logger LOG = LoggerFactory.getLogger(LdapContextFactory.class);
+  private static final Logger LOG = Loggers.get(LdapContextFactory.class);
 
   private static final String DEFAULT_AUTHENTICATION = "simple";
   private static final String DEFAULT_FACTORY = "com.sun.jndi.ldap.LdapCtxFactory";
@@ -154,7 +155,7 @@ public class LdapContextFactory {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
       .add("url", providerUrl)
       .add("authentication", authentication)
       .add("factory", factory)

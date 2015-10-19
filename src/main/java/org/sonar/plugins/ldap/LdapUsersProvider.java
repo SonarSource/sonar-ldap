@@ -25,18 +25,18 @@ import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.SearchResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.sonar.api.security.ExternalUsersProvider;
 import org.sonar.api.security.UserDetails;
 import org.sonar.api.utils.SonarException;
+import org.sonar.api.utils.log.Logger;
+import org.sonar.api.utils.log.Loggers;
 
 /**
  * @author Evgeny Mandrikov
  */
 public class LdapUsersProvider extends ExternalUsersProvider {
 
-  private static final Logger LOG = LoggerFactory.getLogger(LdapUsersProvider.class);
+  private static final Logger LOG = Loggers.get(LdapUsersProvider.class);
   private final Map<String, LdapContextFactory> contextFactories;
   private final Map<String, LdapUserMapping> userMappings;
 
@@ -70,8 +70,8 @@ public class LdapUsersProvider extends ExternalUsersProvider {
       SearchResult searchResult = null;
       try {
         searchResult = userMappings.get(serverKey).createSearch(contextFactories.get(serverKey), username)
-            .returns(userMappings.get(serverKey).getEmailAttribute(), userMappings.get(serverKey).getRealNameAttribute())
-            .findUnique();
+          .returns(userMappings.get(serverKey).getEmailAttribute(), userMappings.get(serverKey).getRealNameAttribute())
+          .findUnique();
       } catch (NamingException e) {
         // just in case if Sonar silently swallowed exception
         LOG.debug(e.getMessage(), e);
@@ -89,7 +89,7 @@ public class LdapUsersProvider extends ExternalUsersProvider {
         }
       } else {
         // user not found
-        LOG.debug("User {} not found in " + serverKey, username);
+        LOG.debug("User {} not found in {}", username, serverKey);
         continue;
       }
     }

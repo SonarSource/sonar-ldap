@@ -19,10 +19,11 @@
  */
 package org.sonar.plugins.ldap;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.LoggerFactory;
 import org.sonar.api.config.Settings;
+import org.sonar.api.utils.log.Loggers;
 
 /**
  * @author Evgeny Mandrikov
@@ -65,9 +66,10 @@ public class LdapUserMapping {
       loginAttribute = StringUtils.defaultString(loginAttribute, DEFAULT_LOGIN_ATTRIBUTE);
       req = "(&(objectClass=" + objectClass + ")(" + loginAttribute + "={login}))";
       // For backward compatibility with plugin versions lower than 1.2
-      LoggerFactory.getLogger(LdapGroupMapping.class)
-          .warn("Properties '" + settingsPrefix + ".user.objectClass' and '" + settingsPrefix + ".user.loginAttribute' are deprecated" +
-            " and should be replaced by single property '" + settingsPrefix + ".user.request' with value: " + req);
+      Loggers.get(LdapGroupMapping.class)
+        .warn("Properties '{}.user.objectClass' and '{}.user.loginAttribute' are deprecated and should be " +
+          "replaced by single property '{}.user.request' with value: {}",
+          settingsPrefix, settingsPrefix, settingsPrefix, req);
     } else {
       req = StringUtils.defaultString(settings.getString(settingsPrefix + ".user.request"), DEFAULT_REQUEST);
     }
@@ -80,9 +82,9 @@ public class LdapUserMapping {
    */
   public LdapSearch createSearch(LdapContextFactory contextFactory, String username) {
     return new LdapSearch(contextFactory)
-        .setBaseDn(getBaseDn())
-        .setRequest(getRequest())
-        .setParameters(username);
+      .setBaseDn(getBaseDn())
+      .setRequest(getRequest())
+      .setParameters(username);
   }
 
   /**
@@ -119,12 +121,12 @@ public class LdapUserMapping {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-        .add("baseDn", getBaseDn())
-        .add("request", getRequest())
-        .add("realNameAttribute", getRealNameAttribute())
-        .add("emailAttribute", getEmailAttribute())
-        .toString();
+    return MoreObjects.toStringHelper(this)
+      .add("baseDn", getBaseDn())
+      .add("request", getRequest())
+      .add("realNameAttribute", getRealNameAttribute())
+      .add("emailAttribute", getEmailAttribute())
+      .toString();
   }
 
 }
