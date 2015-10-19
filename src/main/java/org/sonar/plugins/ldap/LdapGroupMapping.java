@@ -20,7 +20,6 @@
 package org.sonar.plugins.ldap;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
 import java.util.Arrays;
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
@@ -62,8 +61,8 @@ public class LdapGroupMapping {
       memberAttribute = StringUtils.defaultString(memberAttribute, DEFAULT_MEMBER_ATTRIBUTE);
       req = "(&(objectClass=" + objectClass + ")(" + memberAttribute + "=" + "{dn}))";
       LoggerFactory.getLogger(LdapGroupMapping.class)
-          .warn("Properties '" + settingsPrefix + ".group.objectClass' and '" + settingsPrefix + ".group.memberAttribute' are deprecated" +
-            " and should be replaced by single property '" + settingsPrefix + ".group.request' with value: " + req);
+        .warn("Properties '" + settingsPrefix + ".group.objectClass' and '" + settingsPrefix + ".group.memberAttribute' are deprecated" +
+          " and should be replaced by single property '" + settingsPrefix + ".group.request' with value: " + req);
     } else {
       req = StringUtils.defaultString(settings.getString(settingsPrefix + ".group.request"), DEFAULT_REQUEST);
     }
@@ -89,10 +88,10 @@ public class LdapGroupMapping {
       }
     }
     return new LdapSearch(contextFactory)
-        .setBaseDn(getBaseDn())
-        .setRequest(getRequest())
-        .setParameters(parameters)
-        .returns(getIdAttribute());
+      .setBaseDn(getBaseDn())
+      .setRequest(getRequest())
+      .setParameters(parameters)
+      .returns(getIdAttribute());
   }
 
   private static String getAttributeValue(SearchResult user, String attributeId) {
@@ -103,7 +102,7 @@ public class LdapGroupMapping {
     try {
       return (String) attribute.get();
     } catch (NamingException e) {
-      throw new SonarException(e);
+      throw new IllegalArgumentException(e);
     }
   }
 
@@ -143,11 +142,11 @@ public class LdapGroupMapping {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
-        .add("baseDn", getBaseDn())
-        .add("idAttribute", getIdAttribute())
-        .add("requiredUserAttributes", Arrays.toString(getRequiredUserAttributes()))
-        .add("request", getRequest())
-        .toString();
+      .add("baseDn", getBaseDn())
+      .add("idAttribute", getIdAttribute())
+      .add("requiredUserAttributes", Arrays.toString(getRequiredUserAttributes()))
+      .add("request", getRequest())
+      .toString();
   }
 
 }

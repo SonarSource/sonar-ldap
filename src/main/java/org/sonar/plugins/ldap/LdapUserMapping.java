@@ -20,7 +20,6 @@
 package org.sonar.plugins.ldap;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
 import org.apache.commons.lang.StringUtils;
 import org.sonar.api.config.Settings;
 import org.sonar.api.utils.log.Loggers;

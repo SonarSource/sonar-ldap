@@ -97,7 +97,7 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
       context = contextFactories.get(ldapKey).createUserContext(principal, password);
       return true;
     } catch (NamingException e) {
-      LOG.debug("Password not valid for user {} in server {}: {}", new Object[] {principal, ldapKey, e.getMessage()});
+      LOG.debug("Password not valid for user {} in server {}: {}", principal, ldapKey, e.getMessage());
       return false;
     } finally {
       ContextHelper.closeQuietly(context);

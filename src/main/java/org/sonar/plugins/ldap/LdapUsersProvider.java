@@ -31,6 +31,8 @@ import org.sonar.api.utils.SonarException;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 
+import static java.lang.String.format;
+
 /**
  * @author Evgeny Mandrikov
  */
@@ -56,11 +58,12 @@ public class LdapUsersProvider extends ExternalUsersProvider {
    * @return details for specified user, or null if such user doesn't exist
    * @throws SonarException if unable to retrieve details
    */
-  public UserDetails doGetUserDetails(String username) {
+  @Override
+  public UserDetails doGetUserDetails(@Nullable String username) {
     LOG.debug("Requesting details for user {}", username);
     // If there are no userMappings available, we can not retrieve user details.
     if (userMappings.isEmpty()) {
-      String errorMessage = "Unable to retrieve details for user " + username + ": No user mapping found.";
+      String errorMessage = format("Unable to retrieve details for user %s: No user mapping found.", username);
       LOG.debug(errorMessage);
       throw new SonarException(errorMessage);
     }

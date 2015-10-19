@@ -45,6 +45,7 @@ public class Krb5LoginConfiguration extends Configuration {
   /**
    * Interface method requiring us to return all the LoginModules we know about.
    */
+  @Override
   public AppConfigurationEntry[] getAppConfigurationEntry(String applicationName) {
     // We will ignore the applicationName, since we want all apps to use Kerberos V5
     return CONFIG_LIST.clone();
@@ -53,6 +54,7 @@ public class Krb5LoginConfiguration extends Configuration {
   /**
    * Interface method for reloading the configuration. We don't need this.
    */
+  @Override
   public void refresh() {
     // Right now this is a load once scheme and we will not implement the refresh method
   }

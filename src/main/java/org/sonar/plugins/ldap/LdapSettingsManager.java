@@ -66,7 +66,7 @@ public class LdapSettingsManager implements ServerExtension {
   public Map<String, LdapUserMapping> getUserMappings() {
     if (userMappings == null) {
       // Use linked hash map to preserve order
-      userMappings = new LinkedHashMap<String, LdapUserMapping>();
+      userMappings = new LinkedHashMap<>();
       String[] serverKeys = settings.getStringArray(LDAP_SERVERS_PROPERTY);
       if (serverKeys.length > 0) {
         for (String serverKey : serverKeys) {
@@ -101,7 +101,7 @@ public class LdapSettingsManager implements ServerExtension {
   public Map<String, LdapGroupMapping> getGroupMappings() {
     if (groupMappings == null) {
       // Use linked hash map to preserve order
-      groupMappings = new LinkedHashMap<String, LdapGroupMapping>();
+      groupMappings = new LinkedHashMap<>();
       String[] serverKeys = settings.getStringArray(LDAP_SERVERS_PROPERTY);
       if (serverKeys.length > 0) {
         for (String serverKey : serverKeys) {
@@ -136,7 +136,7 @@ public class LdapSettingsManager implements ServerExtension {
   public Map<String, LdapContextFactory> getContextFactories() {
     if (contextFactories == null) {
       // Use linked hash map to preserve order
-      contextFactories = new LinkedHashMap<String, LdapContextFactory>();
+      contextFactories = new LinkedHashMap<>();
       String[] serverKeys = settings.getStringArray(LDAP_SERVERS_PROPERTY);
       if (serverKeys.length > 0) {
         initMultiLdapConfiguration(serverKeys);

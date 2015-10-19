@@ -19,7 +19,7 @@
  */
 package org.sonar.plugins.ldap;
 
-import com.google.common.collect.Lists;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.commons.lang.StringUtils;
 import org.sonar.api.ExtensionProvider;
@@ -51,19 +51,14 @@ public class LdapExtensions extends ExtensionProvider implements ServerExtension
     return getExtensions();
   }
 
-  List<Class> getExtensions() {
-    List<Class> extensions = Lists.newArrayList();
+  List<Class<?>> getExtensions() {
     if (isWindowsAuthEnabled()) {
-      if (system2.isOsWindows()) {
-        extensions.addAll(getWindowsAuthExtensions());
-      } else {
+      if (!system2.isOsWindows()) {
         throw new IllegalArgumentException("Windows authentication is enabled, while the OS is not Windows.");
       }
-    } else {
-      extensions.addAll(getLdapExtensions());
+      return getWindowsAuthExtensions();
     }
-
-    return extensions;
+    return getLdapExtensions();
   }
 
   private boolean isWindowsAuthEnabled() {
@@ -80,24 +75,17 @@ public class LdapExtensions extends ExtensionProvider implements ServerExtension
     return isWindowsAuthEnabled;
   }
 
-  private List<Class> getWindowsAuthExtensions() {
-    List<Class> extensions = Lists.newArrayList();
-    extensions.add(WindowsSecurityRealm.class);
-    extensions.add(WindowsAuthenticationHelper.class);
-    extensions.add(WindowsAuthSettings.class);
-    extensions.add(SsoAuthenticationFilter.class);
-    extensions.add(SsoValidationFilter.class);
-    extensions.add(WindowsLogoutFilter.class);
-
-    return extensions;
+  private List<Class<?>> getWindowsAuthExtensions() {
+    return Arrays.asList(
+      WindowsSecurityRealm.class,
+      WindowsAuthenticationHelper.class,
+      WindowsAuthSettings.class,
+      SsoAuthenticationFilter.class,
+      SsoValidationFilter.class,
+      WindowsLogoutFilter.class);
   }
 
-  private List<Class> getLdapExtensions() {
-    List<Class> extensions = Lists.newArrayList();
-    extensions.add(LdapRealm.class);
-    extensions.add(LdapSettingsManager.class);
-    extensions.add(LdapAutodiscovery.class);
-
-    return extensions;
+  private List<Class<?>> getLdapExtensions() {
+    return Arrays.asList(LdapRealm.class, LdapSettingsManager.class, LdapAutodiscovery.class);
   }
 }

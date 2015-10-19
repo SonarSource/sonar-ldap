@@ -38,6 +38,7 @@ public class CallbackHandlerImpl implements CallbackHandler {
     this.password = password;
   }
 
+  @Override
   public void handle(Callback[] callbacks) throws UnsupportedCallbackException, IOException {
     for (Callback callBack : callbacks) {
       if (callBack instanceof NameCallback) {

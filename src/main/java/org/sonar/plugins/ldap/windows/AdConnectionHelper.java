@@ -36,6 +36,7 @@ import org.sonar.plugins.ldap.windows.auth.ICom4jWrapper;
 import org.sonar.plugins.ldap.windows.auth.impl.Com4jWrapper;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.apache.commons.lang.StringUtils.isNotEmpty;
 
 public class AdConnectionHelper {
   private static final Logger LOG = Loggers.get(AdConnectionHelper.class);
@@ -95,8 +96,8 @@ public class AdConnectionHelper {
    */
   public Map<String, String> getUserDetails(final String domainName, final String userName,
     final Collection<String> requestedDetails) {
-    checkArgument(StringUtils.isNotEmpty(domainName), "domainName is null or empty");
-    checkArgument(StringUtils.isNotEmpty(userName), "userName is null or empty");
+    checkArgument(isNotEmpty(domainName), "domainName is null or empty");
+    checkArgument(isNotEmpty(userName), "userName is null or empty");
     checkArgument(requestedDetails != null && !requestedDetails.isEmpty(),
       "requestedDetails is null or empty");
 

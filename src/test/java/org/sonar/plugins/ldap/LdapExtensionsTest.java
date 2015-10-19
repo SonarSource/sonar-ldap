@@ -22,7 +22,6 @@ package org.sonar.plugins.ldap;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Test;
-import org.mockito.Mockito;
 import org.sonar.api.config.Settings;
 import org.sonar.api.utils.System2;
 import org.sonar.plugins.ldap.windows.WindowsAuthenticationHelper;
@@ -33,6 +32,8 @@ import org.sonar.plugins.ldap.windows.sso.servlet.SsoAuthenticationFilter;
 import org.sonar.plugins.ldap.windows.sso.servlet.SsoValidationFilter;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class LdapExtensionsTest {
   @Test
@@ -73,8 +74,8 @@ public class LdapExtensionsTest {
   public void getExtensionsThrowsException() {
     Settings settings = new Settings();
     settings.setProperty(WindowsAuthSettings.SONAR_WINDOWS_AUTH, "true");
-    System2 system2 = Mockito.mock(System2.class);
-    Mockito.when(system2.isOsWindows()).thenReturn(false);
+    System2 system2 = mock(System2.class);
+    when(system2.isOsWindows()).thenReturn(false);
 
     LdapExtensions ldapExtensions = new LdapExtensions(settings, system2);
 
@@ -83,11 +84,11 @@ public class LdapExtensionsTest {
 
   private void runGetExtensionsDefaultTest(boolean isOperatingSystemWindows, List<Class<?>> expectedExtensions) {
     Settings settings = new Settings();
-    System2 system2 = Mockito.mock(System2.class);
-    Mockito.when(system2.isOsWindows()).thenReturn(isOperatingSystemWindows);
+    System2 system2 = mock(System2.class);
+    when(system2.isOsWindows()).thenReturn(isOperatingSystemWindows);
     LdapExtensions ldapExtensions = new LdapExtensions(settings, system2);
 
-    List<Class> extensions = ldapExtensions.getExtensions();
+    List<Class<?>> extensions = ldapExtensions.getExtensions();
 
     assertThat(extensions).isNotNull().hasSameElementsAs(expectedExtensions);
   }
@@ -96,12 +97,12 @@ public class LdapExtensionsTest {
     Settings settings = new Settings();
     settings.setProperty(WindowsAuthSettings.SONAR_WINDOWS_AUTH, windowsAuthSettingValue);
 
-    System2 system2 = Mockito.mock(System2.class);
-    Mockito.when(system2.isOsWindows()).thenReturn(isOperatingSystemWindows);
+    System2 system2 = mock(System2.class);
+    when(system2.isOsWindows()).thenReturn(isOperatingSystemWindows);
 
     LdapExtensions ldapExtensions = new LdapExtensions(settings, system2);
 
-    List<Class> extensions = ldapExtensions.getExtensions();
+    List<Class<?>> extensions = ldapExtensions.getExtensions();
     assertThat(extensions).isNotNull().hasSameElementsAs(expectedExtensions);
   }
 

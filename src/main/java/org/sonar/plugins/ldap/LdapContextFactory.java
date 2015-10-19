@@ -21,15 +21,14 @@ package org.sonar.plugins.ldap;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
 import java.util.Properties;
+import javax.annotation.Nullable;
 import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.ldap.InitialLdapContext;
 import org.apache.commons.lang.StringUtils;
 import org.sonar.api.config.Settings;
-import org.sonar.api.utils.SonarException;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 
@@ -96,7 +95,7 @@ public class LdapContextFactory {
     return new InitialLdapContext(getEnvironment(principal, credentials, pooling), null);
   }
 
-  private Properties getEnvironment(String principal, String credentials, boolean pooling) {
+  private Properties getEnvironment(@Nullable String principal, @Nullable String credentials, boolean pooling) {
     Properties env = new Properties();
     env.put(Context.SECURITY_AUTHENTICATION, authentication);
     if (realm != null) {
@@ -133,19 +132,18 @@ public class LdapContextFactory {
   /**
    * Tests connection.
    *
-   * @throws SonarException if unable to open connection
+   * @throws IllegalStateException if unable to open connection
    */
   public void testConnection() {
     if (StringUtils.isBlank(username) && isSasl()) {
-      throw new SonarException("When using SASL - property ldap.bindDn is required");
-    } else {
-      try {
-        createBindContext();
-        LOG.info("Test LDAP connection on {}: OK", providerUrl);
-      } catch (NamingException e) {
-        LOG.info("Test LDAP connection: FAIL");
-        throw new SonarException("Unable to open LDAP connection", e);
-      }
+      throw new IllegalArgumentException("When using SASL - property ldap.bindDn is required");
+    }
+    try {
+      createBindContext();
+      LOG.info("Test LDAP connection on {}: OK", providerUrl);
+    } catch (NamingException e) {
+      LOG.info("Test LDAP connection: FAIL");
+      throw new IllegalStateException("Unable to open LDAP connection", e);
     }
   }
 

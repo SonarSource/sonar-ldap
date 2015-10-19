@@ -34,14 +34,15 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 import org.apache.commons.lang.math.NumberUtils;
-import org.sonar.api.ServerExtension;
+import org.sonar.api.server.ServerSide;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 
 /**
  * @author Evgeny Mandrikov
  */
-public class LdapAutodiscovery implements ServerExtension {
+@ServerSide
+public class LdapAutodiscovery {
 
   private static final Logger LOG = Loggers.get(LdapAutodiscovery.class);
 
@@ -134,6 +135,7 @@ public class LdapAutodiscovery implements ServerExtension {
       this.weight = weight;
     }
 
+    @Override
     public int compareTo(LdapSrvRecord o) {
       if (this.priority == o.priority) {
         return Integer.valueOf(o.weight).compareTo(this.weight);

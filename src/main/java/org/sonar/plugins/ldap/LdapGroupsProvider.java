@@ -35,6 +35,8 @@ import org.sonar.api.utils.SonarException;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 
+import static java.lang.String.format;
+
 /**
  * @author Evgeny Mandrikov
  */
@@ -77,7 +79,7 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
         } catch (NamingException e) {
           // just in case if Sonar silently swallowed exception
           LOG.debug(e.getMessage(), e);
-          sonarExceptions.add(new SonarException("Unable to retrieve groups for user " + username + " in " + serverKey, e));
+          sonarExceptions.add(new SonarException(format("Unable to retrieve groups for user %s in %s", username, serverKey), e));
         }
       } else {
         // user not found
@@ -97,7 +99,7 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
 
   private void checkPrerequisites(String username) {
     if (userMappings.isEmpty() || groupMappings.isEmpty()) {
-      throw new SonarException("Unable to retrieve details for user " + username + ": No user or group mapping found.");
+      throw new SonarException(format("Unable to retrieve details for user %s: No user or group mapping found.", username));
     }
   }
 
@@ -112,7 +114,7 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
     } catch (NamingException e) {
       // just in case if Sonar silently swallowed exception
       LOG.debug(e.getMessage(), e);
-      sonarExceptions.add(new SonarException("Unable to retrieve groups for user " + username + " in " + serverKey, e));
+      sonarExceptions.add(new SonarException(format("Unable to retrieve groups for user %s in %s", username, serverKey), e));
     }
     return searchResult;
   }

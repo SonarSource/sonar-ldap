@@ -58,8 +58,8 @@ public class LdapRealmTest {
     try {
       realm.init();
       fail("Since there is no connection, the init method has to throw an exception.");
-    } catch (SonarException e) {
-      assertThat(e.getMessage()).contains("Unable to open LDAP connection");
+    } catch (IllegalStateException e) {
+      assertThat(e).hasMessage("Unable to open LDAP connection");
     }
     assertThat(realm.getLoginPasswordAuthenticator()).isInstanceOf(LoginPasswordAuthenticator.class).isInstanceOf(LdapAuthenticator.class);
     assertThat(realm.getUsersProvider()).isInstanceOf(ExternalUsersProvider.class).isInstanceOf(LdapUsersProvider.class);

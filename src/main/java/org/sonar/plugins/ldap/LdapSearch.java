@@ -20,15 +20,12 @@
 package org.sonar.plugins.ldap;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
 import java.util.Arrays;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
-import org.apache.commons.lang.builder.ToStringBuilder;
-import org.apache.commons.lang.builder.ToStringStyle;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 

@@ -25,6 +25,7 @@ import org.sonar.api.SonarPlugin;
 
 public class LdapPlugin extends SonarPlugin {
 
+  @Override
   public List getExtensions() {
     return Arrays.asList(LdapExtensions.class);
   }
