@@ -33,6 +33,11 @@
       <name>Evgeny Mandrikov</name>
       <timezone>+3</timezone>
     </developer>
+    <developer>
+      <id>sulabh-msft</id>
+      <name>Sulabh Upadhyay</name>
+      <organization>Microsoft</organization>
+    </developer>
   </developers>
   <contributors>
     <contributor>
