@@ -1,2 +1,2 @@
-Sonar LDAP Plugin
-=================
+SonarQube LDAP Plugin
+=====================
