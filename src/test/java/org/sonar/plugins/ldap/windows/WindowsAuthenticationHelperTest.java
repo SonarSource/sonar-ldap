@@ -31,7 +31,6 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.sonar.api.config.Settings;
 import org.sonar.api.security.UserDetails;
-import org.sonar.plugins.ldap.windows.auth.PrincipalFormat;
 import org.sonar.plugins.ldap.windows.auth.WindowsAuthSettings;
 import org.sonar.plugins.ldap.windows.auth.WindowsAuthTestHelper;
 import org.sonar.plugins.ldap.windows.stubs.HttpSessionStub;
@@ -248,16 +247,17 @@ public class WindowsAuthenticationHelperTest {
     IWindowsAccount windowsAccount = getIWindowsAccount(domainName, user);
 
     UserDetails expectedUserDetailsUln = getExpectedUserDetails(user, userName, mail);
-    UserDetails expectedUserDetailsUpn = getExpectedUserDetails(user + "@" + domainName, userName, mail);
-
     UserDetails expectedUserDetailsUlnDownCase = getExpectedUserDetails(user.toLowerCase(), userName, mail);
-    UserDetails expectedUserDetailsUpnDownCase = getExpectedUserDetails(getAccountNameWithDomain(user, "@", domainName).toLowerCase(), userName, mail);
 
-    runGetUserDetailsFromWindowsAccountTest(windowsAccount, PrincipalFormat.ULN, false, expectedUserDetailsUln);
-    runGetUserDetailsFromWindowsAccountTest(windowsAccount, PrincipalFormat.UPN, false, expectedUserDetailsUpn);
+    UserDetails expectedUserDetailsUpn = getExpectedUserDetails(user + "@" + domainName, userName, mail);
+    UserDetails expectedUserDetailsUpnDownCase = getExpectedUserDetails(
+      getAccountNameWithDomain(user, "@", domainName).toLowerCase(), userName, mail);
 
-    runGetUserDetailsFromWindowsAccountTest(windowsAccount, PrincipalFormat.ULN, true, expectedUserDetailsUlnDownCase);
-    runGetUserDetailsFromWindowsAccountTest(windowsAccount, PrincipalFormat.UPN, true, expectedUserDetailsUpnDownCase);
+    runGetUserDetailsFromWindowsAccountTest(windowsAccount, true, false, expectedUserDetailsUln);
+    runGetUserDetailsFromWindowsAccountTest(windowsAccount, true, true, expectedUserDetailsUlnDownCase);
+
+    runGetUserDetailsFromWindowsAccountTest(windowsAccount, false, false, expectedUserDetailsUpn);
+    runGetUserDetailsFromWindowsAccountTest(windowsAccount, false, true, expectedUserDetailsUpnDownCase);
   }
 
   @Test(expected = NullPointerException.class)
@@ -266,77 +266,39 @@ public class WindowsAuthenticationHelperTest {
   }
 
   @Test
-  public void getUserGroupsTestDefaultGroupNameFormat() {
+  public void getUserGroupsTestCompatibilityModeDisabledGroupNames() {
     String domainName = "Domain";
     String groupName = "Group1";
 
-    Collection<WindowsAccount> groups = new ArrayList<WindowsAccount>();
+    Collection<WindowsAccount> groups = new ArrayList<>();
     WindowsAccount windowsAccount = getWindowsAccount(domainName, groupName);
     groups.add(windowsAccount);
 
-    Collection<String> expectedGroups = new ArrayList<String>();
-    expectedGroups.add(getAccountNameWithDomain(groupName, "@", domainName).toLowerCase());
+    Collection<String> expectedGroups = new ArrayList<>();
+    expectedGroups.add(groupName + "@" + domainName);
 
-    this.runGetUserGroupsTest("user", WindowsAuthenticationHelper.BASIC_AUTH_PRINCIPAL_KEY,
-      new ArrayList<WindowsAccount>(), new ArrayList<String>());
-    this.runGetUserGroupsTest("user", WindowsAuthenticationHelper.SSO_PRINCIPAL_KEY,
-      new ArrayList<WindowsAccount>(), new ArrayList<String>());
+    Collection<String> expectedGroupsDownCase = new ArrayList<>();
+    expectedGroupsDownCase.add(groupName.toLowerCase() + "@" + domainName.toLowerCase());
 
-    this.runGetUserGroupsTest("user", WindowsAuthenticationHelper.BASIC_AUTH_PRINCIPAL_KEY, groups, expectedGroups);
-    this.runGetUserGroupsTest("user", WindowsAuthenticationHelper.SSO_PRINCIPAL_KEY, groups, expectedGroups);
+    this.runGetUserGroupsTest(domainName, "user", groups, false, false, null, expectedGroups);
+    this.runGetUserGroupsTest(domainName, "user", groups, false, true, null, expectedGroupsDownCase);
   }
 
   @Test
-  public void getUserGroupsTestUpnGroupNameFormat() {
-    String domainName = "Domain";
-    String groupName = "Group1";
-
-    Collection<WindowsAccount> groups = new ArrayList<WindowsAccount>();
-    WindowsAccount windowsAccount = getWindowsAccount(domainName, groupName);
-    groups.add(windowsAccount);
-
-    Collection<String> expectedGroupsUpn = new ArrayList<String>();
-    expectedGroupsUpn.add(groupName + "@" + domainName);
-
-    Collection<String> expectedGroupsUpnDownCase = new ArrayList<String>();
-    expectedGroupsUpnDownCase.add(groupName.toLowerCase() + "@" + domainName.toLowerCase());
-
-    this.runGetUserGroupsTest("user", WindowsAuthenticationHelper.BASIC_AUTH_PRINCIPAL_KEY,
-            groups, PrincipalFormat.UPN, false, expectedGroupsUpn);
-    this.runGetUserGroupsTest("user", WindowsAuthenticationHelper.SSO_PRINCIPAL_KEY,
-            groups, PrincipalFormat.UPN, false, expectedGroupsUpn);
-
-    this.runGetUserGroupsTest("user", WindowsAuthenticationHelper.BASIC_AUTH_PRINCIPAL_KEY,
-            groups, PrincipalFormat.UPN, true, expectedGroupsUpnDownCase);
-    this.runGetUserGroupsTest("user", WindowsAuthenticationHelper.SSO_PRINCIPAL_KEY,
-            groups, PrincipalFormat.UPN, true, expectedGroupsUpnDownCase);
-  }
-
-  @Test
-  public void getUserGroupsTestUlnGroupNameFormat() {
+  public void getUserGroupsTestCompatibilityModeEnabledGroupNames() {
     String domainNameA = "DomainA";
     String domainNameB = "DomainB";
     String groupName = "Group1";
 
-    Collection<WindowsAccount> groups = new ArrayList<WindowsAccount>();
-    groups.add( getWindowsAccount(domainNameA, groupName));
-    groups.add( getWindowsAccount(domainNameB, groupName));
+    Collection<WindowsAccount> groups = new ArrayList<>();
+    groups.add(getWindowsAccount(domainNameA, groupName));
+    groups.add(getWindowsAccount(domainNameB, groupName));
 
-    Collection<String> expectedGroupsUln = new ArrayList<String>();
-    expectedGroupsUln.add(groupName);
+    Collection<String> expectedGroups = new ArrayList<>();
+    expectedGroups.add(groupName);
 
-    Collection<String> expectedGroupsUlnDownCase = new ArrayList<String>();
-    expectedGroupsUlnDownCase.add(groupName.toLowerCase());
-
-    this.runGetUserGroupsTest("user", WindowsAuthenticationHelper.BASIC_AUTH_PRINCIPAL_KEY,
-            groups, PrincipalFormat.ULN, false, expectedGroupsUln);
-    this.runGetUserGroupsTest("user", WindowsAuthenticationHelper.SSO_PRINCIPAL_KEY,
-            groups, PrincipalFormat.ULN, false, expectedGroupsUln);
-
-    this.runGetUserGroupsTest("user", WindowsAuthenticationHelper.BASIC_AUTH_PRINCIPAL_KEY,
-            groups, PrincipalFormat.ULN, true, expectedGroupsUlnDownCase);
-    this.runGetUserGroupsTest("user", WindowsAuthenticationHelper.SSO_PRINCIPAL_KEY,
-            groups, PrincipalFormat.ULN, true, expectedGroupsUlnDownCase);
+    runGetUserGroupsTest(domainNameA, "user", groups, true, false, "cn", expectedGroups);
+    runGetUserGroupsTest(domainNameA, "user", groups, true, true, "sAMAccountName", expectedGroups);
   }
 
   private void runIsUserSsoAuthenticated(Object windowsPrincipal, boolean expIsUserAuthenticated) {
@@ -349,9 +311,9 @@ public class WindowsAuthenticationHelperTest {
     assertThat(authenticationHelper.getWindowsPrincipal(servletRequest, windowsPrincipalAttributeKey)).isEqualTo(expectedWindowsPrincipal);
   }
 
-  private void runRemoveWindowsPrincipalForBasicAuth(boolean isAttributePresent){
+  private void runRemoveWindowsPrincipalForBasicAuth(boolean isAttributePresent) {
     HttpSession httpSession = new HttpSessionStub();
-    if(isAttributePresent) {
+    if (isAttributePresent) {
       httpSession.setAttribute(WindowsAuthenticationHelper.BASIC_AUTH_PRINCIPAL_KEY, mock(WindowsPrincipal.class));
     }
 
@@ -468,10 +430,10 @@ public class WindowsAuthenticationHelperTest {
       adConnectionHelper);
   }
 
-  private void runGetUserDetailsFromWindowsAccountTest(IWindowsAccount windowsAccount, PrincipalFormat principalFormat,
+  private void runGetUserDetailsFromWindowsAccountTest(IWindowsAccount windowsAccount, boolean isCompatibilityModeEnabled,
     boolean isAuthenticatorDownCase, UserDetails expectedUserDetails) {
     windowsAuthSettings = new WindowsAuthSettings(new Settings()
-      .setProperty(WindowsAuthSettings.SONAR_WINDOWS_USER_ID_FORMAT, principalFormat.toString())
+      .setProperty(WindowsAuthSettings.LDAP_WINDOWS_COMPATIBILITY_MODE, Boolean.toString(isCompatibilityModeEnabled))
       .setProperty(WindowsAuthSettings.SONAR_AUTHENTICATOR_LOGIN_DOWNCASE, Boolean.toString(isAuthenticatorDownCase)));
 
     Map<String, String> attributesUserDetails = null;
@@ -481,7 +443,7 @@ public class WindowsAuthenticationHelperTest {
       attributesUserDetails.put(AdConnectionHelper.MAIL_ATTRIBUTE, expectedUserDetails.getEmail());
     }
 
-    Collection<String> attributeNames = new ArrayList<String>();
+    Collection<String> attributeNames = new ArrayList<>();
     attributeNames.add(AdConnectionHelper.COMMON_NAME_ATTRIBUTE);
     attributeNames.add(AdConnectionHelper.MAIL_ATTRIBUTE);
     Mockito.when(adConnectionHelper.getUserDetails(windowsAccount.getDomain(), windowsAccount.getName(), attributeNames)).thenReturn(attributesUserDetails);
@@ -491,10 +453,27 @@ public class WindowsAuthenticationHelperTest {
     assertThat(authenticationHelper.getSsoUserDetails(windowsAccount)).isEqualToComparingFieldByField(expectedUserDetails);
   }
 
-  private void runGetUserGroupsTest(String userName, String windowsPrincipalKey, Collection<WindowsAccount> windowsAccounts,
-    Collection<String> expectedGroups) {
-    WindowsPrincipal windowsPrincipal = WindowsAuthTestHelper.getWindowsPrincipal(userName, windowsAccounts);
-    HttpServletRequest httpServletRequest = WindowsAuthTestHelper.getHttpServletRequest(windowsPrincipalKey, windowsPrincipal);
+  private void runGetUserGroupsTest(String domainName, String userName, Collection<WindowsAccount> windowsAccounts,
+    boolean isCompatibilityModeEnabled, boolean isGroupsDownCase, String groupIdAttribute, Collection<String> expectedGroups) {
+    String userNameWithDomain = getAccountNameWithDomain(domainName, "\\", userName);
+
+    windowsAuthSettings = new WindowsAuthSettings(new Settings()
+      .setProperty(WindowsAuthSettings.LDAP_WINDOWS_COMPATIBILITY_MODE, Boolean.toString(isCompatibilityModeEnabled))
+      .setProperty(WindowsAuthSettings.LDAP_GROUP_ID_ATTRIBUTE, groupIdAttribute)
+      .setProperty(WindowsAuthSettings.LDAP_WINDOWS_GROUP_DOWNCASE, Boolean.toString(isGroupsDownCase)));
+
+    windowsAuthProvider = mock(IWindowsAuthProvider.class);
+    adConnectionHelper = mock(AdConnectionHelper.class);
+
+    if (isCompatibilityModeEnabled) {
+      IWindowsAccount windowsAccount = getIWindowsAccount(domainName, userName);
+      Mockito.when(windowsAuthProvider.lookupAccount(userNameWithDomain)).thenReturn(windowsAccount);
+      Mockito.when(adConnectionHelper.getUserGroupsInDomain(domainName, userName, groupIdAttribute)).thenReturn(expectedGroups);
+    }
+
+    authenticationHelper = new WindowsAuthenticationHelper(windowsAuthSettings, windowsAuthProvider, adConnectionHelper);
+
+    WindowsPrincipal windowsPrincipal = WindowsAuthTestHelper.getWindowsPrincipal(userNameWithDomain, windowsAccounts);
 
     Collection groups = authenticationHelper.getUserGroups(windowsPrincipal);
     if (expectedGroups == null) {
@@ -502,15 +481,14 @@ public class WindowsAuthenticationHelperTest {
     } else {
       assertThat(groups).hasSameElementsAs(expectedGroups);
     }
-  }
 
-  private void runGetUserGroupsTest(String userName, String windowsPrincipalKey, Collection<WindowsAccount> windowsAccounts,
-    PrincipalFormat principalFormat, boolean isAuthenticatorDownCase, Collection<String> expectedGroups) {
-    windowsAuthSettings = new WindowsAuthSettings(new Settings()
-      .setProperty(WindowsAuthSettings.SONAR_WINDOWS_USER_GROUP_FORMAT, principalFormat.toString())
-      .setProperty(WindowsAuthSettings.SONAR_WINDOWS_GROUP_DOWNCASE, Boolean.toString(isAuthenticatorDownCase)));
-    authenticationHelper = new WindowsAuthenticationHelper(windowsAuthSettings, windowsAuthProvider, adConnectionHelper);
-    runGetUserGroupsTest(userName, windowsPrincipalKey, windowsAccounts, expectedGroups);
+    if (isCompatibilityModeEnabled) {
+      Mockito.verify(windowsAuthProvider, Mockito.times(1)).lookupAccount(userNameWithDomain);
+      Mockito.verify(adConnectionHelper, Mockito.times(1)).getUserGroupsInDomain(domainName, userName, groupIdAttribute);
+    } else {
+      Mockito.verify(windowsAuthProvider, Mockito.times(0)).lookupAccount(userNameWithDomain);
+      Mockito.verify(adConnectionHelper, Mockito.times(0)).getUserGroupsInDomain(domainName, userName, groupIdAttribute);
+    }
   }
 
   private static UserDetails getExpectedUserDetails(String userId, String userName, String mail) {

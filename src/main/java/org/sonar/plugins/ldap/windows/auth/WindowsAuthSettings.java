@@ -20,48 +20,49 @@
 package org.sonar.plugins.ldap.windows.auth;
 
 import org.apache.commons.lang.StringUtils;
-import org.sonar.api.ServerExtension;
 import org.sonar.api.config.Settings;
+import org.sonar.api.server.ServerSide;
 
-public class WindowsAuthSettings implements ServerExtension {
+@ServerSide
+public class WindowsAuthSettings {
   /**
    * Setting to return userId/login-id in lowercase in case of windows authentication mode.
    * This setting is already available in SonarQube.
    */
   public static final String SONAR_AUTHENTICATOR_LOGIN_DOWNCASE = "sonar.authenticator.downcase";
 
-  private static final String SONAR_LDAP_WINDOWS = "sonar.ldap.windows";
-
-  /**
-   * Setting to return group names in lowercase in case of windows authentication mode.
-   */
-  public static final String SONAR_WINDOWS_GROUP_DOWNCASE = SONAR_LDAP_WINDOWS +".groups.downcase";
+  private static final String LDAP_WINDOWS = "ldap.windows";
 
   /**
    * Settings to specify if Windows authentication is enabled or not.
    */
-  public static final String SONAR_WINDOWS_AUTH = SONAR_LDAP_WINDOWS + ".auth";
-
-  /**
-   * Format of the userID returned by the plugin in Windows authentication mode.
-   */
-  public static final String SONAR_WINDOWS_USER_ID_FORMAT = SONAR_LDAP_WINDOWS + ".useridformat";
-
-  /**
-   * Format of the group name returned by plugin in Windows authentication mode.
-   */
-  public static final String SONAR_WINDOWS_USER_GROUP_FORMAT = SONAR_LDAP_WINDOWS + ".groupformat";
+  public static final String LDAP_WINDOWS_AUTH = LDAP_WINDOWS + ".auth";
 
   /**
    * Authentication protocols supported by plugin in Windows authentication mode for Single Sign on (SSO)
    */
-  public static final String SONAR_WINDOWS_AUTH_SSO_PROTOCOLS = SONAR_LDAP_WINDOWS + ".sso.protocols";
+  public static final String LDAP_WINDOWS_AUTH_SSO_PROTOCOLS = LDAP_WINDOWS + ".sso.protocols";
 
-  public static final PrincipalFormat DEFAULT_SONAR_WINDOWS_USER_ID_FORMAT = PrincipalFormat.UPN;
-  public static final PrincipalFormat DEFAULT_SONAR_WINDOWS_USER_GROUP_FORMAT = PrincipalFormat.UPN;
+  /**
+   * Setting to return group names in lowercase in case of windows authentication mode.
+   */
+  public static final String LDAP_WINDOWS_GROUP_DOWNCASE = LDAP_WINDOWS + ".group.downcase";
+
+  /**
+   * Setting to specify compatibility mode
+   */
+  public static final String LDAP_WINDOWS_COMPATIBILITY_MODE = LDAP_WINDOWS + ".compatibilityMode";
+
+  /**
+   * Setting to specify group-id attribute, which is used by plugin while returning user groups in compatibility mode
+   */
+  public static final String LDAP_GROUP_ID_ATTRIBUTE = "ldap.group.idAttribute";
+
   public static final String DEFAULT_SONAR_LDAP_WINDOWS_AUTH = "true";
-  public static final boolean DEFAULT_SONAR_AUTHENTICATOR_GROUP_DOWNCASE = true;
   public static final String DEFAULT_SONAR_WINDOWS_AUTH_SSO_PROTOCOLS = "NTLM";
+  public static final boolean DEFAULT_WINDOWS_COMPATIBILITY_MODE = false;
+  public static final boolean DEFAULT_SONAR_AUTHENTICATOR_GROUP_DOWNCASE = true;
+  public static final String DEFAULT_LDAP_WINDOWS_GROUP_ID_ATTRIBUTE = "cn";
 
   private final Settings settings;
 
@@ -80,7 +81,7 @@ public class WindowsAuthSettings implements ServerExtension {
    * Returns true if sonar authentication is set to return group names in lowercase.  By default it is set to true.
    */
   public boolean getIsSonarAuthenticatorGroupDownCase() {
-    String sonarAuthenticatorGroupDownCase = StringUtils.defaultIfBlank(settings.getString(SONAR_WINDOWS_GROUP_DOWNCASE),
+    String sonarAuthenticatorGroupDownCase = StringUtils.defaultIfBlank(settings.getString(LDAP_WINDOWS_GROUP_DOWNCASE),
       Boolean.toString(DEFAULT_SONAR_AUTHENTICATOR_GROUP_DOWNCASE));
 
     return Boolean.parseBoolean(sonarAuthenticatorGroupDownCase);
@@ -90,23 +91,24 @@ public class WindowsAuthSettings implements ServerExtension {
    *  Settings to specify if Windows authentication is enabled or not. By default, its value is "true".
    */
   public String getIsSonarLdapWindowsAuth() {
-    return StringUtils.defaultIfBlank(settings.getString(SONAR_WINDOWS_AUTH), DEFAULT_SONAR_LDAP_WINDOWS_AUTH);
+    return StringUtils.defaultIfBlank(settings.getString(LDAP_WINDOWS_AUTH), DEFAULT_SONAR_LDAP_WINDOWS_AUTH);
   }
 
   /**
-   * Returns user-id format returned by the plugin in Windows Authentication mode. By default, the format is
-   * {@link PrincipalFormat} UPN.
+   * Settings to specify if Ldap Windows compatibility mode is enabled or not.  By default compatibility mode is disabled
    */
-  public PrincipalFormat getUserIdFormat() {
-    return getPrincipalFormat(SONAR_WINDOWS_USER_ID_FORMAT, DEFAULT_SONAR_WINDOWS_USER_ID_FORMAT);
+  public boolean getIsLdapWindowsCompatibilityModeEnabled() {
+    String ldapWindowsCompatibilityMode = StringUtils.defaultIfBlank(settings.getString(LDAP_WINDOWS_COMPATIBILITY_MODE),
+      Boolean.toString(DEFAULT_WINDOWS_COMPATIBILITY_MODE));
+
+    return Boolean.parseBoolean(ldapWindowsCompatibilityMode);
   }
 
   /**
-   * Returns the user group name format returned by the plugin in Windows Authentication mode. By default, the format is
-   * {@link PrincipalFormat} UPN.
+   * Settings to specify the groups id attribute. By default, its value is "cn"
    */
-  public PrincipalFormat getUserGroupFormat() {
-    return getPrincipalFormat(SONAR_WINDOWS_USER_GROUP_FORMAT, DEFAULT_SONAR_WINDOWS_USER_GROUP_FORMAT);
+  public String getGroupIdAttribute() {
+    return StringUtils.defaultIfBlank(settings.getString(LDAP_GROUP_ID_ATTRIBUTE), DEFAULT_LDAP_WINDOWS_GROUP_ID_ATTRIBUTE);
   }
 
   /**
@@ -114,17 +116,7 @@ public class WindowsAuthSettings implements ServerExtension {
    * single sign on. By default, protocol is NTLM.
    */
   public String getProtocols() {
-    return StringUtils.defaultIfBlank(settings.getString(SONAR_WINDOWS_AUTH_SSO_PROTOCOLS), DEFAULT_SONAR_WINDOWS_AUTH_SSO_PROTOCOLS);
+    return StringUtils.defaultIfBlank(settings.getString(LDAP_WINDOWS_AUTH_SSO_PROTOCOLS), DEFAULT_SONAR_WINDOWS_AUTH_SSO_PROTOCOLS);
   }
 
-  private PrincipalFormat getPrincipalFormat(String settingName, PrincipalFormat defaultPrincipalFormat) {
-    PrincipalFormat principalFormat = defaultPrincipalFormat;
-
-    String userIdFormatString = settings.getString(settingName);
-    if (StringUtils.isNotBlank(userIdFormatString)) {
-      principalFormat = Enum.valueOf(PrincipalFormat.class, userIdFormatString.toUpperCase());
-    }
-
-    return principalFormat;
-  }
 }

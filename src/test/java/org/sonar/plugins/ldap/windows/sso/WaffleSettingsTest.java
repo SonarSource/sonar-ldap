@@ -54,7 +54,7 @@ public class WaffleSettingsTest {
 
   @Test
   public void nonDefaultSettingsTest() {
-    settings.setProperty(WindowsAuthSettings.SONAR_WINDOWS_USER_GROUP_FORMAT, "Negotiate");
+    settings.setProperty(WindowsAuthSettings.LDAP_WINDOWS_AUTH_SSO_PROTOCOLS, "Negotiate");
 
     WaffleSettings waffleSettings = new WaffleSettings(filterName, servletContext, windowsAuthSettings);
     validateWaffleSettings(waffleSettings, filterName, servletContext, windowsAuthSettings);

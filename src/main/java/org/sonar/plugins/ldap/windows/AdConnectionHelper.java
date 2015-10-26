@@ -26,6 +26,7 @@ import com4j.typelibs.ado20.Fields;
 import com4j.typelibs.ado20._Command;
 import com4j.typelibs.ado20._Connection;
 import com4j.typelibs.ado20._Recordset;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -67,6 +68,12 @@ public class AdConnectionHelper {
   public static final String SAMACCOUNTNAME_STR = "sAMAccountName";
 
   /**
+   * Attribute for storing distinguished name of a user
+   * E.g. User Name,OU=Users,DC=domain,DC=com
+   */
+  public static final String DISTINGUISHED_NAME_STR = "distinguishedName";
+
+  /**
    * Attribute for storing common name of a user in an active directory
    */
   public static final String COMMON_NAME_ATTRIBUTE = "cn";
@@ -103,7 +110,6 @@ public class AdConnectionHelper {
 
     Map<String, String> userDetails = new HashMap<>();
     _Connection connection = null;
-    _Recordset recordSet = null;
     try {
       String defaultNamingContext = getDefaultNamingContext(domainName);
       if (defaultNamingContext == null) {
@@ -115,22 +121,8 @@ public class AdConnectionHelper {
         return userDetails;
       }
 
-      String commandText = getCommandText(defaultNamingContext, userName, requestedDetails);
-      LOG.trace(commandText);
-
-      recordSet = executeCommand(connection, commandText);
-      if (recordSet != null) {
-        Map<String, String> adUserDetails = getUserDetailsFromRecordSet(recordSet, userName, domainName,
-          requestedDetails);
-        if (adUserDetails != null) {
-          userDetails.putAll(adUserDetails);
-        }
-      }
+      userDetails = getUserDetailsFromAd(connection, defaultNamingContext, domainName, userName, requestedDetails);
     } finally {
-      if (recordSet != null) {
-        recordSet.close();
-        recordSet.dispose();
-      }
       if (connection != null) {
         connection.close();
         connection.dispose();
@@ -139,6 +131,46 @@ public class AdConnectionHelper {
     }
 
     return userDetails;
+  }
+
+  public Collection<String> getUserGroupsInDomain(final String domainName, final String userName,
+    final String requestedGroupIdAttribute) {
+    checkArgument(isNotEmpty(domainName), "domainName is null or empty");
+    checkArgument(isNotEmpty(userName), "userName is null or empty");
+    checkArgument(isNotEmpty(requestedGroupIdAttribute), "requestedGroupIdAttribute is null or empty");
+
+    Collection<String> userGroups = new ArrayList<>();
+
+    _Connection connection = null;
+    try {
+      String defaultNamingContext = getDefaultNamingContext(domainName);
+      if (defaultNamingContext == null) {
+        return userGroups;
+      }
+
+      connection = getActiveDirectoryConnection();
+      if (connection == null) {
+        return userGroups;
+      }
+
+      String userNameDn = getUserDistinguishedName(connection, defaultNamingContext, domainName, userName);
+      if (StringUtils.isBlank(userNameDn)) {
+        return userGroups;
+      }
+
+      Collection<String> adUserGroups = getUserGroupsFromAd(connection, defaultNamingContext, domainName, userNameDn,
+        requestedGroupIdAttribute);
+      userGroups.addAll(adUserGroups);
+
+    } finally {
+      if (connection != null) {
+        connection.close();
+        connection.dispose();
+      }
+      com4jWrapper.cleanUp();
+    }
+
+    return userGroups;
   }
 
   /**
@@ -203,14 +235,97 @@ public class AdConnectionHelper {
     return attributeValue;
   }
 
+  private Map<String, String> getUserDetailsFromAd(final _Connection connection, final String namingContext, String domainName,
+    String userName, final Collection<String> requestedDetails) {
+    Map<String, String> userDetails = new HashMap<>();
+
+    String commandText = getUserDetailsCommandText(namingContext, userName, requestedDetails);
+    LOG.trace(commandText);
+
+    Collection<Map<String, String>> userDetailsRecords = executeQuery(connection, commandText, requestedDetails);
+
+    if (userDetailsRecords.size() == 1) {
+      userDetails = userDetailsRecords.iterator().next();
+    }
+
+    return userDetails;
+  }
+
+  private String getUserDistinguishedName(final _Connection connection, final String namingContext, final String domainName,
+    final String userName) {
+    Collection<String> requestedUserAttributes = new ArrayList<>();
+    requestedUserAttributes.add(DISTINGUISHED_NAME_STR);
+
+    Map<String, String> userAttributes = getUserDetailsFromAd(connection, namingContext, domainName, userName, requestedUserAttributes);
+
+    return userAttributes.get(DISTINGUISHED_NAME_STR);
+  }
+
+  private Collection<String> getUserGroupsFromAd(final _Connection connection, final String namingContext, String domainName,
+    final String userNameDn, final String requestedGroupIdAttribute) {
+    Collection<String> adUserGroups = new ArrayList<>();
+
+    String commandText = getUserGroupsCommandText(namingContext, userNameDn, requestedGroupIdAttribute);
+    LOG.trace(commandText);
+
+    Collection<String> requestedAttributes = new ArrayList<>();
+    requestedAttributes.add(requestedGroupIdAttribute);
+
+    Collection<Map<String, String>> groupRecords = executeQuery(connection, commandText, requestedAttributes);
+    for (Map<String, String> groupRecord : groupRecords) {
+      String groupIdValue = groupRecord.get(requestedGroupIdAttribute);
+      if (StringUtils.isNotBlank(groupIdValue))
+        adUserGroups.add(groupIdValue);
+    }
+
+    return adUserGroups;
+  }
+
+  private Collection<Map<String, String>> executeQuery(final _Connection connection, String commandText,
+    final Collection<String> requestedDetails) {
+    Collection<Map<String, String>> records = new ArrayList<>();
+
+    _Recordset recordSet = null;
+    try {
+      recordSet = executeCommand(connection, commandText);
+      if (recordSet != null) {
+        records = getDataFromRecordSet(recordSet, requestedDetails);
+      }
+    } finally {
+      if (recordSet != null) {
+        recordSet.close();
+        recordSet.dispose();
+      }
+    }
+
+    return records;
+  }
+
+  private Collection<Map<String, String>> getDataFromRecordSet(final _Recordset recordSet, final Collection<String> requestedDetails) {
+    Collection<Map<String, String>> records = new ArrayList<>();
+
+    while (!recordSet.eof()) {
+      Fields userData = recordSet.fields();
+      if (userData != null) {
+        Map<String, String> requestedDetailsMap = new HashMap<>();
+        for (String requestedDetail : requestedDetails) {
+          String userAttributeValue = getUserAttributeValue(userData, requestedDetail);
+          requestedDetailsMap.put(requestedDetail, userAttributeValue);
+        }
+        records.add(requestedDetailsMap);
+      }
+      recordSet.moveNext();
+    }
+
+    return records;
+  }
+
   private _Recordset executeCommand(final _Connection connection, final String commandText) {
     _Recordset recordSet = null;
     _Command command = null;
     try {
-      command = com4jWrapper.createCommand();
+      command = com4jWrapper.createCommand(connection, commandText);
       if (command != null) {
-        command.activeConnection(connection);
-        command.commandText(commandText);
         recordSet = command.execute(null, com4jWrapper.getMissing(), -1);
       } else {
         LOG.error("Unable to create the active directory command");
@@ -224,41 +339,28 @@ public class AdConnectionHelper {
     return recordSet;
   }
 
-  private Map<String, String> getUserDetailsFromRecordSet(final _Recordset recordSet, final String userName,
-    final String domainName, final Collection<String> requestedDetails) {
-    Map<String, String> userDetails = new HashMap<>();
-
-    if (recordSet.eof()) {
-      LOG.debug("{} not found in the domain {}", userName, domainName);
-      return null;
-    } else {
-      Fields userData = recordSet.fields();
-      if (userData != null) {
-        for (String requestedDetail : requestedDetails) {
-          userDetails.put(requestedDetail, getUserAttributeValue(userData, requestedDetail));
-        }
-      }
-    }
-
-    return userDetails;
-  }
-
   /*
-   * Command Text format <GC://root>;(filter);requestedAttributes;scope
-   * e.g.<GC://DC=domain, dc=com>;(sAMAccountName=userName);ch,mail;SubTree
+   * User Details Command Text format <GC://root>;(filter);requestedAttributes;scope
+   * e.g.<GC://DC=domain, dc=com>;(sAMAccountName=userName);cn,mail;SubTree
    */
-  private static String getCommandText(final String namingContext, final String userName,
+  private static String getUserDetailsCommandText(final String namingContext, final String userName,
     final Collection<String> requestedDetails) {
-    /* Specify the command to search a global catalog server using GC moniker */
-    String root = String.format("<GC://%s>", namingContext);
     /* Filter on sAMAccountName attribute */
     String filter = String.format("(%s=%s)", SAMACCOUNTNAME_STR, userName);
     /* Requested user attributes */
     String requestedAttributes = StringUtils.join(requestedDetails, ",");
-    /* Search scope as SubTree */
-    String scope = "SubTree";
 
-    return String.format("%s;%s;%s;%s", root, filter, requestedAttributes, scope);
+    return String.format("<GC://%s>;%s;%s;SubTree", namingContext, filter, requestedAttributes);
   }
 
+  /*
+   * User Groups Command Text format <GC://root>;(filter);requestedAttributes;scope
+   */
+  private static String getUserGroupsCommandText(final String namingContext, final String userDn,
+    final String requestedDetail) {
+    /* Filter on user dn attribute */
+    String filter = String.format("(&(objectClass=group)(member=%s))", userDn);
+
+    return String.format("<GC://%s>;%s;%s;SubTree", namingContext, filter, requestedDetail);
+  }
 }

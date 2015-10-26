@@ -73,7 +73,7 @@ public class LdapExtensionsTest {
   @Test(expected = IllegalArgumentException.class)
   public void getExtensionsThrowsException() {
     Settings settings = new Settings();
-    settings.setProperty(WindowsAuthSettings.SONAR_WINDOWS_AUTH, "true");
+    settings.setProperty(WindowsAuthSettings.LDAP_WINDOWS_AUTH, "true");
     System2 system2 = mock(System2.class);
     when(system2.isOsWindows()).thenReturn(false);
 
@@ -95,7 +95,7 @@ public class LdapExtensionsTest {
 
   private void runGetExtensionsTest(String windowsAuthSettingValue, boolean isOperatingSystemWindows, List<Class<?>> expectedExtensions) {
     Settings settings = new Settings();
-    settings.setProperty(WindowsAuthSettings.SONAR_WINDOWS_AUTH, windowsAuthSettingValue);
+    settings.setProperty(WindowsAuthSettings.LDAP_WINDOWS_AUTH, windowsAuthSettingValue);
 
     System2 system2 = mock(System2.class);
     when(system2.isOsWindows()).thenReturn(isOperatingSystemWindows);

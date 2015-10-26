@@ -27,11 +27,24 @@ import com4j.typelibs.ado20._Command;
 import com4j.typelibs.ado20._Connection;
 import org.sonar.plugins.ldap.windows.auth.ICom4jWrapper;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.commons.lang.StringUtils.isNotEmpty;
+
 public class Com4jWrapper implements ICom4jWrapper {
 
   @Override
-  public _Command createCommand() {
-    return ClassFactory.createCommand();
+  public _Command createCommand(_Connection connection, String commandText) {
+    checkNotNull(connection, "connection is null");
+    checkArgument(isNotEmpty(commandText), "commandText is null");
+
+    _Command command = ClassFactory.createCommand();
+    if (command != null) {
+      command.activeConnection(connection);
+      command.commandText(commandText);
+    }
+
+    return command;
   }
 
   @Override

@@ -25,265 +25,442 @@ import com4j.typelibs.ado20.Field;
 import com4j.typelibs.ado20.Fields;
 import com4j.typelibs.ado20._Command;
 import com4j.typelibs.ado20._Connection;
-import com4j.typelibs.ado20._Recordset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nullable;
+import org.apache.commons.lang.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.sonar.plugins.ldap.windows.auth.ICom4jWrapper;
+import org.sonar.plugins.ldap.windows.stubs.com4j.RecordSetStub;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class AdConnectionHelperTest {
   private AdConnectionHelper adConnectionHelper;
   private ICom4jWrapper com4jWrapper;
-  private Collection<String> testRequestedUserAttributes;
+  private Collection<String> userAttributesForGetUserDetailsTests;
+  private Collection<String> userAttributesForGetUserGroupTests;
+  private String testRequestedGroupIdAttribute;
+  private String domainName;
+  private String userName;
+  private String namingContext;
+  private String userDistinguishedName;
 
   @Before
   public void init() {
-    com4jWrapper = Mockito.mock(ICom4jWrapper.class);
+    com4jWrapper = mock(ICom4jWrapper.class);
     adConnectionHelper = new AdConnectionHelper(com4jWrapper);
-    testRequestedUserAttributes = getTestRequestedUserAttributes();
+    userAttributesForGetUserDetailsTests = getRequestedUserAttributesForGetUserDetailsTests();
+    userAttributesForGetUserGroupTests = getRequestedUserAttributesForGetUserGroupsTests();
+    testRequestedGroupIdAttribute = "someAttribute";
+    domainName = "domain";
+    userName = "userName";
+    namingContext = "dc=domain";
+    userDistinguishedName = "dn=User Distinguished Name";
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void getUserDetailsDomainNameNullArgumentCheck() {
-    adConnectionHelper.getUserDetails(null, "userName", testRequestedUserAttributes);
+    adConnectionHelper.getUserDetails(null, userName, userAttributesForGetUserDetailsTests);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void getUserDetailsDomainNameEmptyArgumentCheck() {
-    adConnectionHelper.getUserDetails("", "userName", testRequestedUserAttributes);
+    adConnectionHelper.getUserDetails("", userName, userAttributesForGetUserDetailsTests);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void getUserDetailsUserNameNullArgumentCheck() {
-    adConnectionHelper.getUserDetails("domain", null, testRequestedUserAttributes);
+    adConnectionHelper.getUserDetails(domainName, null, userAttributesForGetUserDetailsTests);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void getUserDetailsUserNameEmptyArgumentCheck() {
-    adConnectionHelper.getUserDetails("domain", "", testRequestedUserAttributes);
+    adConnectionHelper.getUserDetails(domainName, "", userAttributesForGetUserDetailsTests);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void getUserDetailsRequestedAttributesNullArgumentCheck() {
-    adConnectionHelper.getUserDetails("domain", "userName", null);
+    adConnectionHelper.getUserDetails(domainName, userName, null);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void getUserDetailsRequestedAttributesEmptyArgumentCheck() {
-    adConnectionHelper.getUserDetails("domain", "userName", new ArrayList<String>());
+    adConnectionHelper.getUserDetails(domainName, userName, new ArrayList<String>());
   }
 
   @Test
   public void getUserDetailsWhenGetDefaultNamingContextReturnsNull() {
-    String domainName = "domain";
     String testConnectionString = getTestConnectionString(domainName);
-    Mockito.when(com4jWrapper.getObject(IADs.class, testConnectionString,
-      null)).thenThrow(Mockito.mock(ComException.class));
+    when(com4jWrapper.getObject(IADs.class, testConnectionString,
+      null)).thenThrow(mock(ComException.class));
 
-    assertThat(adConnectionHelper.getUserDetails(domainName, "userName", testRequestedUserAttributes)).isEmpty();
+    assertThat(adConnectionHelper.getUserDetails(domainName, userName, userAttributesForGetUserDetailsTests)).isEmpty();
 
-    Mockito.verify(com4jWrapper, Mockito.never()).createCommand();
-    Mockito.verify(com4jWrapper, Mockito.times(1)).cleanUp();
+    verify(com4jWrapper, times(1)).cleanUp();
   }
 
   @Test
   public void getUserDetailsWhenGetActiveDirectoryReturnsNull() {
-    String domainName = "domain";
-    String expectedNamingContext = "dc=domain";
-    setupTestDefaultNamingContext(domainName, expectedNamingContext);
+    setupTestDefaultNamingContext(domainName, namingContext);
 
-    Mockito.when(com4jWrapper.createConnection()).thenReturn(null);
+    when(com4jWrapper.createConnection()).thenReturn(null);
 
-    assertThat(adConnectionHelper.getUserDetails(domainName, "userName", testRequestedUserAttributes)).isEmpty();
-    Mockito.verify(com4jWrapper, Mockito.never()).createCommand();
-    Mockito.verify(com4jWrapper, Mockito.times(1)).cleanUp();
+    assertThat(adConnectionHelper.getUserDetails(domainName, userName, userAttributesForGetUserDetailsTests)).isEmpty();
+
+    verify(com4jWrapper, times(1)).cleanUp();
   }
 
   @Test
   public void getUserDetailsWhenExecuteCommandReturnsNull() {
-    String domainName = "domain";
-    String expectedNamingContext = "dc=domain";
-    setupTestDefaultNamingContext(domainName, expectedNamingContext);
+    setupTestDefaultNamingContext(domainName, namingContext);
 
-    Mockito.when(com4jWrapper.createConnection()).thenReturn(Mockito.mock(_Connection.class));
-    Mockito.when(com4jWrapper.createCommand()).thenReturn(null);
+    String commandText = getUserDetailsCommandText(namingContext, userName, userAttributesForGetUserDetailsTests);
 
-    assertThat(adConnectionHelper.getUserDetails(domainName, "userName", testRequestedUserAttributes)).isEmpty();
-    Mockito.verify(com4jWrapper, Mockito.times(1)).createCommand();
-    Mockito.verify(com4jWrapper, Mockito.times(1)).cleanUp();
+    _Connection connection = mock(_Connection.class);
+    when(com4jWrapper.createConnection()).thenReturn(connection);
+    when(com4jWrapper.createCommand(connection, commandText)).thenReturn(null);
+
+    assertThat(adConnectionHelper.getUserDetails(domainName, userName, userAttributesForGetUserDetailsTests)).isEmpty();
+    verify(com4jWrapper, times(1)).createCommand(connection, commandText);
+    verify(com4jWrapper, times(1)).cleanUp();
   }
 
   @Test
   public void getUserDetailsWhenExecuteCommandReturnsNullRecordSet() {
-    String domainName = "domain";
-    String expectedNamingContext = "dc=domain";
-    setupTestDefaultNamingContext(domainName, expectedNamingContext);
+    setupTestDefaultNamingContext(domainName, namingContext);
+    _Connection connection = mock(_Connection.class);
+    when(com4jWrapper.createConnection()).thenReturn(connection);
 
-    Mockito.when(com4jWrapper.createConnection()).thenReturn(Mockito.mock(_Connection.class));
+    String commandText = getUserDetailsCommandText(namingContext, userName, userAttributesForGetUserDetailsTests);
 
-    _Command command = Mockito.mock(_Command.class);
-    Mockito.when(command.execute(null, com4jWrapper.getMissing(), -1)).thenReturn(null);
-    Mockito.when(com4jWrapper.createCommand()).thenReturn(command);
+    _Command command = mock(_Command.class);
+    when(command.execute(null, com4jWrapper.getMissing(), -1)).thenReturn(null);
+    when(com4jWrapper.createCommand(connection, commandText)).thenReturn(command);
 
-    assertThat(adConnectionHelper.getUserDetails(domainName, "userName", testRequestedUserAttributes)).isEmpty();
-    Mockito.verify(com4jWrapper, Mockito.times(1)).createCommand();
-    Mockito.verify(command, Mockito.times(1)).dispose();
-    Mockito.verify(com4jWrapper, Mockito.times(1)).cleanUp();
+    assertThat(adConnectionHelper.getUserDetails(domainName, userName, userAttributesForGetUserDetailsTests)).isEmpty();
+    verify(com4jWrapper, times(1)).createCommand(connection, commandText);
+    verify(command, times(1)).dispose();
+    verify(com4jWrapper, times(1)).cleanUp();
   }
 
   @Test
   public void getUserDetailsWhenRecordSetEofIsNotSet() {
-    String domainName = "domain";
-    String expectedNamingContext = "dc=domain";
-    setupTestDefaultNamingContext(domainName, expectedNamingContext);
+    setupTestDefaultNamingContext(domainName, namingContext);
+    _Connection connection = mock(_Connection.class);
+    when(com4jWrapper.createConnection()).thenReturn(connection);
 
-    Mockito.when(com4jWrapper.createConnection()).thenReturn(Mockito.mock(_Connection.class));
+    String commandText = getUserDetailsCommandText(namingContext, userName, userAttributesForGetUserDetailsTests);
 
-    _Recordset recordSet = getTestRecordSet(true, null);
-    _Command command = Mockito.mock(_Command.class);
-    Mockito.when(command.execute(null, com4jWrapper.getMissing(), -1)).thenReturn(recordSet);
-    Mockito.when(com4jWrapper.createCommand()).thenReturn(command);
+    RecordSetStub recordSet = getTestRecordSet(null);
+    _Command command = mock(_Command.class);
+    when(command.execute(null, com4jWrapper.getMissing(), -1)).thenReturn(recordSet);
+    when(com4jWrapper.createCommand(connection, commandText)).thenReturn(command);
 
-    assertThat(adConnectionHelper.getUserDetails(domainName, "userName", testRequestedUserAttributes)).isEmpty();
-    Mockito.verify(command, Mockito.times(1)).dispose();
-    Mockito.verify(recordSet, Mockito.times(1)).close();
+    assertThat(adConnectionHelper.getUserDetails(domainName, userName, userAttributesForGetUserDetailsTests)).isEmpty();
+    verify(command, times(1)).dispose();
 
-    Mockito.verify(recordSet, Mockito.times(1)).dispose();
-    Mockito.verify(recordSet, Mockito.times(1)).close();
-    Mockito.verify(com4jWrapper, Mockito.times(1)).createCommand();
-    Mockito.verify(com4jWrapper, Mockito.times(1)).cleanUp();
+    assertThat(recordSet.getDisposeInvocationCount()).isEqualTo(1);
+    assertThat(recordSet.getCloseInvocationCount()).isEqualTo(1);
+
+    verify(com4jWrapper, times(1)).createCommand(connection, commandText);
+    verify(com4jWrapper, times(1)).cleanUp();
   }
 
   @Test
   public void getUserDetailsNormalTest() {
-    String domainName = "domain";
-    String expectedNamingContext = "dc=domain";
-    setupTestDefaultNamingContext(domainName, expectedNamingContext);
+    setupTestDefaultNamingContext(domainName, namingContext);
+    _Connection connection = mock(_Connection.class);
+    when(com4jWrapper.createConnection()).thenReturn(connection);
 
-    Mockito.when(com4jWrapper.createConnection()).thenReturn(Mockito.mock(_Connection.class));
-    Map<String, String> fieldsCollection = new HashMap<String, String>();
+    String commandText = getUserDetailsCommandText(namingContext, userName, userAttributesForGetUserDetailsTests);
+
+    Collection<Map<String, String>> fieldsRows = new ArrayList<>();
+    Map<String, String> fieldsCollection = new HashMap<>();
     fieldsCollection.put(AdConnectionHelper.COMMON_NAME_ATTRIBUTE, "Full Name");
     fieldsCollection.put(AdConnectionHelper.MAIL_ATTRIBUTE, "abc@example.org");
+    fieldsRows.add(fieldsCollection);
 
-    _Recordset recordSet = getTestRecordSet(false, fieldsCollection);
-    _Command command = Mockito.mock(_Command.class);
-    Mockito.when(command.execute(null, com4jWrapper.getMissing(), -1)).thenReturn(recordSet);
-    Mockito.when(com4jWrapper.createCommand()).thenReturn(command);
-    Map<String, String> userDetails = adConnectionHelper.getUserDetails(domainName, "userName",
-      testRequestedUserAttributes);
+    RecordSetStub recordSet = getTestRecordSet(fieldsRows);
+    _Command command = mock(_Command.class);
+    when(command.execute(null, com4jWrapper.getMissing(), -1)).thenReturn(recordSet);
+    when(com4jWrapper.createCommand(connection, commandText)).thenReturn(command);
+
+    Map<String, String> userDetails = adConnectionHelper.getUserDetails(domainName, userName, userAttributesForGetUserDetailsTests);
+
     assertThat(userDetails).isEqualTo(fieldsCollection);
+    verify(command, times(1)).dispose();
+    assertThat(recordSet.getDisposeInvocationCount()).isEqualTo(1);
+    assertThat(recordSet.getCloseInvocationCount()).isEqualTo(1);
+    verify(com4jWrapper, times(1)).createCommand(connection, commandText);
+    verify(com4jWrapper, times(1)).cleanUp();
+  }
 
-    Mockito.verify(command, Mockito.times(1)).dispose();
-    Mockito.verify(recordSet, Mockito.times(1)).close();
+  @Test(expected = IllegalArgumentException.class)
+  public void getUserGroupsDomainNameNullArgumentCheck() {
+    adConnectionHelper.getUserGroupsInDomain(null, userName, testRequestedGroupIdAttribute);
+  }
 
-    Mockito.verify(recordSet, Mockito.times(1)).dispose();
-    Mockito.verify(recordSet, Mockito.times(1)).close();
+  @Test(expected = IllegalArgumentException.class)
+  public void getUserGroupsDomainNameEmptyArgumentCheck() {
+    adConnectionHelper.getUserGroupsInDomain("", userName, testRequestedGroupIdAttribute);
+  }
 
-    Mockito.verify(com4jWrapper, Mockito.times(1)).createCommand();
-    Mockito.verify(com4jWrapper, Mockito.times(1)).cleanUp();
+  @Test(expected = IllegalArgumentException.class)
+  public void getUserGroupsUserNameNullArgumentCheck() {
+    adConnectionHelper.getUserGroupsInDomain(domainName, null, testRequestedGroupIdAttribute);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void getUserGroupsUserNameEmptyArgumentCheck() {
+    adConnectionHelper.getUserGroupsInDomain(domainName, "", testRequestedGroupIdAttribute);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void getUserGroupsRequestedAttributesNullArgumentCheck() {
+    adConnectionHelper.getUserGroupsInDomain(domainName, userName, null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void getUserGroupsRequestedAttributesEmptyArgumentCheck() {
+    adConnectionHelper.getUserGroupsInDomain(domainName, userName, "");
+  }
+
+  @Test
+  public void getUserGroupsWhenGetDefaultNamingContextReturnsNull() {
+    String testConnectionString = getTestConnectionString(domainName);
+    when(com4jWrapper.getObject(IADs.class, testConnectionString, null)).thenThrow(mock(ComException.class));
+
+    assertThat(adConnectionHelper.getUserGroupsInDomain(domainName, userName, testRequestedGroupIdAttribute)).isEmpty();
+
+    verify(com4jWrapper, times(1)).cleanUp();
+  }
+
+  @Test
+  public void getUserGroupsWhenGetActiveDirectoryReturnsNull() {
+    setupTestDefaultNamingContext(domainName, namingContext);
+
+    when(com4jWrapper.createConnection()).thenReturn(null);
+
+    assertThat(adConnectionHelper.getUserGroupsInDomain(domainName, userName, testRequestedGroupIdAttribute)).isEmpty();
+    verify(com4jWrapper, times(1)).cleanUp();
+  }
+
+  @Test
+  public void getUserGroupsWhenExecuteCommandReturnsNull() {
+    setupTestDefaultNamingContext(domainName, namingContext);
+    _Connection connection = mock(_Connection.class);
+    when(com4jWrapper.createConnection()).thenReturn(connection);
+
+    String commandText = getUserDetailsCommandText(namingContext, userName, userAttributesForGetUserGroupTests);
+
+    when(com4jWrapper.createCommand(connection, commandText)).thenReturn(null);
+
+    assertThat(adConnectionHelper.getUserGroupsInDomain(domainName, userName, testRequestedGroupIdAttribute)).isEmpty();
+    verify(com4jWrapper, times(1)).createCommand(connection, commandText);
+    verify(com4jWrapper, times(1)).cleanUp();
+  }
+
+  @Test
+  public void getUserGroupsWhenExecuteCommandFroUserDetailsReturnsNullRecordSet() {
+    setupTestDefaultNamingContext(domainName, namingContext);
+
+    _Connection connection = mock(_Connection.class);
+    when(com4jWrapper.createConnection()).thenReturn(connection);
+
+    String commandText = getUserDetailsCommandText(namingContext, userName, userAttributesForGetUserGroupTests);
+
+    _Command command = mock(_Command.class);
+    when(command.execute(null, com4jWrapper.getMissing(), -1)).thenReturn(null);
+    when(com4jWrapper.createCommand(connection, commandText)).thenReturn(command);
+
+    assertThat(adConnectionHelper.getUserGroupsInDomain(domainName, userName, testRequestedGroupIdAttribute)).isEmpty();
+    verify(com4jWrapper, times(1)).createCommand(connection, commandText);
+    verify(command, times(1)).dispose();
+    verify(com4jWrapper, times(1)).cleanUp();
+  }
+
+  @Test
+  public void getUserGroupsWhenUserDetailsRecordSetEofIsNotSet() {
+    setupTestDefaultNamingContext(domainName, namingContext);
+    _Connection connection = mock(_Connection.class);
+    when(com4jWrapper.createConnection()).thenReturn(connection);
+
+    String commandText = getUserDetailsCommandText(namingContext, userName, userAttributesForGetUserGroupTests);
+
+    RecordSetStub recordSet = getTestRecordSet(null);
+    _Command command = mock(_Command.class);
+    when(command.execute(null, com4jWrapper.getMissing(), -1)).thenReturn(recordSet);
+    when(com4jWrapper.createCommand(connection, commandText)).thenReturn(command);
+
+    assertThat(adConnectionHelper.getUserGroupsInDomain(domainName, userName, testRequestedGroupIdAttribute)).isEmpty();
+    verify(command, times(1)).dispose();
+
+    assertThat(recordSet.getDisposeInvocationCount()).isEqualTo(1);
+    assertThat(recordSet.getCloseInvocationCount()).isEqualTo(1);
+
+    verify(com4jWrapper, times(1)).createCommand(connection, commandText);
+    verify(com4jWrapper, times(1)).cleanUp();
+  }
+
+  @Test
+  public void getUserGroupsNormalTest() {
+    setupTestDefaultNamingContext(domainName, namingContext);
+    _Connection connection = mock(_Connection.class);
+    when(com4jWrapper.createConnection()).thenReturn(connection);
+
+    // Setup User Details
+    Collection<Map<String, String>> userDetailsRows = new ArrayList<>();
+    Map<String, String> userDetailsFieldsCollection = new HashMap<>();
+    userDetailsFieldsCollection.put(AdConnectionHelper.DISTINGUISHED_NAME_STR, userDistinguishedName);
+    userDetailsRows.add(userDetailsFieldsCollection);
+    RecordSetStub userDetailsRecordSet = getTestRecordSet(userDetailsRows);
+
+    String userDetailsCommandText = getUserDetailsCommandText(namingContext, userName, userAttributesForGetUserGroupTests);
+
+    _Command userDetailsCommand = mock(_Command.class);
+    when(userDetailsCommand.execute(null, com4jWrapper.getMissing(), -1)).thenReturn(userDetailsRecordSet);
+    when(com4jWrapper.createCommand(connection, userDetailsCommandText)).thenReturn(userDetailsCommand);
+
+    // Setup User Groups
+    Collection<Map<String, String>> userGroupsRows = new ArrayList<>();
+    Map<String, String> userGroupFieldsCollection1 = new HashMap<>();
+    userGroupFieldsCollection1.put(testRequestedGroupIdAttribute, "Group1");
+    userGroupsRows.add(userGroupFieldsCollection1);
+
+    Map<String, String> userGroupFieldsCollection2 = new HashMap<>();
+    userGroupFieldsCollection2.put(testRequestedGroupIdAttribute, "Group2");
+    userGroupsRows.add(userGroupFieldsCollection2);
+
+    Collection<String> expectedUserGroups = new ArrayList<>();
+    expectedUserGroups.add("Group1");
+    expectedUserGroups.add("Group2");
+    RecordSetStub userGroupsRecordSet = getTestRecordSet(userGroupsRows);
+
+    String userGroupsCommandText = getUserGroupsCommandText(namingContext, userDistinguishedName, testRequestedGroupIdAttribute);
+    _Command userGroupsCommand = mock(_Command.class);
+    when(userGroupsCommand.execute(null, com4jWrapper.getMissing(), -1)).thenReturn(userGroupsRecordSet);
+    when(com4jWrapper.createCommand(connection, userGroupsCommandText)).thenReturn(userGroupsCommand);
+
+    Collection<String> userGroups = adConnectionHelper.getUserGroupsInDomain(domainName, userName,
+      testRequestedGroupIdAttribute);
+
+    assertThat(userGroups).isEqualTo(expectedUserGroups);
+
+    verify(userDetailsCommand, times(1)).dispose();
+    verify(userGroupsCommand, times(1)).dispose();
+
+    assertThat(userDetailsRecordSet.getDisposeInvocationCount()).isEqualTo(1);
+    assertThat(userDetailsRecordSet.getCloseInvocationCount()).isEqualTo(1);
+
+    assertThat(userGroupsRecordSet.getDisposeInvocationCount()).isEqualTo(1);
+    assertThat(userGroupsRecordSet.getCloseInvocationCount()).isEqualTo(1);
+
+    verify(com4jWrapper, times(1)).createCommand(connection, userGroupsCommandText);
+    verify(com4jWrapper, times(1)).createCommand(connection, userDetailsCommandText);
+
+    verify(com4jWrapper, times(1)).cleanUp();
   }
 
   @Test
   public void getActiveDirectoryConnectionOpenThrowsComException() {
-    ComException comException = Mockito.mock(ComException.class);
-    Mockito.when(comException.getMessage()).thenReturn("ComException");
+    ComException comException = mock(ComException.class);
+    when(comException.getMessage()).thenReturn("ComException");
 
-    _Connection connection = Mockito.mock(_Connection.class);
+    _Connection connection = mock(_Connection.class);
     Mockito.doThrow(comException).when(connection).open(AdConnectionHelper.DEFAULT_AD_CONNECTION_STR, "", "", -1);
-    Mockito.when(com4jWrapper.createConnection()).thenReturn(connection);
+    when(com4jWrapper.createConnection()).thenReturn(connection);
 
     assertThat(adConnectionHelper.getActiveDirectoryConnection()).isNull();
-    Mockito.verify(comException, Mockito.times(1)).getMessage();
+    verify(comException, times(1)).getMessage();
   }
 
   @Test
   public void getActiveDirectoryConnectionCreateConnectionReturnsNull() {
-    Mockito.when(com4jWrapper.createConnection()).thenReturn(null);
+    when(com4jWrapper.createConnection()).thenReturn(null);
 
     assertThat(adConnectionHelper.getActiveDirectoryConnection()).isNull();
   }
 
   @Test
   public void getActiveDirectoryConnectionNormalTest() {
-    _Connection connection = Mockito.mock(_Connection.class);
-    Mockito.when(com4jWrapper.createConnection()).thenReturn(connection);
+    _Connection connection = mock(_Connection.class);
+    when(com4jWrapper.createConnection()).thenReturn(connection);
 
     assertThat(adConnectionHelper.getActiveDirectoryConnection()).isEqualTo(connection);
   }
 
   @Test
   public void getNamingContextTestCom4jGetObjectThrowsComException() {
-    String domainName = "domain";
     String testConnectionString = getTestConnectionString(domainName);
-    ComException comException = Mockito.mock(ComException.class);
-    Mockito.when(comException.getMessage()).thenReturn("ComException");
-    Mockito.when(com4jWrapper.getObject(IADs.class, testConnectionString,
+    ComException comException = mock(ComException.class);
+    when(comException.getMessage()).thenReturn("ComException");
+    when(com4jWrapper.getObject(IADs.class, testConnectionString,
       null)).thenThrow(comException);
 
     String namingContext = adConnectionHelper.getDefaultNamingContext(domainName);
 
     assertThat(namingContext).isNull();
-    Mockito.verify(com4jWrapper, Mockito.times(1)).getObject(IADs.class, testConnectionString, null);
-    Mockito.verify(comException, Mockito.times(1)).getMessage();
+    verify(com4jWrapper, times(1)).getObject(IADs.class, testConnectionString, null);
+    verify(comException, times(1)).getMessage();
   }
 
   @Test
   public void getNamingContextTestRootDseGetThrowsComException() {
-    String domainName = "domain";
     String testConnectionString = getTestConnectionString(domainName);
-    ComException comException = Mockito.mock(ComException.class);
-    Mockito.when(comException.getMessage()).thenReturn("ComException");
-    IADs iads = Mockito.mock(IADs.class);
-    Mockito.when(iads.get(AdConnectionHelper.DEFAULT_NAMING_CONTEXT_STR)).thenThrow(comException);
-    Mockito.when(com4jWrapper.getObject(IADs.class, testConnectionString, null)).thenReturn(iads);
+    ComException comException = mock(ComException.class);
+    when(comException.getMessage()).thenReturn("ComException");
+    IADs iads = mock(IADs.class);
+    when(iads.get(AdConnectionHelper.DEFAULT_NAMING_CONTEXT_STR)).thenThrow(comException);
+    when(com4jWrapper.getObject(IADs.class, testConnectionString, null)).thenReturn(iads);
 
     String namingContext = adConnectionHelper.getDefaultNamingContext(domainName);
 
     assertThat(namingContext).isNull();
-    Mockito.verify(com4jWrapper, Mockito.times(1)).getObject(IADs.class, testConnectionString, null);
-    Mockito.verify(comException, Mockito.times(1)).getMessage();
+    verify(com4jWrapper, times(1)).getObject(IADs.class, testConnectionString, null);
+    verify(comException, times(1)).getMessage();
   }
 
   @Test
   public void getNamingContextNormalTest() {
-    String domainName = "domain";
-    String expectedNamingContext = "dc=domain";
-    setupTestDefaultNamingContext(domainName, expectedNamingContext);
+    setupTestDefaultNamingContext(domainName, namingContext);
 
-    assertThat(adConnectionHelper.getDefaultNamingContext(domainName)).isEqualTo(expectedNamingContext);
+    assertThat(adConnectionHelper.getDefaultNamingContext(domainName)).isEqualTo(namingContext);
   }
 
   @Test
   public void getUserAttributeValueFieldsItemIsNull() {
-    Fields fields = Mockito.mock(Fields.class);
-    Mockito.when(fields.item(AdConnectionHelper.COMMON_NAME_ATTRIBUTE)).thenReturn(null);
+    Fields fields = mock(Fields.class);
+    when(fields.item(AdConnectionHelper.COMMON_NAME_ATTRIBUTE)).thenReturn(null);
     assertThat(adConnectionHelper.getUserAttributeValue(fields, AdConnectionHelper.COMMON_NAME_ATTRIBUTE)).isNull();
   }
 
   @Test
   public void getUserAttributeValueFieldsItemThrowComException() {
-    ComException comException = Mockito.mock(ComException.class);
-    Mockito.when(comException.getMessage()).thenReturn("COMException is thrown");
+    ComException comException = mock(ComException.class);
+    when(comException.getMessage()).thenReturn("COMException is thrown");
 
-    Fields fields = Mockito.mock(Fields.class);
-    Mockito.when(fields.item(AdConnectionHelper.COMMON_NAME_ATTRIBUTE)).thenThrow(comException);
+    Fields fields = mock(Fields.class);
+    when(fields.item(AdConnectionHelper.COMMON_NAME_ATTRIBUTE)).thenThrow(comException);
     assertThat(adConnectionHelper.getUserAttributeValue(fields, AdConnectionHelper.COMMON_NAME_ATTRIBUTE)).isNull();
-    Mockito.verify(comException, Mockito.times(1)).getMessage();
+    verify(comException, times(1)).getMessage();
   }
 
   @Test
   public void getUserAttributeValueFieldsItemValueIsNull() {
-    Field field = Mockito.mock(Field.class);
-    Mockito.when(field.value()).thenReturn(null);
+    Field field = mock(Field.class);
+    when(field.value()).thenReturn(null);
 
-    Fields fields = Mockito.mock(Fields.class);
-    Mockito.when(fields.item(AdConnectionHelper.COMMON_NAME_ATTRIBUTE)).thenReturn(field);
+    Fields fields = mock(Fields.class);
+    when(fields.item(AdConnectionHelper.COMMON_NAME_ATTRIBUTE)).thenReturn(field);
 
     assertThat(adConnectionHelper.getUserAttributeValue(fields, AdConnectionHelper.COMMON_NAME_ATTRIBUTE)).isNull();
   }
@@ -292,7 +469,7 @@ public class AdConnectionHelperTest {
   public void getUserAttributeValueNormalTest() {
     String fullName = "Full Name";
     String mail = "abc@example.org";
-    Map<String, String> fieldsCollection = new HashMap<String, String>();
+    Map<String, String> fieldsCollection = new HashMap<>();
     fieldsCollection.put(AdConnectionHelper.COMMON_NAME_ATTRIBUTE, fullName);
     fieldsCollection.put(AdConnectionHelper.MAIL_ATTRIBUTE, mail);
     Fields fields = getTestFields(fieldsCollection);
@@ -306,49 +483,69 @@ public class AdConnectionHelperTest {
     return "GC://" + domainName + "/" + AdConnectionHelper.ROOT_DSE;
   }
 
-  private Collection<String> getTestRequestedUserAttributes() {
-    Collection<String> requestedAttributes = new ArrayList<String>();
+  private String getUserDetailsCommandText(final String namingContext, final String userName, final Collection<String> requestedDetails) {
+    /* Requested user attributes */
+    String requestedAttributes = StringUtils.join(requestedDetails, ",");
+
+    return String.format("<GC://%s>;(%s=%s);%s;SubTree", namingContext,
+      AdConnectionHelper.SAMACCOUNTNAME_STR, userName, requestedAttributes);
+  }
+
+  private String getUserGroupsCommandText(final String namingContext, final String userDistinguishedName,
+    final String requestedGroupIdAttribute) {
+    String filter = String.format("(&(objectClass=group)(member=%s))", userDistinguishedName);
+    return String.format("<GC://%s>;%s;%s;SubTree", namingContext, filter, testRequestedGroupIdAttribute);
+  }
+
+  private Collection<String> getRequestedUserAttributesForGetUserDetailsTests() {
+    Collection<String> requestedAttributes = new ArrayList<>();
     requestedAttributes.add(AdConnectionHelper.COMMON_NAME_ATTRIBUTE);
     requestedAttributes.add(AdConnectionHelper.MAIL_ATTRIBUTE);
 
     return requestedAttributes;
   }
 
-  private _Recordset getTestRecordSet(boolean isEofSet, Map<String, String> fieldsCollection) {
-    _Recordset recordSet = Mockito.mock(_Recordset.class);
+  private Collection<String> getRequestedUserAttributesForGetUserGroupsTests() {
+    Collection<String> requestedAttributes = new ArrayList<>();
+    requestedAttributes.add(AdConnectionHelper.DISTINGUISHED_NAME_STR);
 
-    Mockito.when(recordSet.eof()).thenReturn(isEofSet);
+    return requestedAttributes;
+  }
 
-    if (!isEofSet && fieldsCollection != null) {
-      Fields fields = getTestFields(fieldsCollection);
-      Mockito.when(recordSet.fields()).thenReturn(fields);
+  private RecordSetStub getTestRecordSet(@Nullable Collection<Map<String, String>> fieldsRows) {
+    Collection<Fields> fieldsRowList = new ArrayList<>();
+
+    if (fieldsRows != null) {
+      for (Map<String, String> fieldsCollection : fieldsRows) {
+        fieldsRowList.add(getTestFields(fieldsCollection));
+      }
     }
 
-    return recordSet;
+    return new RecordSetStub(fieldsRowList);
   }
 
   private Fields getTestFields(final Map<String, String> fieldsCollection) {
-    Fields fields = Mockito.mock(Fields.class);
+    Fields fields = mock(Fields.class);
 
     for (String fieldName : fieldsCollection.keySet()) {
       Field field = getTestField(fieldsCollection.get(fieldName));
-      Mockito.when(fields.item(fieldName)).thenReturn(field);
+      when(fields.item(fieldName)).thenReturn(field);
     }
 
     return fields;
   }
 
   private Field getTestField(final String fieldValue) {
-    Field field = Mockito.mock(Field.class);
-    Mockito.when(field.value()).thenReturn(fieldValue);
+    Field field = mock(Field.class);
+    when(field.value()).thenReturn(fieldValue);
 
     return field;
   }
 
   private void setupTestDefaultNamingContext(final String domainName, final String defaultNamingContext) {
     String testConnectionString = getTestConnectionString(domainName);
-    IADs iads = Mockito.mock(IADs.class);
-    Mockito.when(iads.get(AdConnectionHelper.DEFAULT_NAMING_CONTEXT_STR)).thenReturn(defaultNamingContext);
-    Mockito.when(com4jWrapper.getObject(IADs.class, testConnectionString, null)).thenReturn(iads);
+    IADs iads = mock(IADs.class);
+    when(iads.get(AdConnectionHelper.DEFAULT_NAMING_CONTEXT_STR)).thenReturn(defaultNamingContext);
+    when(com4jWrapper.getObject(IADs.class, testConnectionString, null)).thenReturn(iads);
   }
 }

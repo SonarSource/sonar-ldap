@@ -27,7 +27,7 @@ import com4j.typelibs.ado20._Connection;
 /* A Com4J api wrapper*/
 public interface ICom4jWrapper {
 
-  _Command createCommand();
+  _Command createCommand(_Connection connection, String commandText);
 
   _Connection createConnection();
 

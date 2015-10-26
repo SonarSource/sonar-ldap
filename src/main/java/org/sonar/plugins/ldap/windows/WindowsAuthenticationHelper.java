@@ -27,12 +27,10 @@ import java.util.Map;
 import javax.annotation.CheckForNull;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import org.apache.commons.lang.StringUtils;
-import org.sonar.api.ServerExtension;
 import org.sonar.api.security.UserDetails;
+import org.sonar.api.server.ServerSide;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
-import org.sonar.plugins.ldap.windows.auth.PrincipalFormat;
 import org.sonar.plugins.ldap.windows.auth.WindowsAuthSettings;
 import waffle.servlet.NegotiateSecurityFilter;
 import waffle.servlet.WindowsPrincipal;
@@ -46,7 +44,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
 
-public class WindowsAuthenticationHelper implements ServerExtension {
+@ServerSide
+public class WindowsAuthenticationHelper {
   public static final String SSO_PRINCIPAL_KEY = NegotiateSecurityFilter.class.getName() + ".PRINCIPAL";
   public static final String BASIC_AUTH_PRINCIPAL_KEY = "ldap.windows.Principal";
 
@@ -197,13 +196,15 @@ public class WindowsAuthenticationHelper implements ServerExtension {
     LOG.debug("Getting groups for user: {}", windowsPrincipal.getName());
 
     HashSet<String> groups = new HashSet<>();
-    Map<String, WindowsAccount> groupsMap = windowsPrincipal.getGroups();
-    for (WindowsAccount windowsAccount : groupsMap.values()) {
+    if (settings.getIsLdapWindowsCompatibilityModeEnabled()) {
+      IWindowsAccount windowsAccount = getWindowsAccount(windowsPrincipal.getName());
       if (windowsAccount != null) {
-        String groupName = getWindowsAccountName(windowsAccount, true);
-        if (!groups.contains(groupName)) {
-          groups.add(getWindowsAccountName(windowsAccount, true));
-        }
+        groups.addAll(getCompatibilityModeAdUserGroups(windowsAccount));
+      }
+    } else {
+      Map<String, WindowsAccount> groupsMap = windowsPrincipal.getGroups();
+      for (WindowsAccount group : groupsMap.values()) {
+        groups.add(getWindowsAccountName(group, settings.getIsSonarAuthenticatorGroupDownCase()));
       }
     }
 
@@ -213,7 +214,8 @@ public class WindowsAuthenticationHelper implements ServerExtension {
   UserDetails getSsoUserDetails(IWindowsAccount windowsAccount) {
     UserDetails userDetails = new UserDetails();
 
-    String windowsAccountName = getWindowsAccountName(new WindowsAccount(windowsAccount), false);
+    String windowsAccountName = getWindowsAccountName(new WindowsAccount(windowsAccount),
+      settings.getIsSonarAuthenticatorLoginDownCase());
     userDetails.setUserId(windowsAccountName);
 
     Map<String, String> adUserDetails = getAdUserDetails(windowsAccount.getDomain(), windowsAccount.getName());
@@ -221,10 +223,25 @@ public class WindowsAuthenticationHelper implements ServerExtension {
       userDetails.setName(adUserDetails.get(AdConnectionHelper.COMMON_NAME_ATTRIBUTE));
       userDetails.setEmail(adUserDetails.get(AdConnectionHelper.MAIL_ATTRIBUTE));
     } else {
-      LOG.debug("Unable to get Name and Email for user: {}", windowsAccount.getFqn());
+      LOG.debug("Unable to get name and email for user: {}", windowsAccount.getFqn());
     }
 
     return userDetails;
+  }
+
+  // Returns the collection of user group name when the plugin is running under compatibility mode.
+  private Collection<String> getCompatibilityModeAdUserGroups(IWindowsAccount windowsAccount) {
+    Collection<String> userGroups = new ArrayList<>();
+
+    Collection<String> adUserGroups = adConnectionHelper.getUserGroupsInDomain(windowsAccount.getDomain(),
+      windowsAccount.getName(), settings.getGroupIdAttribute());
+    if (adUserGroups != null) {
+      userGroups.addAll(adUserGroups);
+    } else {
+      LOG.debug("Unable to get groups for the user: {}", windowsAccount.getFqn());
+    }
+
+    return userGroups;
   }
 
   @CheckForNull
@@ -247,27 +264,19 @@ public class WindowsAuthenticationHelper implements ServerExtension {
     return adConnectionHelper.getUserDetails(domainName, name, requestedDetails);
   }
 
-  private String getWindowsAccountName(WindowsAccount windowsAccount, boolean isGroup) {
+  private String getWindowsAccountName(WindowsAccount windowsAccount, boolean isLowerCase) {
     String windowsAccountName;
 
-    PrincipalFormat principalFormat = isGroup ? settings.getUserGroupFormat() : settings.getUserIdFormat();
-    switch (principalFormat) {
-      case ULN:
-        windowsAccountName = windowsAccount.getName();
-        break;
-
-      case UPN:
-      default:
-        windowsAccountName = windowsAccount.getName() + "@" + windowsAccount.getDomain();
-        break;
+    if (settings.getIsLdapWindowsCompatibilityModeEnabled()) {
+      windowsAccountName = windowsAccount.getName();
+    } else {
+      windowsAccountName = windowsAccount.getName() + "@" + windowsAccount.getDomain();
     }
 
-    boolean isLowerCaseConversionRequired = isGroup ? settings.getIsSonarAuthenticatorGroupDownCase() : settings.getIsSonarAuthenticatorLoginDownCase();
-    if (isLowerCaseConversionRequired) {
+    if (isLowerCase) {
       windowsAccountName = windowsAccountName.toLowerCase();
     }
 
     return windowsAccountName;
   }
-
 }

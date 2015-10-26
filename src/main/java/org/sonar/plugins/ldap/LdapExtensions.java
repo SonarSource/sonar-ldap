@@ -66,10 +66,10 @@ public class LdapExtensions extends ExtensionProvider implements ServerExtension
     if (system2.isOsWindows()) {
       // In Windows OS, Windows authentication is enabled by default.
       isWindowsAuthEnabled = Boolean.parseBoolean(StringUtils.defaultString(
-        settings.getString(WindowsAuthSettings.SONAR_WINDOWS_AUTH),
+        settings.getString(WindowsAuthSettings.LDAP_WINDOWS_AUTH),
         WindowsAuthSettings.DEFAULT_SONAR_LDAP_WINDOWS_AUTH));
     } else {
-      isWindowsAuthEnabled = settings.getBoolean(WindowsAuthSettings.SONAR_WINDOWS_AUTH);
+      isWindowsAuthEnabled = settings.getBoolean(WindowsAuthSettings.LDAP_WINDOWS_AUTH);
     }
 
     return isWindowsAuthEnabled;
