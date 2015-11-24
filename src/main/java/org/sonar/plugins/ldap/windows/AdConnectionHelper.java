@@ -19,7 +19,9 @@
  */
 package org.sonar.plugins.ldap.windows;
 
+import com.google.common.annotations.VisibleForTesting;
 import com4j.ComException;
+import com4j.ExecutionException;
 import com4j.typelibs.activeDirectory.IADs;
 import com4j.typelibs.ado20.Field;
 import com4j.typelibs.ado20.Fields;
@@ -48,7 +50,7 @@ public class AdConnectionHelper {
   public static final String ADS_OBJECT_PROVIDER_STR = "ADsDSOObject";
 
   /**
-   * Root of the directory data tree on a diretory server
+   * Root of the directory data tree on a directory server
    */
   public static final String ROOT_DSE = "RootDSE";
 
@@ -111,8 +113,8 @@ public class AdConnectionHelper {
     Map<String, String> userDetails = new HashMap<>();
     _Connection connection = null;
     try {
-      String defaultNamingContext = getDefaultNamingContext(domainName);
-      if (defaultNamingContext == null) {
+      String activeDirectoryBindString = getActiveDirectoryBindString(domainName);
+      if (activeDirectoryBindString == null) {
         return userDetails;
       }
 
@@ -121,7 +123,7 @@ public class AdConnectionHelper {
         return userDetails;
       }
 
-      userDetails = getUserDetailsFromAd(connection, defaultNamingContext, domainName, userName, requestedDetails);
+      userDetails = getUserDetailsFromAd(connection, activeDirectoryBindString, domainName, userName, requestedDetails);
     } finally {
       if (connection != null) {
         connection.close();
@@ -143,8 +145,8 @@ public class AdConnectionHelper {
 
     _Connection connection = null;
     try {
-      String defaultNamingContext = getDefaultNamingContext(domainName);
-      if (defaultNamingContext == null) {
+      String activeDirectoryBindString = getActiveDirectoryBindString(domainName);
+      if (activeDirectoryBindString == null) {
         return userGroups;
       }
 
@@ -153,12 +155,12 @@ public class AdConnectionHelper {
         return userGroups;
       }
 
-      String userNameDn = getUserDistinguishedName(connection, defaultNamingContext, domainName, userName);
+      String userNameDn = getUserDistinguishedName(connection, activeDirectoryBindString, domainName, userName);
       if (StringUtils.isBlank(userNameDn)) {
         return userGroups;
       }
 
-      Collection<String> adUserGroups = getUserGroupsFromAd(connection, defaultNamingContext, domainName, userNameDn,
+      Collection<String> adUserGroups = getUserGroupsFromAd(connection, activeDirectoryBindString, domainName, userNameDn,
         requestedGroupIdAttribute);
       userGroups.addAll(adUserGroups);
 
@@ -174,21 +176,35 @@ public class AdConnectionHelper {
   }
 
   /**
-   * Returns the default naming context of the active directory for given domain
-   *
-   * @return {@link String} Default naming context.
+   * Returns the bind string of one of the available active directory controllers in the given domain.
    */
-  String getDefaultNamingContext(String domainName) {
-    String defaultNamingContext = null;
-    IADs rootDse;
+  @VisibleForTesting
+  String getActiveDirectoryBindString(String domainName) {
+    String connectionUrl = null;
+
+    LOG.debug("Getting active directory bind string for domain: {}", domainName);
+    IADs rootDse = null;
     try {
-      rootDse = com4jWrapper.getObject(IADs.class, String.format("GC://%s/%s", domainName, ROOT_DSE), null);
-      defaultNamingContext = (String) rootDse.get(DEFAULT_NAMING_CONTEXT_STR);
-    } catch (ComException comException) {
-      LOG.debug("Unable to get {} for domain: {}: {}", DEFAULT_NAMING_CONTEXT_STR, domainName, comException.getMessage());
+      rootDse = getRootDse(domainName);
+      if (rootDse != null) {
+        String defaultNamingContext = (String) getRootDseAttribute(rootDse, DEFAULT_NAMING_CONTEXT_STR);
+        if (StringUtils.isNotBlank(defaultNamingContext)) {
+          connectionUrl = String.format("LDAP://%s/%s", domainName, defaultNamingContext);
+        }
+      }
+    } finally {
+      if (rootDse != null) {
+        rootDse.dispose();
+      }
     }
 
-    return defaultNamingContext;
+    if (StringUtils.isNotBlank(connectionUrl)) {
+      LOG.debug("Active directory bind string for the domain {}: {}", domainName, connectionUrl);
+    } else {
+      LOG.debug("Unable to get the active directory bind string for the domain {}", domainName);
+    }
+
+    return connectionUrl;
   }
 
   /**
@@ -196,18 +212,19 @@ public class AdConnectionHelper {
    *
    * @return {@link _Connection}
    */
+  @VisibleForTesting
   _Connection getActiveDirectoryConnection() {
     _Connection connection = com4jWrapper.createConnection();
     if (connection != null) {
       connection.provider(ADS_OBJECT_PROVIDER_STR);
       try {
         connection.open(DEFAULT_AD_CONNECTION_STR, "", "", -1);
-      } catch (ComException comException) {
-        LOG.error("Unable to get connection to active directory. {}", comException.getMessage());
+      } catch (ComException | ExecutionException ex) {
+        LOG.error("Unable to get connection to the active directory. {}", ex.getMessage());
         connection = null;
       }
     } else {
-      LOG.error("Unable to create connection to active directory.");
+      LOG.error("Unable to create connection to the active directory.");
     }
 
     return connection;
@@ -218,6 +235,7 @@ public class AdConnectionHelper {
    *
    * @return {@link String} attributes value or null if the attribute is not found
    */
+  @VisibleForTesting
   String getUserAttributeValue(final Fields userData, final String attributeName) {
     String attributeValue = null;
     try {
@@ -226,7 +244,10 @@ public class AdConnectionHelper {
         Object obj = field.value();
         if (obj != null) {
           attributeValue = obj.toString();
+          LOG.trace("Value of user attribute {}: {}", attributeName, attributeValue);
         }
+      } else {
+        LOG.debug("User attribute {} doesn't exist.", attributeName);
       }
     } catch (ComException comException) {
       LOG.debug("Unable to get {}. {}", attributeName, comException.getMessage());
@@ -235,39 +256,65 @@ public class AdConnectionHelper {
     return attributeValue;
   }
 
-  private Map<String, String> getUserDetailsFromAd(final _Connection connection, final String namingContext, String domainName,
+  private Object getRootDseAttribute(IADs rootDse, String attributeName) {
+    Object attributeValue = null;
+    try {
+      LOG.trace("Getting value of {} from {}", attributeName, ROOT_DSE);
+      attributeValue = rootDse.get(attributeName);
+      LOG.trace("Value of {} from {} : {}", attributeName, ROOT_DSE, attributeValue);
+    } catch (ComException comException) {
+      LOG.debug("Unable to get value of attribute {} from {}: {}", attributeName, ROOT_DSE, comException.getMessage());
+    }
+
+    return attributeValue;
+  }
+
+  private IADs getRootDse(String domainName) {
+    IADs rootDse = null;
+
+    String adBindString = String.format("LDAP://%s/%s", domainName, ROOT_DSE);
+    try {
+      rootDse = com4jWrapper.getObject(IADs.class, adBindString, null);
+    } catch (ComException | ExecutionException ex) {
+      // ExecutionException will be thrown if the server is unavailable
+      LOG.debug("Unable to get {} for the active directory bind string {}: {}", ROOT_DSE, adBindString, ex.getMessage());
+    }
+
+    return rootDse;
+  }
+
+  private Map<String, String> getUserDetailsFromAd(final _Connection connection, final String connectionUrl, String domainName,
     String userName, final Collection<String> requestedDetails) {
     Map<String, String> userDetails = new HashMap<>();
 
-    String commandText = getUserDetailsCommandText(namingContext, userName, requestedDetails);
-    LOG.trace(commandText);
+    String commandText = getUserDetailsCommandText(connectionUrl, userName, requestedDetails);
 
     Collection<Map<String, String>> userDetailsRecords = executeQuery(connection, commandText, requestedDetails);
 
     if (userDetailsRecords.size() == 1) {
       userDetails = userDetailsRecords.iterator().next();
+    } else {
+      LOG.debug("No details record for the user found: " + domainName + "\\" + userName);
     }
 
     return userDetails;
   }
 
-  private String getUserDistinguishedName(final _Connection connection, final String namingContext, final String domainName,
+  private String getUserDistinguishedName(final _Connection connection, final String connectionUrl, final String domainName,
     final String userName) {
     Collection<String> requestedUserAttributes = new ArrayList<>();
     requestedUserAttributes.add(DISTINGUISHED_NAME_STR);
 
-    Map<String, String> userAttributes = getUserDetailsFromAd(connection, namingContext, domainName, userName, requestedUserAttributes);
+    Map<String, String> userAttributes = getUserDetailsFromAd(connection, connectionUrl, domainName, userName, requestedUserAttributes);
 
     return userAttributes.get(DISTINGUISHED_NAME_STR);
   }
 
-  private Collection<String> getUserGroupsFromAd(final _Connection connection, final String namingContext, String domainName,
+  private Collection<String> getUserGroupsFromAd(final _Connection connection, final String connectionUrl, String domainName,
     final String userNameDn, final String requestedGroupIdAttribute) {
     Collection<String> adUserGroups = new ArrayList<>();
 
-    String commandText = getUserGroupsCommandText(namingContext, userNameDn, requestedGroupIdAttribute);
-    LOG.trace(commandText);
-
+    String commandText = getUserGroupsCommandText(connectionUrl, userNameDn, requestedGroupIdAttribute);
     Collection<String> requestedAttributes = new ArrayList<>();
     requestedAttributes.add(requestedGroupIdAttribute);
 
@@ -304,17 +351,21 @@ public class AdConnectionHelper {
   private Collection<Map<String, String>> getDataFromRecordSet(final _Recordset recordSet, final Collection<String> requestedDetails) {
     Collection<Map<String, String>> records = new ArrayList<>();
 
-    while (!recordSet.eof()) {
-      Fields userData = recordSet.fields();
-      if (userData != null) {
-        Map<String, String> requestedDetailsMap = new HashMap<>();
-        for (String requestedDetail : requestedDetails) {
-          String userAttributeValue = getUserAttributeValue(userData, requestedDetail);
-          requestedDetailsMap.put(requestedDetail, userAttributeValue);
+    try {
+      while (!recordSet.eof()) {
+        Fields userData = recordSet.fields();
+        if (userData != null) {
+          Map<String, String> requestedDetailsMap = new HashMap<>();
+          for (String requestedDetail : requestedDetails) {
+            String userAttributeValue = getUserAttributeValue(userData, requestedDetail);
+            requestedDetailsMap.put(requestedDetail, userAttributeValue);
+          }
+          records.add(requestedDetailsMap);
         }
-        records.add(requestedDetailsMap);
+        recordSet.moveNext();
       }
-      recordSet.moveNext();
+    } catch (ComException comException) {
+      LOG.debug("Exception while getting data from the record-set :  {} ", comException.getMessage());
     }
 
     return records;
@@ -326,10 +377,13 @@ public class AdConnectionHelper {
     try {
       command = com4jWrapper.createCommand(connection, commandText);
       if (command != null) {
+        LOG.trace("Executing command: {}", commandText);
         recordSet = command.execute(null, com4jWrapper.getMissing(), -1);
       } else {
-        LOG.error("Unable to create the active directory command");
+        LOG.error("Unable to create the active directory command {}", commandText);
       }
+    } catch (ComException comException) {
+      LOG.debug("Exception while executing the command :  {} ", comException.getMessage());
     } finally {
       if (command != null) {
         command.dispose();
@@ -340,27 +394,27 @@ public class AdConnectionHelper {
   }
 
   /*
-   * User Details Command Text format <GC://root>;(filter);requestedAttributes;scope
-   * e.g.<GC://DC=domain, dc=com>;(sAMAccountName=userName);cn,mail;SubTree
+   * User Details Command Text format <LDAP://domain/root>;(filter);requestedAttributes;scope
+   * e.g.<LDAP://domain/DC=domain, dc=com>;(sAMAccountName=userName);cn,mail;SubTree
    */
-  private static String getUserDetailsCommandText(final String namingContext, final String userName,
+  private String getUserDetailsCommandText(final String bindString, final String userName,
     final Collection<String> requestedDetails) {
     /* Filter on sAMAccountName attribute */
     String filter = String.format("(%s=%s)", SAMACCOUNTNAME_STR, userName);
     /* Requested user attributes */
     String requestedAttributes = StringUtils.join(requestedDetails, ",");
 
-    return String.format("<GC://%s>;%s;%s;SubTree", namingContext, filter, requestedAttributes);
+    return String.format("<%s>;%s;%s;SubTree", bindString, filter, requestedAttributes);
   }
 
   /*
-   * User Groups Command Text format <GC://root>;(filter);requestedAttributes;scope
+   * User Groups Command Text format <LDAP://domain/root>;(filter);requestedAttributes;scope
    */
-  private static String getUserGroupsCommandText(final String namingContext, final String userDn,
+  private String getUserGroupsCommandText(final String bindString, final String userDn,
     final String requestedDetail) {
     /* Filter on user dn attribute */
     String filter = String.format("(&(objectClass=group)(member=%s))", userDn);
 
-    return String.format("<GC://%s>;%s;%s;SubTree", namingContext, filter, requestedDetail);
+    return String.format("<%s>;%s;%s;SubTree", bindString, filter, requestedDetail);
   }
 }

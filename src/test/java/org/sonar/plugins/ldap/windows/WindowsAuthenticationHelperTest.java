@@ -450,7 +450,7 @@ public class WindowsAuthenticationHelperTest {
 
     authenticationHelper = new WindowsAuthenticationHelper(windowsAuthSettings, windowsAuthProvider, adConnectionHelper);
 
-    assertThat(authenticationHelper.getSsoUserDetails(windowsAccount)).isEqualToComparingFieldByField(expectedUserDetails);
+    assertThat(authenticationHelper.getUserDetails(windowsAccount)).isEqualToComparingFieldByField(expectedUserDetails);
   }
 
   private void runGetUserGroupsTest(String domainName, String userName, Collection<WindowsAccount> windowsAccounts,
