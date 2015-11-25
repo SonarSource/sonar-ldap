@@ -181,8 +181,21 @@ public class WindowsAuthenticationHelper {
   @CheckForNull
   public UserDetails getUserDetails(String userName) {
     checkArgument(isNotEmpty(userName), "userName is null or empty.");
+
+    LOG.debug("Getting details for user: {}", userName);
+    UserDetails userDetails = null;
     IWindowsAccount windowsAccount = getWindowsAccount(userName);
-    return windowsAccount != null ? getSsoUserDetails(windowsAccount) : null;
+    if (windowsAccount != null) {
+      userDetails = getUserDetails(windowsAccount);
+    }
+
+    if (userDetails == null) {
+      LOG.debug("Unable to get details for user {}", userName);
+    } else {
+      LOG.debug("Details for user {}: {}", userName, userDetails);
+    }
+
+    return userDetails;
   }
 
   /**
@@ -208,10 +221,12 @@ public class WindowsAuthenticationHelper {
       }
     }
 
+    LOG.debug("Groups for the user {} : {}", windowsPrincipal.getName(), groups);
+
     return groups;
   }
 
-  UserDetails getSsoUserDetails(IWindowsAccount windowsAccount) {
+  UserDetails getUserDetails(IWindowsAccount windowsAccount) {
     UserDetails userDetails = new UserDetails();
 
     String windowsAccountName = getWindowsAccountName(new WindowsAccount(windowsAccount),

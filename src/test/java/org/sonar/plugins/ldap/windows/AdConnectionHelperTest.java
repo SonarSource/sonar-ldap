@@ -53,6 +53,7 @@ public class AdConnectionHelperTest {
   private String userName;
   private String namingContext;
   private String userDistinguishedName;
+  private String adBindString;
 
   @Before
   public void init() {
@@ -65,6 +66,7 @@ public class AdConnectionHelperTest {
     userName = "userName";
     namingContext = "dc=domain";
     userDistinguishedName = "dn=User Distinguished Name";
+    adBindString = "LDAP://" + domainName + "/" + namingContext;
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -98,7 +100,7 @@ public class AdConnectionHelperTest {
   }
 
   @Test
-  public void getUserDetailsWhenGetDefaultNamingContextReturnsNull() {
+  public void getUserDetailsWhenGetConnectionUrlReturnsNull() {
     String testConnectionString = getTestConnectionString(domainName);
     when(com4jWrapper.getObject(IADs.class, testConnectionString,
       null)).thenThrow(mock(ComException.class));
@@ -120,18 +122,41 @@ public class AdConnectionHelperTest {
   }
 
   @Test
-  public void getUserDetailsWhenExecuteCommandReturnsNull() {
+  public void getUserDetailsWhenCom4JWrapperExecuteCommandReturnsNull() {
     setupTestDefaultNamingContext(domainName, namingContext);
 
-    String commandText = getUserDetailsCommandText(namingContext, userName, userAttributesForGetUserDetailsTests);
+    String commandText = getUserDetailsCommandText(adBindString, userName, userAttributesForGetUserDetailsTests);
 
     _Connection connection = mock(_Connection.class);
     when(com4jWrapper.createConnection()).thenReturn(connection);
     when(com4jWrapper.createCommand(connection, commandText)).thenReturn(null);
+    when(connection.execute(null, com4jWrapper.getMissing(), -1)).thenReturn(null);
 
     assertThat(adConnectionHelper.getUserDetails(domainName, userName, userAttributesForGetUserDetailsTests)).isEmpty();
     verify(com4jWrapper, times(1)).createCommand(connection, commandText);
     verify(com4jWrapper, times(1)).cleanUp();
+  }
+
+  @Test
+  public void getUserDetailsWhenCom4jWrapperExecuteCommandThrowsException() {
+    setupTestDefaultNamingContext(domainName, namingContext);
+    String commandText = getUserDetailsCommandText(adBindString, userName, userAttributesForGetUserDetailsTests);
+
+    // ExecuteCommand returns null as executeCommand throws exception
+    _Connection connection = mock(_Connection.class);
+    when(com4jWrapper.createConnection()).thenReturn(connection);
+
+    ComException comException = mock(ComException.class);
+    when(comException.getMessage()).thenReturn("Com4jComException: Exception");
+
+    _Command command = mock(_Command.class);
+    when(com4jWrapper.createCommand(connection, commandText)).thenReturn(command);
+    when(command.execute(null, com4jWrapper.getMissing(), -1)).thenThrow(comException);
+
+    assertThat(adConnectionHelper.getUserDetails(domainName, userName, userAttributesForGetUserDetailsTests)).isEmpty();
+    verify(com4jWrapper, times(1)).createCommand(connection, commandText);
+    verify(com4jWrapper, times(1)).cleanUp();
+    verify(comException, times(1)).getMessage();
   }
 
   @Test
@@ -140,7 +165,7 @@ public class AdConnectionHelperTest {
     _Connection connection = mock(_Connection.class);
     when(com4jWrapper.createConnection()).thenReturn(connection);
 
-    String commandText = getUserDetailsCommandText(namingContext, userName, userAttributesForGetUserDetailsTests);
+    String commandText = getUserDetailsCommandText(adBindString, userName, userAttributesForGetUserDetailsTests);
 
     _Command command = mock(_Command.class);
     when(command.execute(null, com4jWrapper.getMissing(), -1)).thenReturn(null);
@@ -158,7 +183,7 @@ public class AdConnectionHelperTest {
     _Connection connection = mock(_Connection.class);
     when(com4jWrapper.createConnection()).thenReturn(connection);
 
-    String commandText = getUserDetailsCommandText(namingContext, userName, userAttributesForGetUserDetailsTests);
+    String commandText = getUserDetailsCommandText(adBindString, userName, userAttributesForGetUserDetailsTests);
 
     RecordSetStub recordSet = getTestRecordSet(null);
     _Command command = mock(_Command.class);
@@ -181,7 +206,7 @@ public class AdConnectionHelperTest {
     _Connection connection = mock(_Connection.class);
     when(com4jWrapper.createConnection()).thenReturn(connection);
 
-    String commandText = getUserDetailsCommandText(namingContext, userName, userAttributesForGetUserDetailsTests);
+    String commandText = getUserDetailsCommandText(adBindString, userName, userAttributesForGetUserDetailsTests);
 
     Collection<Map<String, String>> fieldsRows = new ArrayList<>();
     Map<String, String> fieldsCollection = new HashMap<>();
@@ -260,7 +285,7 @@ public class AdConnectionHelperTest {
     _Connection connection = mock(_Connection.class);
     when(com4jWrapper.createConnection()).thenReturn(connection);
 
-    String commandText = getUserDetailsCommandText(namingContext, userName, userAttributesForGetUserGroupTests);
+    String commandText = getUserDetailsCommandText(adBindString, userName, userAttributesForGetUserGroupTests);
 
     when(com4jWrapper.createCommand(connection, commandText)).thenReturn(null);
 
@@ -276,7 +301,7 @@ public class AdConnectionHelperTest {
     _Connection connection = mock(_Connection.class);
     when(com4jWrapper.createConnection()).thenReturn(connection);
 
-    String commandText = getUserDetailsCommandText(namingContext, userName, userAttributesForGetUserGroupTests);
+    String commandText = getUserDetailsCommandText(adBindString, userName, userAttributesForGetUserGroupTests);
 
     _Command command = mock(_Command.class);
     when(command.execute(null, com4jWrapper.getMissing(), -1)).thenReturn(null);
@@ -294,7 +319,7 @@ public class AdConnectionHelperTest {
     _Connection connection = mock(_Connection.class);
     when(com4jWrapper.createConnection()).thenReturn(connection);
 
-    String commandText = getUserDetailsCommandText(namingContext, userName, userAttributesForGetUserGroupTests);
+    String commandText = getUserDetailsCommandText(adBindString, userName, userAttributesForGetUserGroupTests);
 
     RecordSetStub recordSet = getTestRecordSet(null);
     _Command command = mock(_Command.class);
@@ -324,7 +349,7 @@ public class AdConnectionHelperTest {
     userDetailsRows.add(userDetailsFieldsCollection);
     RecordSetStub userDetailsRecordSet = getTestRecordSet(userDetailsRows);
 
-    String userDetailsCommandText = getUserDetailsCommandText(namingContext, userName, userAttributesForGetUserGroupTests);
+    String userDetailsCommandText = getUserDetailsCommandText(adBindString, userName, userAttributesForGetUserGroupTests);
 
     _Command userDetailsCommand = mock(_Command.class);
     when(userDetailsCommand.execute(null, com4jWrapper.getMissing(), -1)).thenReturn(userDetailsRecordSet);
@@ -345,7 +370,7 @@ public class AdConnectionHelperTest {
     expectedUserGroups.add("Group2");
     RecordSetStub userGroupsRecordSet = getTestRecordSet(userGroupsRows);
 
-    String userGroupsCommandText = getUserGroupsCommandText(namingContext, userDistinguishedName, testRequestedGroupIdAttribute);
+    String userGroupsCommandText = getUserGroupsCommandText(adBindString, userDistinguishedName, testRequestedGroupIdAttribute);
     _Command userGroupsCommand = mock(_Command.class);
     when(userGroupsCommand.execute(null, com4jWrapper.getMissing(), -1)).thenReturn(userGroupsRecordSet);
     when(com4jWrapper.createCommand(connection, userGroupsCommandText)).thenReturn(userGroupsCommand);
@@ -399,22 +424,22 @@ public class AdConnectionHelperTest {
   }
 
   @Test
-  public void getNamingContextTestCom4jGetObjectThrowsComException() {
+  public void getConnectionUrlTestCom4jGetObjectThrowsComException() {
     String testConnectionString = getTestConnectionString(domainName);
     ComException comException = mock(ComException.class);
     when(comException.getMessage()).thenReturn("ComException");
     when(com4jWrapper.getObject(IADs.class, testConnectionString,
       null)).thenThrow(comException);
 
-    String namingContext = adConnectionHelper.getDefaultNamingContext(domainName);
+    String bindString = adConnectionHelper.getActiveDirectoryBindString(domainName);
 
-    assertThat(namingContext).isNull();
+    assertThat(bindString).isNull();
     verify(com4jWrapper, times(1)).getObject(IADs.class, testConnectionString, null);
     verify(comException, times(1)).getMessage();
   }
 
   @Test
-  public void getNamingContextTestRootDseGetThrowsComException() {
+  public void getConnectionUrlTestRootDseGetThrowsComException() {
     String testConnectionString = getTestConnectionString(domainName);
     ComException comException = mock(ComException.class);
     when(comException.getMessage()).thenReturn("ComException");
@@ -422,18 +447,18 @@ public class AdConnectionHelperTest {
     when(iads.get(AdConnectionHelper.DEFAULT_NAMING_CONTEXT_STR)).thenThrow(comException);
     when(com4jWrapper.getObject(IADs.class, testConnectionString, null)).thenReturn(iads);
 
-    String namingContext = adConnectionHelper.getDefaultNamingContext(domainName);
+    String bindString = adConnectionHelper.getActiveDirectoryBindString(domainName);
 
-    assertThat(namingContext).isNull();
+    assertThat(bindString).isNull();
     verify(com4jWrapper, times(1)).getObject(IADs.class, testConnectionString, null);
     verify(comException, times(1)).getMessage();
   }
 
   @Test
-  public void getNamingContextNormalTest() {
+  public void getConnectionUrlNormalTest() {
     setupTestDefaultNamingContext(domainName, namingContext);
 
-    assertThat(adConnectionHelper.getDefaultNamingContext(domainName)).isEqualTo(namingContext);
+    assertThat(adConnectionHelper.getActiveDirectoryBindString(domainName)).isEqualTo(adBindString);
   }
 
   @Test
@@ -480,21 +505,21 @@ public class AdConnectionHelperTest {
   }
 
   private String getTestConnectionString(final String domainName) {
-    return "GC://" + domainName + "/" + AdConnectionHelper.ROOT_DSE;
+    return "LDAP://" + domainName + "/" + AdConnectionHelper.ROOT_DSE;
   }
 
-  private String getUserDetailsCommandText(final String namingContext, final String userName, final Collection<String> requestedDetails) {
+  private String getUserDetailsCommandText(final String bindString, final String userName, final Collection<String> requestedDetails) {
     /* Requested user attributes */
     String requestedAttributes = StringUtils.join(requestedDetails, ",");
 
-    return String.format("<GC://%s>;(%s=%s);%s;SubTree", namingContext,
-      AdConnectionHelper.SAMACCOUNTNAME_STR, userName, requestedAttributes);
+    return String.format("<%s>;(%s=%s);%s;SubTree", bindString, AdConnectionHelper.SAMACCOUNTNAME_STR, userName,
+      requestedAttributes);
   }
 
-  private String getUserGroupsCommandText(final String namingContext, final String userDistinguishedName,
+  private String getUserGroupsCommandText(final String bindString, final String userDistinguishedName,
     final String requestedGroupIdAttribute) {
     String filter = String.format("(&(objectClass=group)(member=%s))", userDistinguishedName);
-    return String.format("<GC://%s>;%s;%s;SubTree", namingContext, filter, testRequestedGroupIdAttribute);
+    return String.format("<%s>;%s;%s;SubTree", bindString, filter, testRequestedGroupIdAttribute);
   }
 
   private Collection<String> getRequestedUserAttributesForGetUserDetailsTests() {
