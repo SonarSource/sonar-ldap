@@ -79,11 +79,6 @@ public class AdConnectionHelper {
    * Attribute for storing common name of a user in an active directory
    */
   public static final String COMMON_NAME_ATTRIBUTE = "cn";
-  
-  /**
-   * Attribute for storing common name of a user in an active directory
-   */
-  public static final String REAL_NAME_ATTRIBUTE = "displayName";
 
   /**
    * Attribute for storing email of a user in an active directory

@@ -235,7 +235,7 @@ public class WindowsAuthenticationHelper {
 
     Map<String, String> adUserDetails = getAdUserDetails(windowsAccount.getDomain(), windowsAccount.getName());
     if (!adUserDetails.isEmpty()) {
-      userDetails.setName(adUserDetails.get(AdConnectionHelper.REAL_NAME_ATTRIBUTE));
+      userDetails.setName(adUserDetails.get(settings.getLdapUserRealNameAttribute()));
       userDetails.setEmail(adUserDetails.get(AdConnectionHelper.MAIL_ATTRIBUTE));
     } else {
       LOG.debug("Unable to get name and email for user: {}", windowsAccount.getFqn());
@@ -272,9 +272,9 @@ public class WindowsAuthenticationHelper {
     return windowsAccount;
   }
 
-  private Map<String, String> getAdUserDetails(String domainName, String name) {
+  private Map<String, String> getAdUserDetails(String domainName, String name) {      
     Collection<String> requestedDetails = new ArrayList<>();
-    requestedDetails.add(AdConnectionHelper.REAL_NAME_ATTRIBUTE);
+    requestedDetails.add(settings.getLdapUserRealNameAttribute());
     requestedDetails.add(AdConnectionHelper.MAIL_ATTRIBUTE);
     return adConnectionHelper.getUserDetails(domainName, name, requestedDetails);
   }
