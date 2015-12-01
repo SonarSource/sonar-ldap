@@ -9,7 +9,7 @@
 
   <groupId>org.sonarsource.ldap</groupId>
   <artifactId>sonar-ldap-plugin</artifactId>
-  <version>1.6-SNAPSHOT</version>
+  <version>1.5.1-SNAPSHOT</version>
   <packaging>sonar-plugin</packaging>
   <name>SonarQube LDAP Plugin</name>
   <description>Delegates authentication to LDAP</description>
