@@ -28,26 +28,26 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.sonar.plugins.ldap.LdapAutodiscovery.LdapSrvRecord;
+import org.sonar.plugins.ldap.LdapAutoDiscovery.LdapSrvRecord;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class LdapAutodiscoveryTest {
+public class LdapAutoDiscoveryTest {
 
   @Test
   public void testGetDnsDomain() throws UnknownHostException {
-    assertThat(LdapAutodiscovery.getDnsDomainName("localhost")).isNull();
-    assertThat(LdapAutodiscovery.getDnsDomainName("godin.example.org")).isEqualTo("example.org");
-    assertThat(LdapAutodiscovery.getDnsDomainName("godin.usr.example.org")).isEqualTo("usr.example.org");
+    assertThat(LdapAutoDiscovery.getDnsDomainName("localhost")).isNull();
+    assertThat(LdapAutoDiscovery.getDnsDomainName("godin.example.org")).isEqualTo("example.org");
+    assertThat(LdapAutoDiscovery.getDnsDomainName("godin.usr.example.org")).isEqualTo("usr.example.org");
   }
 
   @Test
   public void testGetDnsDomainWithoutParameter() throws UnknownHostException {
     try {
-      LdapAutodiscovery.getDnsDomainName();
+      LdapAutoDiscovery.getDnsDomainName();
     } catch (UnknownHostException e) {
       fail(e.getMessage());
     }
@@ -55,7 +55,7 @@ public class LdapAutodiscoveryTest {
 
   @Test
   public void testGetDnsDomainDn() {
-    assertThat(LdapAutodiscovery.getDnsDomainDn("example.org")).isEqualTo("dc=example,dc=org");
+    assertThat(LdapAutoDiscovery.getDnsDomainDn("example.org")).isEqualTo("dc=example,dc=org");
   }
 
   @Test
@@ -84,7 +84,7 @@ public class LdapAutodiscoveryTest {
       .thenReturn("0 30 389 ldap2.example.org")
       .thenReturn("10 60 389 ldap4.example.org");
 
-    assertThat(new LdapAutodiscovery().getLdapServers(context, "example.org.")).extracting("serverUrl")
+    assertThat(new LdapAutoDiscovery().getLdapServers(context, "example.org.")).extracting("serverUrl")
       .isEqualTo(
         Arrays.asList("ldap://ldap1.example.org:389", "ldap://ldap2.example.org:389", "ldap://ldap3.example.org:389", "ldap://ldap4.example.org:389",
           "ldap://ldap5.example.org:389"));

@@ -42,9 +42,9 @@ import org.sonar.api.utils.log.Loggers;
  * @author Evgeny Mandrikov
  */
 @ServerSide
-public class LdapAutodiscovery {
+public class LdapAutoDiscovery {
 
-  private static final Logger LOG = Loggers.get(LdapAutodiscovery.class);
+  private static final Logger LOG = Loggers.get(LdapAutoDiscovery.class);
 
   /**
    * Get the DNS domain name (eg: example.org).
