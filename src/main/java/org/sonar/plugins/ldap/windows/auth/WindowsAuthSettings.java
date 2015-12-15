@@ -57,13 +57,7 @@ public class WindowsAuthSettings {
    * Setting to specify group-id attribute, which is used by plugin while returning user groups in compatibility mode
    */
   public static final String LDAP_GROUP_ID_ATTRIBUTE = "ldap.group.idAttribute";
-  
-  /**
-   * Settings to specify real name attribute for a user
-   */
-  public static final String LDAP_WINDOWS_USER_REAL_NAME_ATTRIBUTE = LDAP_WINDOWS + ".user.realNameAttribute"; 
 
-  public static final String DEFAULT_USER_REAL_NAME_ATTRIBUTE = "cn";
   public static final String DEFAULT_SONAR_LDAP_WINDOWS_AUTH = "true";
   public static final String DEFAULT_SONAR_WINDOWS_AUTH_SSO_PROTOCOLS = "NTLM";
   public static final boolean DEFAULT_WINDOWS_COMPATIBILITY_MODE = false;
@@ -123,13 +117,6 @@ public class WindowsAuthSettings {
    */
   public String getProtocols() {
     return StringUtils.defaultIfBlank(settings.getString(LDAP_WINDOWS_AUTH_SSO_PROTOCOLS), DEFAULT_SONAR_WINDOWS_AUTH_SSO_PROTOCOLS);
-  }
-  
-  /**
-   * Returns the specified value for the real name attribute. By default, it's value is "cn"
-   */
-  public String getLdapUserRealNameAttribute(){ 
-      return StringUtils.defaultIfBlank(settings.getString(LDAP_WINDOWS_USER_REAL_NAME_ATTRIBUTE), DEFAULT_USER_REAL_NAME_ATTRIBUTE ); 
   }
 
 }

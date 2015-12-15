@@ -21,20 +21,12 @@ package org.sonar.plugins.ldap;
 
 import com.google.common.base.MoreObjects;
 import org.apache.commons.lang.StringUtils;
-import org.sonar.api.config.Settings;
 import org.sonar.api.utils.log.Loggers;
 
 /**
  * @author Evgeny Mandrikov
  */
 public class LdapUserMapping {
-
-  private static final String DEFAULT_OBJECT_CLASS = "inetOrgPerson";
-  private static final String DEFAULT_LOGIN_ATTRIBUTE = "uid";
-  private static final String DEFAULT_NAME_ATTRIBUTE = "cn";
-  private static final String DEFAULT_EMAIL_ATTRIBUTE = "mail";
-  private static final String DEFAULT_REQUEST = "(&(objectClass=inetOrgPerson)(uid={login}))";
-
   private final String baseDn;
   private final String request;
   private final String realNameAttribute;
@@ -43,37 +35,21 @@ public class LdapUserMapping {
   /**
    * Constructs mapping from Sonar settings.
    */
-  public LdapUserMapping(Settings settings, String settingsPrefix) {
-    String usersBaseDn = settings.getString(settingsPrefix + ".user.baseDn");
+  public LdapUserMapping(LdapSettings settings, String settingsPrefix) {
+    String usersBaseDn = settings.getUserBaseDn(settingsPrefix);
     if (usersBaseDn == null) {
-      String realm = settings.getString(settingsPrefix + ".realm");
+      String realm = settings.getLdapRealm(settingsPrefix);
       if (realm != null) {
         usersBaseDn = LdapAutodiscovery.getDnsDomainDn(realm);
       }
     }
 
-    String objectClass = settings.getString(settingsPrefix + ".user.objectClass");
-    String loginAttribute = settings.getString(settingsPrefix + ".user.loginAttribute");
-
     this.baseDn = usersBaseDn;
-    this.realNameAttribute = StringUtils.defaultString(settings.getString(settingsPrefix + ".user.realNameAttribute"), DEFAULT_NAME_ATTRIBUTE);
-    this.emailAttribute = StringUtils.defaultString(settings.getString(settingsPrefix + ".user.emailAttribute"), DEFAULT_EMAIL_ATTRIBUTE);
+    this.realNameAttribute = settings.getUserRealNameAttributeOrDefault(settingsPrefix);
+    this.emailAttribute = settings.getUserEmailAttributeOrDefault(settingsPrefix);
 
-    String req;
-    if (StringUtils.isNotBlank(objectClass) || StringUtils.isNotBlank(loginAttribute)) {
-      objectClass = StringUtils.defaultString(objectClass, DEFAULT_OBJECT_CLASS);
-      loginAttribute = StringUtils.defaultString(loginAttribute, DEFAULT_LOGIN_ATTRIBUTE);
-      req = "(&(objectClass=" + objectClass + ")(" + loginAttribute + "={login}))";
-      // For backward compatibility with plugin versions lower than 1.2
-      Loggers.get(LdapGroupMapping.class)
-        .warn("Properties '{}.user.objectClass' and '{}.user.loginAttribute' are deprecated and should be " +
-          "replaced by single property '{}.user.request' with value: {}",
-          settingsPrefix, settingsPrefix, settingsPrefix, req);
-    } else {
-      req = StringUtils.defaultString(settings.getString(settingsPrefix + ".user.request"), DEFAULT_REQUEST);
-    }
-    req = StringUtils.replace(req, "{login}", "{0}");
-    this.request = req;
+    String userRequestQuery = getUserRequestQuery(settings, settingsPrefix);
+    this.request = StringUtils.replace(userRequestQuery, "{login}", "{0}");
   }
 
   /**
@@ -126,6 +102,27 @@ public class LdapUserMapping {
       .add("realNameAttribute", getRealNameAttribute())
       .add("emailAttribute", getEmailAttribute())
       .toString();
+  }
+
+  private String getUserRequestQuery(LdapSettings settings, String settingsPrefix) {
+    String req;
+    if (StringUtils.isNotBlank(settings.getUserObjectClassAttribute(settingsPrefix)) ||
+      StringUtils.isNotBlank(settings.getUserLoginAttribute(settingsPrefix))) {
+      String objectClass = settings.getUserObjectClassAttributeOrDefault(settingsPrefix);
+      String loginAttribute = settings.getUserLoginAttributeOrDefault(settingsPrefix);
+
+      req = "(&(objectClass=" + objectClass + ")(" + loginAttribute + "={login}))";
+
+      // For backward compatibility with plugin versions lower than 1.2
+      Loggers.get(LdapGroupMapping.class)
+        .warn("Properties '{}.user.objectClass' and '{}.user.loginAttribute' are deprecated and should be " +
+          "replaced by single property '{}.user.request' with value: {}",
+          settingsPrefix, settingsPrefix, settingsPrefix, req);
+    } else {
+      req = settings.getUserRequestOrDefault(settingsPrefix);
+    }
+
+    return req;
   }
 
 }

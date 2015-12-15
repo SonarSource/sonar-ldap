@@ -23,8 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.lang.StringUtils;
-import org.sonar.api.ServerExtension;
-import org.sonar.api.config.Settings;
+import org.sonar.api.server.ServerSide;
 import org.sonar.api.utils.SonarException;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
@@ -34,14 +33,13 @@ import org.sonar.plugins.ldap.LdapAutodiscovery.LdapSrvRecord;
  * The LdapSettingsManager will parse the settings.
  * This class is also responsible to cope with multiple ldap servers.
  */
-public class LdapSettingsManager implements ServerExtension {
+@ServerSide
+public class LdapSettingsManager {
 
+  public static final String DEFAULT_LDAP_SERVER_KEY = "<default>";
   private static final Logger LOG = Loggers.get(LdapSettingsManager.class);
 
-  private static final String LDAP_SERVERS_PROPERTY = "ldap.servers";
-  private static final String LDAP_PROPERTY_PREFIX = "ldap";
-  private static final String DEFAULT_LDAP_SERVER_KEY = "<default>";
-  private final Settings settings;
+  private final LdapSettings settings;
   private final LdapAutodiscovery ldapAutodiscovery;
   private Map<String, LdapUserMapping> userMappings = null;
   private Map<String, LdapGroupMapping> groupMappings = null;
@@ -52,7 +50,7 @@ public class LdapSettingsManager implements ServerExtension {
    *
    * @param settings The settings to use.
    */
-  public LdapSettingsManager(Settings settings, LdapAutodiscovery ldapAutodiscovery) {
+  public LdapSettingsManager(LdapSettings settings, LdapAutodiscovery ldapAutodiscovery) {
     this.settings = settings;
     this.ldapAutodiscovery = ldapAutodiscovery;
   }
@@ -67,25 +65,27 @@ public class LdapSettingsManager implements ServerExtension {
     if (userMappings == null) {
       // Use linked hash map to preserve order
       userMappings = new LinkedHashMap<>();
-      String[] serverKeys = settings.getStringArray(LDAP_SERVERS_PROPERTY);
-      if (serverKeys.length > 0) {
-        for (String serverKey : serverKeys) {
-          LdapUserMapping userMapping = new LdapUserMapping(settings, LDAP_PROPERTY_PREFIX + "." + serverKey);
+
+      if (this.getContextFactories().size() > 0) {
+        for (String serverKey : contextFactories.keySet()) {
+          String settingsKey = getSettingsKey(serverKey);
+          LOG.info("Setting key {}", settingsKey);
+
+          LdapUserMapping userMapping = new LdapUserMapping(settings, settingsKey);
           if (StringUtils.isNotBlank(userMapping.getBaseDn())) {
-            LOG.info("User mapping for server {}: {}", serverKey, userMapping);
+            if (isConfigurationSimpleLdapConfig()) {
+              LOG.info("User mapping : {}", userMapping);
+            } else {
+              LOG.info("User mapping for server {}: {}", serverKey, userMapping);
+            }
             userMappings.put(serverKey, userMapping);
           } else {
-            LOG.info("Users will not be synchronized for server {}, because property 'ldap.{}.user.baseDn' is empty.", serverKey, serverKey);
+            if (isConfigurationSimpleLdapConfig()) {
+              LOG.info("Users will not be synchronized, because property '{}.user.baseDn' is empty.", settingsKey);
+            } else {
+              LOG.info("Users will not be synchronized for server {}, because property '{}.user.baseDn' is empty", serverKey, settingsKey);
+            }
           }
-        }
-      } else {
-        // Backward compatibility with single server configuration
-        LdapUserMapping userMapping = new LdapUserMapping(settings, LDAP_PROPERTY_PREFIX);
-        if (StringUtils.isNotBlank(userMapping.getBaseDn())) {
-          LOG.info("User mapping: {}", userMapping);
-          userMappings.put(DEFAULT_LDAP_SERVER_KEY, userMapping);
-        } else {
-          LOG.info("Users will not be synchronized, because property 'ldap.user.baseDn' is empty.");
         }
       }
     }
@@ -96,31 +96,32 @@ public class LdapSettingsManager implements ServerExtension {
    * Get all the @link{LdapGroupMapping}s available in the settings.
    *
    * @return A @link{Map} with all the @link{LdapGroupMapping} objects.
-   *         The key is the server key used in the settings (ldap for old single server notation).
+   * The key is the server key used in the settings (ldap for old single server notation).
    */
   public Map<String, LdapGroupMapping> getGroupMappings() {
     if (groupMappings == null) {
       // Use linked hash map to preserve order
       groupMappings = new LinkedHashMap<>();
-      String[] serverKeys = settings.getStringArray(LDAP_SERVERS_PROPERTY);
-      if (serverKeys.length > 0) {
-        for (String serverKey : serverKeys) {
-          LdapGroupMapping groupMapping = new LdapGroupMapping(settings, LDAP_PROPERTY_PREFIX + "." + serverKey);
+      if (this.getContextFactories().size() > 0) {
+        for (String serverKey : contextFactories.keySet()) {
+          String settingsKey = getSettingsKey(serverKey);
+          LOG.info("Setting key {}", settingsKey);
+
+          LdapGroupMapping groupMapping = new LdapGroupMapping(settings, settingsKey);
           if (StringUtils.isNotBlank(groupMapping.getBaseDn())) {
-            LOG.info("Group mapping for server {}: {}", serverKey, groupMapping);
+            if (isConfigurationSimpleLdapConfig()) {
+              LOG.info("Group mapping: {}", groupMapping);
+            } else {
+              LOG.info("Group mapping for server {}: {}", serverKey, groupMapping);
+            }
             groupMappings.put(serverKey, groupMapping);
           } else {
-            LOG.info("Groups will not be synchronized for server {}, because property 'ldap.{}.group.baseDn' is empty.", serverKey, serverKey);
+            if (isConfigurationSimpleLdapConfig()) {
+              LOG.info("Groups will not be synchronized, because property '{}.group.baseDn' is empty.", settingsKey);
+            } else {
+              LOG.info("Groups will not be synchronized for server {}, because property '{}.group.baseDn' is empty.", serverKey, settingsKey);
+            }
           }
-        }
-      } else {
-        // Backward compatibility with single server configuration
-        LdapGroupMapping groupMapping = new LdapGroupMapping(settings, LDAP_PROPERTY_PREFIX);
-        if (StringUtils.isNotBlank(groupMapping.getBaseDn())) {
-          LOG.info("Group mapping: {}", groupMapping);
-          groupMappings.put(DEFAULT_LDAP_SERVER_KEY, groupMapping);
-        } else {
-          LOG.info("Groups will not be synchronized, because property 'ldap.group.baseDn' is empty.");
         }
       }
     }
@@ -131,64 +132,83 @@ public class LdapSettingsManager implements ServerExtension {
    * Get all the @link{LdapContextFactory}s available in the settings.
    *
    * @return A @link{Map} with all the @link{LdapContextFactory} objects.
-   *        The key is the server key used in the settings (ldap for old single server notation).
+   * The key is the server key used in the settings (ldap for old single server notation).
    */
   public Map<String, LdapContextFactory> getContextFactories() {
     if (contextFactories == null) {
       // Use linked hash map to preserve order
       contextFactories = new LinkedHashMap<>();
-      String[] serverKeys = settings.getStringArray(LDAP_SERVERS_PROPERTY);
-      if (serverKeys.length > 0) {
-        initMultiLdapConfiguration(serverKeys);
-      } else {
+      if (isConfigurationSimpleLdapConfig()) {
         initSimpleLdapConfiguration();
+      } else {
+        initMultiLdapConfiguration();
       }
     }
     return contextFactories;
   }
 
   private void initSimpleLdapConfiguration() {
-    String realm = settings.getString(LDAP_PROPERTY_PREFIX + ".realm");
-    String ldapUrlKey = LDAP_PROPERTY_PREFIX + ".url";
-    String ldapUrl = settings.getString(ldapUrlKey);
+    String realm = settings.getLdapRealm(LdapSettings.LDAP_PROPERTY_PREFIX);
+    String ldapUrl = settings.getLdapUrl(LdapSettings.LDAP_PROPERTY_PREFIX);
     if (ldapUrl == null && realm != null) {
       LOG.info("Auto discovery mode");
       List<LdapSrvRecord> ldapServers = ldapAutodiscovery.getLdapServers(realm);
       if (ldapServers.isEmpty()) {
-        throw new SonarException(String.format("The property '%s' is empty and SonarQube is not able to auto-discover any LDAP server.", ldapUrlKey));
+        throw new SonarException(
+          String.format("The property '%s' is empty and SonarQube is not able to auto-discover any LDAP server.",
+            settings.getLdapUrlKey(LdapSettings.LDAP_PROPERTY_PREFIX)));
       }
       int index = 1;
       for (LdapSrvRecord ldapSrvRecord : ldapServers) {
         if (StringUtils.isNotBlank(ldapSrvRecord.getServerUrl())) {
           LOG.info("Detected server: {}", ldapSrvRecord.getServerUrl());
-          LdapContextFactory contextFactory = new LdapContextFactory(settings, LDAP_PROPERTY_PREFIX, ldapSrvRecord.getServerUrl());
+          LdapContextFactory contextFactory = new LdapContextFactory(settings,
+            LdapSettings.LDAP_PROPERTY_PREFIX, ldapSrvRecord.getServerUrl());
           contextFactories.put(DEFAULT_LDAP_SERVER_KEY + index, contextFactory);
           index++;
         }
       }
     } else {
       if (StringUtils.isBlank(ldapUrl)) {
-        throw new SonarException(String.format("The property '%s' is empty and no realm configured to try auto-discovery.", ldapUrlKey));
+        throw new SonarException(
+          String.format("The property '%s' is empty and no realm configured to try auto-discovery.",
+            settings.getLdapUrlKey(LdapSettings.LDAP_PROPERTY_PREFIX)));
       }
-      LdapContextFactory contextFactory = new LdapContextFactory(settings, LDAP_PROPERTY_PREFIX, ldapUrl);
+      LdapContextFactory contextFactory = new LdapContextFactory(settings, LdapSettings.LDAP_PROPERTY_PREFIX, ldapUrl);
       contextFactories.put(DEFAULT_LDAP_SERVER_KEY, contextFactory);
     }
   }
 
-  private void initMultiLdapConfiguration(String[] serverKeys) {
+  private void initMultiLdapConfiguration() {
     if (settings.hasKey("ldap.url") || settings.hasKey("ldap.realm")) {
-      throw new SonarException("When defining multiple LDAP servers with the property '" + LDAP_SERVERS_PROPERTY + "', "
+      throw new SonarException("When defining multiple LDAP servers with the property '" + LdapSettings.LDAP_SERVERS_PROPERTY + "', "
         + "all LDAP properties must be linked to one of those servers. Please remove properties like 'ldap.url', 'ldap.realm', ...");
     }
+
+    String[] serverKeys = settings.getLdapServerKeys();
     for (String serverKey : serverKeys) {
-      String prefix = LDAP_PROPERTY_PREFIX + "." + serverKey;
-      String ldapUrlKey = prefix + ".url";
-      String ldapUrl = settings.getString(ldapUrlKey);
+      String prefix = LdapSettings.LDAP_PROPERTY_PREFIX + "." + serverKey;
+      String ldapUrl = settings.getLdapUrl(prefix);
       if (StringUtils.isBlank(ldapUrl)) {
-        throw new SonarException(String.format("The property '%s' property is empty while it is mandatory.", ldapUrlKey));
+        throw new SonarException(String.format("The property '%s' property is empty while it is mandatory.",
+          settings.getLdapUrlKey(prefix)));
       }
       LdapContextFactory contextFactory = new LdapContextFactory(settings, prefix, ldapUrl);
       contextFactories.put(serverKey, contextFactory);
     }
   }
+
+  private String getSettingsKey(String serverKey) {
+    String settingsKey = LdapSettings.LDAP_PROPERTY_PREFIX + "." + serverKey;
+    if (isConfigurationSimpleLdapConfig()) {
+      settingsKey = LdapSettings.LDAP_PROPERTY_PREFIX;
+    }
+    return settingsKey;
+  }
+
+  private boolean isConfigurationSimpleLdapConfig() {
+    String[] serverKeys = settings.getLdapServerKeys();
+    return serverKeys.length == 0;
+  }
+
 }

@@ -39,22 +39,21 @@ public class LdapSettingsFactory {
       settings.setProperty("ldap.servers", "example,infosupport");
 
       settings.setProperty("ldap.example.url", exampleServer.getUrl())
-          .setProperty("ldap.example.user.baseDn", "ou=users,dc=example,dc=org")
-          .setProperty("ldap.example.group.baseDn", "ou=groups,dc=example,dc=org");
+        .setProperty("ldap.example.user.baseDn", "ou=users,dc=example,dc=org")
+        .setProperty("ldap.example.group.baseDn", "ou=groups,dc=example,dc=org");
       settings.setProperty("ldap.infosupport.url", infosupportServer.getUrl())
-          .setProperty("ldap.infosupport.user.baseDn", "ou=users,dc=infosupport,dc=com")
-          .setProperty("ldap.infosupport.group.baseDn", "ou=groups,dc=infosupport,dc=com");
-    }
-    else {
+        .setProperty("ldap.infosupport.user.baseDn", "ou=users,dc=infosupport,dc=com")
+        .setProperty("ldap.infosupport.group.baseDn", "ou=groups,dc=infosupport,dc=com");
+    } else {
       settings.setProperty("ldap.url", exampleServer.getUrl())
-          .setProperty("ldap.user.baseDn", "ou=users,dc=example,dc=org")
-          .setProperty("ldap.group.baseDn", "ou=groups,dc=example,dc=org");
+        .setProperty("ldap.user.baseDn", "ou=users,dc=example,dc=org")
+        .setProperty("ldap.group.baseDn", "ou=groups,dc=example,dc=org");
     }
     return settings;
   }
 
   /**
-   * Generate settings for 2 ldap servers that require authenticaten.
+   * Generate settings for 2 ldap servers that require authentication.
    *
    * @param exampleServer     The first ldap server.
    * @param infosupportServer The second ldap server.
@@ -67,28 +66,27 @@ public class LdapSettingsFactory {
       settings.setProperty("ldap.servers", "example,infosupport");
 
       settings.setProperty("ldap.example.url", exampleServer.getUrl())
-          .setProperty("ldap.example.bindDn", "bind")
-          .setProperty("ldap.example.bindPassword", "bindpassword")
-          .setProperty("ldap.example.authentication", LdapContextFactory.CRAM_MD5_METHOD)
-          .setProperty("ldap.example.realm", "example.org")
-          .setProperty("ldap.example.user.baseDn", "ou=users,dc=example,dc=org")
-          .setProperty("ldap.example.group.baseDn", "ou=groups,dc=example,dc=org");
+        .setProperty("ldap.example.bindDn", "bind")
+        .setProperty("ldap.example.bindPassword", "bindpassword")
+        .setProperty("ldap.example.authentication", LdapContextFactory.AUTH_METHOD_CRAM_MD5)
+        .setProperty("ldap.example.realm", "example.org")
+        .setProperty("ldap.example.user.baseDn", "ou=users,dc=example,dc=org")
+        .setProperty("ldap.example.group.baseDn", "ou=groups,dc=example,dc=org");
       settings.setProperty("ldap.infosupport.url", infosupportServer.getUrl())
-          .setProperty("ldap.infosupport.bindDn", "bind")
-          .setProperty("ldap.infosupport.bindPassword", "bindpassword")
-          .setProperty("ldap.infosupport.authentication", LdapContextFactory.CRAM_MD5_METHOD)
-          .setProperty("ldap.infosupport.realm", "infosupport.com")
-          .setProperty("ldap.infosupport.user.baseDn", "ou=users,dc=infosupport,dc=com")
-          .setProperty("ldap.infosupport.group.baseDn", "ou=groups,dc=infosupport,dc=com");
-    }
-    else {
+        .setProperty("ldap.infosupport.bindDn", "bind")
+        .setProperty("ldap.infosupport.bindPassword", "bindpassword")
+        .setProperty("ldap.infosupport.authentication", LdapContextFactory.AUTH_METHOD_CRAM_MD5)
+        .setProperty("ldap.infosupport.realm", "infosupport.com")
+        .setProperty("ldap.infosupport.user.baseDn", "ou=users,dc=infosupport,dc=com")
+        .setProperty("ldap.infosupport.group.baseDn", "ou=groups,dc=infosupport,dc=com");
+    } else {
       settings.setProperty("ldap.url", exampleServer.getUrl())
-          .setProperty("ldap.bindDn", "bind")
-          .setProperty("ldap.bindPassword", "bindpassword")
-          .setProperty("ldap.authentication", LdapContextFactory.CRAM_MD5_METHOD)
-          .setProperty("ldap.realm", "example.org")
-          .setProperty("ldap.user.baseDn", "ou=users,dc=example,dc=org")
-          .setProperty("ldap.group.baseDn", "ou=groups,dc=example,dc=org");
+        .setProperty("ldap.bindDn", "bind")
+        .setProperty("ldap.bindPassword", "bindpassword")
+        .setProperty("ldap.authentication", LdapContextFactory.AUTH_METHOD_CRAM_MD5)
+        .setProperty("ldap.realm", "example.org")
+        .setProperty("ldap.user.baseDn", "ou=users,dc=example,dc=org")
+        .setProperty("ldap.group.baseDn", "ou=groups,dc=example,dc=org");
     }
     return settings;
   }

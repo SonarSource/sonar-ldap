@@ -41,7 +41,7 @@ public class LdapSettingsManagerTest {
   public void shouldFailWhenNoLdapUrl() throws Exception {
     Settings settings = generateMultipleLdapSettingsWithUserAndGroupMapping();
     settings.removeProperty("ldap.example.url");
-    LdapSettingsManager settingsManager = new LdapSettingsManager(settings, new LdapAutodiscovery());
+    LdapSettingsManager settingsManager = new LdapSettingsManager(new LdapSettings(settings), new LdapAutodiscovery());
 
     thrown.expect(SonarException.class);
     thrown.expectMessage("The property 'ldap.example.url' property is empty while it is mandatory.");
@@ -52,18 +52,20 @@ public class LdapSettingsManagerTest {
   public void shouldFailWhenMixingSingleAndMultipleConfiguration() throws Exception {
     Settings settings = generateMultipleLdapSettingsWithUserAndGroupMapping();
     settings.setProperty("ldap.url", "ldap://foo");
-    LdapSettingsManager settingsManager = new LdapSettingsManager(settings, new LdapAutodiscovery());
+    LdapSettingsManager settingsManager = new LdapSettingsManager(new LdapSettings(settings), new LdapAutodiscovery());
 
     thrown.expect(SonarException.class);
     thrown
-      .expectMessage("When defining multiple LDAP servers with the property 'ldap.servers', all LDAP properties must be linked to one of those servers. Please remove properties like 'ldap.url', 'ldap.realm', ...");
+      .expectMessage(
+        "When defining multiple LDAP servers with the property 'ldap.servers', all LDAP properties must be " +
+          "linked to one of those servers. Please remove properties like 'ldap.url', 'ldap.realm', ...");
     settingsManager.getContextFactories();
   }
 
   @Test
   public void testContextFactoriesWithSingleLdap() throws Exception {
-    LdapSettingsManager settingsManager = new LdapSettingsManager(
-      generateSingleLdapSettingsWithUserAndGroupMapping(), new LdapAutodiscovery());
+    Settings settings = generateSingleLdapSettingsWithUserAndGroupMapping();
+    LdapSettingsManager settingsManager = new LdapSettingsManager(new LdapSettings(settings), new LdapAutodiscovery());
     assertThat(settingsManager.getContextFactories().size()).isEqualTo(1);
   }
 
@@ -75,8 +77,8 @@ public class LdapSettingsManagerTest {
    */
   @Test
   public void testContextFactoriesWithMultipleLdap() throws Exception {
-    LdapSettingsManager settingsManager = new LdapSettingsManager(
-      generateMultipleLdapSettingsWithUserAndGroupMapping(), new LdapAutodiscovery());
+    Settings settings = generateMultipleLdapSettingsWithUserAndGroupMapping();
+    LdapSettingsManager settingsManager = new LdapSettingsManager(new LdapSettings(settings), new LdapAutodiscovery());
     assertThat(settingsManager.getContextFactories().size()).isEqualTo(2);
     // We do it twice to make sure the settings keep the same.
     assertThat(settingsManager.getContextFactories().size()).isEqualTo(2);
@@ -88,8 +90,9 @@ public class LdapSettingsManagerTest {
     LdapSrvRecord ldap1 = new LdapSrvRecord("ldap://localhost:189", 1, 1);
     LdapSrvRecord ldap2 = new LdapSrvRecord("ldap://localhost:1899", 1, 1);
     when(ldapAutodiscovery.getLdapServers("example.org")).thenReturn(Arrays.asList(ldap1, ldap2));
-    LdapSettingsManager settingsManager = new LdapSettingsManager(
-      generateAutodiscoverSettings(), ldapAutodiscovery);
+
+    Settings settings = generateAutodiscoverSettings();
+    LdapSettingsManager settingsManager = new LdapSettingsManager(new LdapSettings(settings), ldapAutodiscovery);
     assertThat(settingsManager.getContextFactories().size()).isEqualTo(2);
   }
 
@@ -97,8 +100,9 @@ public class LdapSettingsManagerTest {
   public void testAutodiscoverFailed() throws Exception {
     LdapAutodiscovery ldapAutodiscovery = mock(LdapAutodiscovery.class);
     when(ldapAutodiscovery.getLdapServers("example.org")).thenReturn(Collections.<LdapSrvRecord>emptyList());
-    LdapSettingsManager settingsManager = new LdapSettingsManager(
-      generateAutodiscoverSettings(), ldapAutodiscovery);
+
+    Settings settings = generateAutodiscoverSettings();
+    LdapSettingsManager settingsManager = new LdapSettingsManager(new LdapSettings(settings), ldapAutodiscovery);
 
     thrown.expect(SonarException.class);
     thrown.expectMessage("The property 'ldap.url' is empty and SonarQube is not able to auto-discover any LDAP server.");
@@ -114,8 +118,8 @@ public class LdapSettingsManagerTest {
    */
   @Test
   public void testUserMappings() throws Exception {
-    LdapSettingsManager settingsManager = new LdapSettingsManager(
-      generateMultipleLdapSettingsWithUserAndGroupMapping(), new LdapAutodiscovery());
+    Settings settings = generateMultipleLdapSettingsWithUserAndGroupMapping();
+    LdapSettingsManager settingsManager = new LdapSettingsManager(new LdapSettings(settings), new LdapAutodiscovery());
     assertThat(settingsManager.getUserMappings().size()).isEqualTo(2);
     // We do it twice to make sure the settings keep the same.
     assertThat(settingsManager.getUserMappings().size()).isEqualTo(2);
@@ -129,8 +133,8 @@ public class LdapSettingsManagerTest {
    */
   @Test
   public void testGroupMappings() throws Exception {
-    LdapSettingsManager settingsManager = new LdapSettingsManager(
-      generateMultipleLdapSettingsWithUserAndGroupMapping(), new LdapAutodiscovery());
+    Settings settings = generateMultipleLdapSettingsWithUserAndGroupMapping();
+    LdapSettingsManager settingsManager = new LdapSettingsManager(new LdapSettings(settings), new LdapAutodiscovery());
     assertThat(settingsManager.getGroupMappings().size()).isEqualTo(2);
     // We do it twice to make sure the settings keep the same.
     assertThat(settingsManager.getGroupMappings().size()).isEqualTo(2);
@@ -138,13 +142,13 @@ public class LdapSettingsManagerTest {
 
   /**
    * Test what happens when no configuration is set.
-   * Normally there will be a contextFactory, but the autodiscovery doesn't work for the test server.
+   * Normally there will be a contextFactory, but the auto-discovery doesn't work for the test server.
    * @throws Exception
    */
   @Test
   public void testEmptySettings() throws Exception {
-    LdapSettingsManager settingsManager = new LdapSettingsManager(
-      new Settings(), new LdapAutodiscovery());
+    LdapSettingsManager settingsManager = new LdapSettingsManager(new LdapSettings(new Settings()),
+      new LdapAutodiscovery());
 
     thrown.expect(SonarException.class);
     thrown.expectMessage("The property 'ldap.url' is empty and no realm configured to try auto-discovery.");

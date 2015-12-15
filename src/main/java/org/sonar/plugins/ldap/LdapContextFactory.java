@@ -28,7 +28,6 @@ import javax.naming.NamingException;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.ldap.InitialLdapContext;
 import org.apache.commons.lang.StringUtils;
-import org.sonar.api.config.Settings;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 
@@ -38,19 +37,16 @@ import org.sonar.api.utils.log.Loggers;
 public class LdapContextFactory {
 
   private static final Logger LOG = Loggers.get(LdapContextFactory.class);
-
-  private static final String DEFAULT_AUTHENTICATION = "simple";
-  private static final String DEFAULT_FACTORY = "com.sun.jndi.ldap.LdapCtxFactory";
   private static final String DEFAULT_REFERRAL = "follow";
 
   @VisibleForTesting
-  static final String GSSAPI_METHOD = "GSSAPI";
+  static final String AUTH_METHOD_GSSAPI = "GSSAPI";
 
   @VisibleForTesting
-  static final String DIGEST_MD5_METHOD = "DIGEST-MD5";
+  static final String AUTH_METHOD_DIGEST_MD5 = "DIGEST-MD5";
 
   @VisibleForTesting
-  static final String CRAM_MD5_METHOD = "CRAM-MD5";
+  static final String AUTH_METHOD_CRAM_MD5 = "CRAM-MD5";
 
   /**
    * The Sun LDAP property used to enable connection pooling. This is used in the default implementation to enable
@@ -67,13 +63,13 @@ public class LdapContextFactory {
   private final String password;
   private final String realm;
 
-  public LdapContextFactory(Settings settings, String settingsPrefix, String ldapUrl) {
-    this.authentication = StringUtils.defaultString(settings.getString(settingsPrefix + ".authentication"), DEFAULT_AUTHENTICATION);
-    this.factory = StringUtils.defaultString(settings.getString(settingsPrefix + ".contextFactoryClass"), DEFAULT_FACTORY);
-    this.realm = settings.getString(settingsPrefix + ".realm");
+  public LdapContextFactory(LdapSettings settings, String settingsPrefix, String ldapUrl) {
+    this.authentication = settings.getLdapAuthenticationOrDefault(settingsPrefix);
+    this.factory = settings.getLdapContextFactoryOrDefault(settingsPrefix);
+    this.realm = settings.getLdapRealm(settingsPrefix);
     this.providerUrl = ldapUrl;
-    this.username = settings.getString(settingsPrefix + ".bindDn");
-    this.password = settings.getString(settingsPrefix + ".bindPassword");
+    this.username = settings.getBindUserNameDn(settingsPrefix);
+    this.password = settings.getBindPassword(settingsPrefix);
   }
 
   /**
@@ -120,13 +116,13 @@ public class LdapContextFactory {
   }
 
   public boolean isSasl() {
-    return DIGEST_MD5_METHOD.equals(authentication) ||
-      CRAM_MD5_METHOD.equals(authentication) ||
-      GSSAPI_METHOD.equals(authentication);
+    return AUTH_METHOD_DIGEST_MD5.equals(authentication) ||
+      AUTH_METHOD_CRAM_MD5.equals(authentication) ||
+      AUTH_METHOD_GSSAPI.equals(authentication);
   }
 
   public boolean isGssapi() {
-    return GSSAPI_METHOD.equals(authentication);
+    return AUTH_METHOD_GSSAPI.equals(authentication);
   }
 
   /**
