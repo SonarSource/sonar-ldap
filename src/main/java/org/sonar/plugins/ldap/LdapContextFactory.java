@@ -22,7 +22,8 @@ package org.sonar.plugins.ldap;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 
-import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.Properties;
 import javax.naming.Context;
 import javax.naming.NamingException;
@@ -66,6 +67,8 @@ public class LdapContextFactory {
   private static final String SUN_CONNECTION_POOLING_PROPERTY = "com.sun.jndi.ldap.connect.pool";
 
   private static final String SASL_REALM_PROPERTY = "java.naming.security.sasl.realm";
+  
+  private static final String LDAP_BINARY_ATTRIBUTES_PROPERTY = "java.naming.ldap.attributes.binary";
 
   private final String providerUrl;
   private final String authentication;
@@ -88,12 +91,12 @@ public class LdapContextFactory {
    */
   public InitialDirContext createBindContext() throws NamingException {
       if (isGssapi()) {
-    	  LOG.debug("LDAP connection using Gssapi with username {}", username);
+          LOG.debug("LDAP connection using Gssapi with username {}", username);
           return createInitialDirContextUsingGssapi(username, password, true);
         } else {
-        	LOG.debug("LDAP connection with default bind with username {}", username);
+          LOG.debug("LDAP connection with default bind with username {}", username);
           return createInitialDirContext(username, password, true);
-  	  }	  
+      }
   }
 
   /**
@@ -105,38 +108,33 @@ public class LdapContextFactory {
   }
 
   private InitialDirContext createInitialDirContextUsingGssapi(String principal, String credentials, final boolean pooling) throws NamingException {
-	  Configuration.setConfiguration(new Krb5LoginConfiguration());
-	  //Configuration.getConfiguration();
-	  InitialDirContext initialDirContext = null;
-	  LoginContext lc = null;
-	  try {
-		  lc = new LoginContext(getClass().getName(), new CallbackHandlerImpl(principal, credentials));
-		  lc.login();
-		  
-		  initialDirContext = Subject.doAs(lc.getSubject(), new PrivilegedAction<InitialDirContext>() {
-			  @Override
-			  public InitialDirContext run(){
-				  // TODO Auto-generated method stub
-				  try {
-					  return new InitialLdapContext(getEnvironment(null, null, pooling), null);
-				  } catch (NamingException e) {
-					  // TODO Auto-generated catch block
-					  e.printStackTrace();
-				  }
-				  return null;
-			  }
-		  });
-	  } catch (LoginException e) {
-		    // Bad username: Client not found in Kerberos database
-		    // Bad password: Integrity check on decrypted field failed
-			throw new NamingException(e.getMessage());
-	  }
-	  
-	  if (initialDirContext == null) {
-		  throw new NamingException("Problem occured");
-	  }
-	  
-	  return initialDirContext;
+    Configuration.setConfiguration(new Krb5LoginConfiguration());
+    //Configuration.getConfiguration();
+    InitialDirContext initialDirContext = null;
+    LoginContext lc = null;
+    try {
+      lc = new LoginContext(getClass().getName(), new CallbackHandlerImpl(principal, credentials));
+      lc.login();
+      
+      initialDirContext = Subject.doAs(lc.getSubject(), new PrivilegedExceptionAction<InitialDirContext>() {
+        @Override
+        public InitialDirContext run() throws NamingException {
+          return new InitialLdapContext(getEnvironment(null, null, pooling), null);
+        }
+      });
+    } catch (LoginException e) {
+      // Bad username: Client not found in Kerberos database
+      // Bad password: Integrity check on decrypted field failed
+      throw new NamingException(e.getMessage());
+    } catch (PrivilegedActionException e) {
+      if (e.getException() instanceof NamingException) {
+        NamingException innerException = (NamingException) e.getException();
+        throw innerException;
+      }        
+      throw new NamingException(e.getMessage());
+  } 
+    
+    return initialDirContext;
   }
   
   private InitialDirContext createInitialDirContext(String principal, String credentials, boolean pooling) throws NamingException {
@@ -153,6 +151,7 @@ public class LdapContextFactory {
       // Enable connection pooling
       env.put(SUN_CONNECTION_POOLING_PROPERTY, "true");
     }
+    env.put(LDAP_BINARY_ATTRIBUTES_PROPERTY, "objectSid objectGUID");
     env.put(Context.INITIAL_CONTEXT_FACTORY, factory);
     env.put(Context.PROVIDER_URL, providerUrl);
     env.put(Context.REFERRAL, DEFAULT_REFERRAL);

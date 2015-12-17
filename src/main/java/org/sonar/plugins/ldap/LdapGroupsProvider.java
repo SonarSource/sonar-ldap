@@ -62,6 +62,7 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
     for (String serverKey : userMappings.keySet()) {
       if (!groupMappings.containsKey(serverKey)) {
         // No group mapping for this ldap instance.
+        LOG.debug(" No group mapping for this ldap instance {}", serverKey);
         continue;
       }
       SearchResult searchResult = searchUserGroups(username, sonarExceptions, serverKey);
@@ -81,6 +82,7 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
         }
       } else {
         // user not found
+        LOG.debug("user not found on server {}", serverKey);
         continue;
       }
     }
@@ -104,7 +106,7 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
   private SearchResult searchUserGroups(String username, List<SonarException> sonarExceptions, String serverKey) {
     SearchResult searchResult = null;
     try {
-      LOG.debug("Requesting groups for user {}", username);
+      LOG.debug("Requesting groups for user {} on Server {}", username, serverKey);
 
       searchResult = userMappings.get(serverKey).createSearch(contextFactories.get(serverKey), username)
         .returns(groupMappings.get(serverKey).getRequiredUserAttributes())
@@ -131,6 +133,7 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
       SearchResult obj = (SearchResult) searchResult.nextElement();
       Attributes attributes = obj.getAttributes();
       String groupId = (String) attributes.get(groupMappings.get(serverKey).getIdAttribute()).get();
+      LOG.debug("found group {}", groupId);
       groups.add(groupId);
     }
     return groups;

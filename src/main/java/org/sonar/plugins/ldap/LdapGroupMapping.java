@@ -20,7 +20,9 @@
 package org.sonar.plugins.ldap;
 
 import com.google.common.base.Objects;
-import java.util.Arrays;
+import com.sun.jna.platform.win32.Advapi32Util;
+import com.sun.jna.platform.win32.WinNT.PSID;
+
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.SearchResult;
@@ -28,6 +30,8 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.config.Settings;
 import org.sonar.api.utils.SonarException;
+
+import java.util.Arrays;
 
 /**
  * @author Evgeny Mandrikov
@@ -83,6 +87,16 @@ public class LdapGroupMapping {
       String attr = attrs[i];
       if ("dn".equals(attr)) {
         parameters[i] = user.getNameInNamespace();
+      } else if ("objectsid".equals(attr.toLowerCase())) {
+        Attribute attribute = user.getAttributes().get(attr);
+        byte[] objectSid;
+        try {
+          objectSid = (byte[])attribute.get();
+          PSID sid = new PSID(objectSid);
+          parameters[i] = Advapi32Util.convertSidToStringSid(sid);
+        } catch (NamingException e) {
+          parameters[i] = null;
+        }
       } else {
         parameters[i] = getAttributeValue(user, attr);
       }
@@ -148,5 +162,4 @@ public class LdapGroupMapping {
         .add("request", getRequest())
         .toString();
   }
-
 }
