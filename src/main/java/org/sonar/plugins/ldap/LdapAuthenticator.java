@@ -65,15 +65,16 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
         try {
           result = userMappings.get(ldapKey).createSearch(contextFactories.get(ldapKey), login).findUnique();
         } catch (NamingException e) {
-          LOG.debug("User {} not found in server {}: {}", new Object[] {login, ldapKey, e.getMessage()});
+          LOG.debug("User {} not found in server {}: {}", login, ldapKey, e.getMessage());
           continue;
         }
         if (result == null) {
-          LOG.debug("User {} not found in " + ldapKey, login);
+          LOG.debug("User {} not found in {}", login, ldapKey);
           continue;
         }
         principal = result.getNameInNamespace();
       }
+      LOG.debug("User {}  found", principal);
       boolean passwordValid;
       if (contextFactories.get(ldapKey).isGssapi()) {
         passwordValid = checkPasswordUsingGssapi(principal, password, ldapKey);
@@ -96,10 +97,10 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
     InitialDirContext context = null;
     try {
       context = contextFactories.get(ldapKey).createUserContext(principal, password);
-	  LOG.debug("Password valid for user {} in server {}!", new Object[] {principal, ldapKey});
+    LOG.debug("Password valid for user {} in server {}!", principal, ldapKey);
       return true;
     } catch (NamingException e) {
-      LOG.debug("Password not valid for user {} in server {}: {}", new Object[] {principal, ldapKey, e.getMessage()});
+      LOG.debug("Password not valid for user {} in server {}: {}", principal, ldapKey, e.getMessage());
       return false;
     } finally {
       ContextHelper.closeQuetly(context);
@@ -107,31 +108,30 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
   }
 
   private boolean checkPasswordUsingGssapi(String principal, String password, String ldapKey) {
-    
-	Configuration currentConfiguration = Configuration.getConfiguration();
-	try {
-	    // Use our custom configuration to avoid reliance on external config
-	    Configuration.setConfiguration(new Krb5LoginConfiguration());
-	    LoginContext lc;
-	    try {
-	      lc = new LoginContext(getClass().getName(), new CallbackHandlerImpl(principal, password));
-	      lc.login();
-	    } catch (LoginException e) {
-	      // Bad username: Client not found in Kerberos database
-	      // Bad password: Integrity check on decrypted field failed
-	      LOG.debug("Password not valid for {} in server {}: {}", new Object[] {principal, ldapKey, e.getMessage()});
-	      return false;
-	    }
-	    try {
-	      lc.logout();
-	    } catch (LoginException e) {
-	      LOG.warn("Logout fails", e);
-	    }
-		LOG.debug("Password valid for user {} in server {}!", new Object[] {principal, ldapKey});
-    return true;
-	} finally {
-		Configuration.setConfiguration(currentConfiguration);
-	}
+    Configuration currentConfiguration = Configuration.getConfiguration();
+    try {
+        // Use our custom configuration to avoid reliance on external config
+        Configuration.setConfiguration(new Krb5LoginConfiguration());
+        LoginContext lc;
+        try {
+          lc = new LoginContext(getClass().getName(), new CallbackHandlerImpl(principal, password));
+          lc.login();
+        } catch (LoginException e) {
+          // Bad username: Client not found in Kerberos database
+          // Bad password: Integrity check on decrypted field failed
+          LOG.debug("Password not valid for {} in server {}: {}", principal, ldapKey, e.getMessage());
+          return false;
+        }
+        try {
+          lc.logout();
+        } catch (LoginException e) {
+          LOG.warn("Logout fails", e);
+        }
+      LOG.debug("Password valid for user {} in server {}!", principal, ldapKey);
+      return true;
+    } finally {
+      Configuration.setConfiguration(currentConfiguration);
+    }
   }
 
 }

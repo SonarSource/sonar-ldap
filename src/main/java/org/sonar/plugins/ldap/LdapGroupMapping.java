@@ -107,16 +107,15 @@ public class LdapGroupMapping {
       if ("dn".equals(attr)) {
         parameters[i] = user.getNameInNamespace();
       } else if ("objectsid".equals(attr.toLowerCase())) {
-    	Attribute attribute = user.getAttributes().get(attr);
-		byte[] objectSid;
-		try {
-			objectSid = (byte[])attribute.get();
-			PSID sid = new PSID(objectSid);
-			parameters[i] = Advapi32Util.convertSidToStringSid(sid);
-		} catch (NamingException e) {
-			// TODO Auto-generated catch block
-			parameters[i] = null;
-		}
+        Attribute attribute = user.getAttributes().get(attr);
+        byte[] objectSid;
+        try {
+          objectSid = (byte[])attribute.get();
+          PSID sid = new PSID(objectSid);
+          parameters[i] = Advapi32Util.convertSidToStringSid(sid);
+        } catch (NamingException e) {
+          parameters[i] = null;
+        }
       } else {
         parameters[i] = getAttributeValue(user, attr);
       }
@@ -189,5 +188,4 @@ public class LdapGroupMapping {
         .add("request", getRequest())
         .toString();
   }
-
 }
