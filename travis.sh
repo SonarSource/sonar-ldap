@@ -4,9 +4,13 @@ set -euo pipefail
 
 function installTravisTools {
   mkdir ~/.local
-  curl -sSL https://github.com/SonarSource/travis-utils/tarball/v16 | tar zx --strip-components 1 -C ~/.local
+  curl -sSL https://github.com/SonarSource/travis-utils/tarball/v21 | tar zx --strip-components 1 -C ~/.local
   source ~/.local/bin/install
 }
+
+installTravisTools
+# temporary build of parent 24 as long as it's not available in maven central repository
+build "SonarSource/parent-oss" "24"
 
 case "$TESTS" in
 
@@ -15,7 +19,6 @@ CI)
   ;;
 
 IT-DEV)
-  installTravisTools
   start_xvfb
 
   mvn install -Dsource.skip=true -Denforcer.skip=true -Danimal.sniffer.skip=true -Dmaven.test.skip=true
@@ -24,16 +27,6 @@ IT-DEV)
 
   cd it
   mvn -DldapVersion="DEV" -Dsonar.runtimeVersion="DEV" -Dmaven.test.redirectTestOutputToFile=false install
-  ;;
-
-IT-LTS)
-  installTravisTools
-  start_xvfb
-
-  mvn install -Dsource.skip=true -Denforcer.skip=true -Danimal.sniffer.skip=true -Dmaven.test.skip=true
-
-  cd it
-  mvn -DldapVersion="DEV" -Dsonar.runtimeVersion="4.5.1" -Dmaven.test.redirectTestOutputToFile=false install
   ;;
 
 esac

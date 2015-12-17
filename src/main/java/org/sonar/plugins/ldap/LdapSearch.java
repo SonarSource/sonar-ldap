@@ -1,7 +1,7 @@
 /*
  * SonarQube LDAP Plugin
  * Copyright (C) 2009 SonarSource
- * dev@sonar.codehaus.org
+ * sonarqube@googlegroups.com
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,15 +19,15 @@
  */
 package org.sonar.plugins.ldap;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import java.util.Arrays;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.sonar.api.utils.log.Logger;
+import org.sonar.api.utils.log.Loggers;
 
 /**
  * Fluent API for building LDAP queries.
@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
  */
 public class LdapSearch {
 
-  private static final Logger LOG = LoggerFactory.getLogger(LdapSearch.class);
+  private static final Logger LOG = Loggers.get(LdapSearch.class);
 
   private final LdapContextFactory contextFactory;
 
@@ -153,7 +153,7 @@ public class LdapSearch {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("baseDn", baseDn)
         .add("scope", scopeToString())
         .add("request", request)

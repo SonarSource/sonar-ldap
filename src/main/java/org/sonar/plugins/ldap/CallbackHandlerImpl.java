@@ -1,7 +1,7 @@
 /*
  * SonarQube LDAP Plugin
  * Copyright (C) 2009 SonarSource
- * dev@sonar.codehaus.org
+ * sonarqube@googlegroups.com
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -38,6 +38,7 @@ public class CallbackHandlerImpl implements CallbackHandler {
     this.password = password;
   }
 
+  @Override
   public void handle(Callback[] callbacks) throws UnsupportedCallbackException, IOException {
     for (Callback callBack : callbacks) {
       if (callBack instanceof NameCallback) {

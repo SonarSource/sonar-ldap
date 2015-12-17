@@ -1,7 +1,7 @@
 /*
  * SonarQube LDAP Plugin
  * Copyright (C) 2009 SonarSource
- * dev@sonar.codehaus.org
+ * sonarqube@googlegroups.com
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,18 +25,20 @@ import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.SearchResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.sonar.api.security.ExternalUsersProvider;
 import org.sonar.api.security.UserDetails;
 import org.sonar.api.utils.SonarException;
+import org.sonar.api.utils.log.Logger;
+import org.sonar.api.utils.log.Loggers;
+
+import static java.lang.String.format;
 
 /**
  * @author Evgeny Mandrikov
  */
 public class LdapUsersProvider extends ExternalUsersProvider {
 
-  private static final Logger LOG = LoggerFactory.getLogger(LdapUsersProvider.class);
+  private static final Logger LOG = Loggers.get(LdapUsersProvider.class);
   private final Map<String, LdapContextFactory> contextFactories;
   private final Map<String, LdapUserMapping> userMappings;
 
@@ -56,11 +58,12 @@ public class LdapUsersProvider extends ExternalUsersProvider {
    * @return details for specified user, or null if such user doesn't exist
    * @throws SonarException if unable to retrieve details
    */
-  public UserDetails doGetUserDetails(String username) {
+  @Override
+  public UserDetails doGetUserDetails(@Nullable String username) {
     LOG.debug("Requesting details for user {}", username);
     // If there are no userMappings available, we can not retrieve user details.
     if (userMappings.isEmpty()) {
-      String errorMessage = "Unable to retrieve details for user " + username + ": No user mapping found.";
+      String errorMessage = format("Unable to retrieve details for user %s: No user mapping found.", username);
       LOG.debug(errorMessage);
       throw new SonarException(errorMessage);
     }
@@ -70,8 +73,8 @@ public class LdapUsersProvider extends ExternalUsersProvider {
       SearchResult searchResult = null;
       try {
         searchResult = userMappings.get(serverKey).createSearch(contextFactories.get(serverKey), username)
-            .returns(userMappings.get(serverKey).getEmailAttribute(), userMappings.get(serverKey).getRealNameAttribute())
-            .findUnique();
+          .returns(userMappings.get(serverKey).getEmailAttribute(), userMappings.get(serverKey).getRealNameAttribute())
+          .findUnique();
       } catch (NamingException e) {
         // just in case if Sonar silently swallowed exception
         LOG.debug(e.getMessage(), e);
@@ -89,7 +92,7 @@ public class LdapUsersProvider extends ExternalUsersProvider {
         }
       } else {
         // user not found
-        LOG.debug("User {} not found in " + serverKey, username);
+        LOG.debug("User {} not found in {}", username, serverKey);
         continue;
       }
     }

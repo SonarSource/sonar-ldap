@@ -1,7 +1,7 @@
 /*
  * SonarQube LDAP Plugin
  * Copyright (C) 2009 SonarSource
- * dev@sonar.codehaus.org
+ * sonarqube@googlegroups.com
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,11 +23,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.sonar.api.ServerExtension;
 import org.sonar.api.config.Settings;
 import org.sonar.api.utils.SonarException;
+import org.sonar.api.utils.log.Logger;
+import org.sonar.api.utils.log.Loggers;
 import org.sonar.plugins.ldap.LdapAutodiscovery.LdapSrvRecord;
 
 /**
@@ -36,7 +36,7 @@ import org.sonar.plugins.ldap.LdapAutodiscovery.LdapSrvRecord;
  */
 public class LdapSettingsManager implements ServerExtension {
 
-  private static final Logger LOG = LoggerFactory.getLogger(LdapSettingsManager.class);
+  private static final Logger LOG = Loggers.get(LdapSettingsManager.class);
 
   private static final String LDAP_SERVERS_PROPERTY = "ldap.servers";
   private static final String LDAP_PROPERTY_PREFIX = "ldap";
@@ -66,7 +66,7 @@ public class LdapSettingsManager implements ServerExtension {
   public Map<String, LdapUserMapping> getUserMappings() {
     if (userMappings == null) {
       // Use linked hash map to preserve order
-      userMappings = new LinkedHashMap<String, LdapUserMapping>();
+      userMappings = new LinkedHashMap<>();
       String[] serverKeys = settings.getStringArray(LDAP_SERVERS_PROPERTY);
       if (serverKeys.length > 0) {
         for (String serverKey : serverKeys) {
@@ -101,7 +101,7 @@ public class LdapSettingsManager implements ServerExtension {
   public Map<String, LdapGroupMapping> getGroupMappings() {
     if (groupMappings == null) {
       // Use linked hash map to preserve order
-      groupMappings = new LinkedHashMap<String, LdapGroupMapping>();
+      groupMappings = new LinkedHashMap<>();
       String[] serverKeys = settings.getStringArray(LDAP_SERVERS_PROPERTY);
       if (serverKeys.length > 0) {
         for (String serverKey : serverKeys) {
@@ -136,7 +136,7 @@ public class LdapSettingsManager implements ServerExtension {
   public Map<String, LdapContextFactory> getContextFactories() {
     if (contextFactories == null) {
       // Use linked hash map to preserve order
-      contextFactories = new LinkedHashMap<String, LdapContextFactory>();
+      contextFactories = new LinkedHashMap<>();
       String[] serverKeys = settings.getStringArray(LDAP_SERVERS_PROPERTY);
       if (serverKeys.length > 0) {
         initMultiLdapConfiguration(serverKeys);
@@ -160,7 +160,7 @@ public class LdapSettingsManager implements ServerExtension {
       int index = 1;
       for (LdapSrvRecord ldapSrvRecord : ldapServers) {
         if (StringUtils.isNotBlank(ldapSrvRecord.getServerUrl())) {
-          LOG.info("Detected server: " + ldapSrvRecord.getServerUrl());
+          LOG.info("Detected server: {}", ldapSrvRecord.getServerUrl());
           LdapContextFactory contextFactory = new LdapContextFactory(settings, LDAP_PROPERTY_PREFIX, ldapSrvRecord.getServerUrl());
           contextFactories.put(DEFAULT_LDAP_SERVER_KEY + index, contextFactory);
           index++;

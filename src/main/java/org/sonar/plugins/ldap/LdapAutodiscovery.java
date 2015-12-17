@@ -1,7 +1,7 @@
 /*
  * SonarQube LDAP Plugin
  * Copyright (C) 2009 SonarSource
- * dev@sonar.codehaus.org
+ * sonarqube@googlegroups.com
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -34,16 +34,17 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 import org.apache.commons.lang.math.NumberUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.sonar.api.ServerExtension;
+import org.sonar.api.server.ServerSide;
+import org.sonar.api.utils.log.Logger;
+import org.sonar.api.utils.log.Loggers;
 
 /**
  * @author Evgeny Mandrikov
  */
-public class LdapAutodiscovery implements ServerExtension {
+@ServerSide
+public class LdapAutodiscovery {
 
-  private static final Logger LOG = LoggerFactory.getLogger(LdapAutodiscovery.class);
+  private static final Logger LOG = Loggers.get(LdapAutodiscovery.class);
 
   /**
    * Get the DNS domain name (eg: example.org).
@@ -102,7 +103,7 @@ public class LdapAutodiscovery implements ServerExtension {
     Attributes lSrvAttrs = context.getAttributes("dns:/_ldap._tcp." + domain, new String[] {"srv"});
     Attribute serversAttribute = lSrvAttrs.get("srv");
     NamingEnumeration<?> lEnum = serversAttribute.getAll();
-    SortedSet<LdapSrvRecord> result = new TreeSet<LdapSrvRecord>();
+    SortedSet<LdapSrvRecord> result = new TreeSet<>();
     while (lEnum.hasMore()) {
       String srvRecord = (String) lEnum.next();
       // priority weight port target
@@ -119,7 +120,7 @@ public class LdapAutodiscovery implements ServerExtension {
       String server = "ldap://" + target + ":" + port;
       result.add(new LdapSrvRecord(server, priority, weight));
     }
-    return new ArrayList<LdapSrvRecord>(result);
+    return new ArrayList<>(result);
   }
 
   @VisibleForTesting
@@ -134,6 +135,7 @@ public class LdapAutodiscovery implements ServerExtension {
       this.weight = weight;
     }
 
+    @Override
     public int compareTo(LdapSrvRecord o) {
       if (this.priority == o.priority) {
         return Integer.valueOf(o.weight).compareTo(this.weight);

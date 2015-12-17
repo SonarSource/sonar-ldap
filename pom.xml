@@ -2,17 +2,17 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.codehaus.sonar-plugins</groupId>
+    <groupId>org.sonarsource.parent</groupId>
     <artifactId>parent</artifactId>
-    <version>19</version>
+    <version>24</version>
   </parent>
 
+  <groupId>org.sonarsource.ldap</groupId>
   <artifactId>sonar-ldap-plugin</artifactId>
-  <version>1.5-SNAPSHOT</version>
+  <version>1.6-SNAPSHOT</version>
   <packaging>sonar-plugin</packaging>
-
   <name>SonarQube LDAP Plugin</name>
-  <description>Delegates authentication to LDAP.</description>
+  <description>Delegates authentication to LDAP</description>
   <url>http://redirect.sonarsource.com/plugins/ldap.html</url>
   <inceptionYear>2009</inceptionYear>
   <organization>
@@ -33,6 +33,11 @@
       <name>Evgeny Mandrikov</name>
       <timezone>+3</timezone>
     </developer>
+    <developer>
+      <id>sulabh-msft</id>
+      <name>Sulabh Upadhyay</name>
+      <organization>Microsoft</organization>
+    </developer>
   </developers>
   <contributors>
     <contributor>
@@ -40,7 +45,6 @@
       <timezone>+1</timezone>
     </contributor>
   </contributors>
-
   <scm>
     <connection>scm:git:git@github.com:SonarCommunity/sonar-ldap.git</connection>
     <developerConnection>scm:git:git@github.com:SonarCommunity/sonar-ldap.git</developerConnection>
@@ -52,15 +56,17 @@
     <url>http://jira.sonarsource.com/browse/LDAP</url>
   </issueManagement>
   <ciManagement>
-    <system>Bamboo</system>
-    <url>http://ci.codehaus.org/browse/SONAR-LDAP</url>
+    <system>Travis</system>
+    <url>https://travis-ci.org/SonarCommunity/sonar-ldap</url>
   </ciManagement>
 
   <properties>
-    <sonar.version>4.5.1</sonar.version>
     <sonar.pluginName>LDAP</sonar.pluginName>
     <sonar.pluginClass>org.sonar.plugins.ldap.LdapPlugin</sonar.pluginClass>
     <jna.version>4.1.0</jna.version>
+    <version.com4j>2.1</version.com4j>
+    <version.org.jvnet.com4j.typelibs>1.0</version.org.jvnet.com4j.typelibs>
+    <version.javax.servlet>3.0.1</version.javax.servlet>
     <version.org.apache.directory.server>1.5.5</version.org.apache.directory.server>
     <version.org.opends>2.2.0</version.org.opends>
 
@@ -69,9 +75,15 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.codehaus.sonar</groupId>
+      <groupId>org.sonarsource.sonarqube</groupId>
       <artifactId>sonar-plugin-api</artifactId>
-      <version>${sonar.version}</version>
+      <version>5.2-RC4</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+      <version>${version.javax.servlet}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -83,6 +95,42 @@
       <groupId>net.java.dev.jna</groupId>
       <artifactId>jna-platform</artifactId>
       <version>${jna.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jvnet.com4j</groupId>
+      <artifactId>com4j</artifactId>
+      <version>${version.com4j}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jvnet.com4j.typelibs</groupId>
+      <artifactId>active-directory</artifactId>
+      <version>${version.org.jvnet.com4j.typelibs}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jvnet.com4j.typelibs</groupId>
+      <artifactId>ado20</artifactId>
+      <version>${version.org.jvnet.com4j.typelibs}</version>
+    </dependency>
+    <dependency>
+      <groupId>commons-lang</groupId>
+      <artifactId>commons-lang</artifactId>
+      <version>2.6</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>18.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
+      <version>3.0.0</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.github.dblock.waffle</groupId>
+      <artifactId>waffle-jna</artifactId>
+      <version>1.8.0</version>
     </dependency>
 
     <dependency>
@@ -106,7 +154,7 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>0.9.30</version>
+      <version>1.1.3</version>
       <scope>test</scope>
     </dependency>
 
@@ -129,7 +177,6 @@
       <version>${version.org.apache.directory.server}</version>
       <scope>test</scope>
     </dependency>
-
   </dependencies>
 
 </project>

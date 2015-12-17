@@ -1,7 +1,7 @@
 /*
  * SonarQube LDAP Plugin
  * Copyright (C) 2009 SonarSource
- * dev@sonar.codehaus.org
+ * sonarqube@googlegroups.com
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,19 +19,15 @@
  */
 package org.sonar.plugins.ldap;
 
-import com.google.common.collect.ImmutableList;
+import java.util.Arrays;
 import java.util.List;
 import org.sonar.api.SonarPlugin;
 
-/**
- * @author Evgeny Mandrikov
- */
 public class LdapPlugin extends SonarPlugin {
 
+  @Override
   public List getExtensions() {
-    return ImmutableList.of(LdapRealm.class,
-      LdapSettingsManager.class,
-      LdapAutodiscovery.class);
+    return Arrays.asList(LdapExtensions.class);
   }
 
 }

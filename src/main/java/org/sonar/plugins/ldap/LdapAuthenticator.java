@@ -1,7 +1,7 @@
 /*
  * SonarQube LDAP Plugin
  * Copyright (C) 2009 SonarSource
- * dev@sonar.codehaus.org
+ * sonarqube@googlegroups.com
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,16 +27,16 @@ import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.sonar.api.security.LoginPasswordAuthenticator;
+import org.sonar.api.utils.log.Logger;
+import org.sonar.api.utils.log.Loggers;
 
 /**
  * @author Evgeny Mandrikov
  */
 public class LdapAuthenticator implements LoginPasswordAuthenticator {
 
-  private static final Logger LOG = LoggerFactory.getLogger(LdapAuthenticator.class);
+  private static final Logger LOG = Loggers.get(LdapAuthenticator.class);
   private final Map<String, LdapContextFactory> contextFactories;
   private final Map<String, LdapUserMapping> userMappings;
 
@@ -103,7 +103,7 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
       LOG.debug("Password not valid for user {} in server {}: {}", principal, ldapKey, e.getMessage());
       return false;
     } finally {
-      ContextHelper.closeQuetly(context);
+      ContextHelper.closeQuietly(context);
     }
   }
 

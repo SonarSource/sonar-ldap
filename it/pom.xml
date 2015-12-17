@@ -6,11 +6,11 @@
   <parent>
     <groupId>org.sonarsource.parent</groupId>
     <artifactId>parent</artifactId>
-    <version>23</version>
+    <version>24</version>
   </parent>
 
-  <groupId>org.sonarsource.sonar-ldap</groupId>
-  <artifactId>it-ldap</artifactId>
+  <groupId>org.sonarsource.ldap</groupId>
+  <artifactId>it</artifactId>
   <version>1.0-SNAPSHOT</version>
   <inceptionYear>2009</inceptionYear>
   <name>SonarQube LDAP Plugin :: Integration Tests</name>
@@ -20,10 +20,6 @@
     <url>http://www.sonarsource.com</url>
   </organization>
 
-  <properties>
-    <surefire.argLine>-server</surefire.argLine>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>org.assertj</groupId>
@@ -32,9 +28,9 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.sonarsource.orchestrator</groupId>
+      <groupId>org.sonarsource.orchestrator</groupId>
       <artifactId>sonar-orchestrator</artifactId>
-      <version>3.3</version>
+      <version>3.5</version>
       <scope>test</scope>
     </dependency>
 

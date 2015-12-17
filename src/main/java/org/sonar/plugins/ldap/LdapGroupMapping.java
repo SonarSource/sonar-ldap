@@ -1,7 +1,7 @@
 /*
  * SonarQube LDAP Plugin
  * Copyright (C) 2009 SonarSource
- * dev@sonar.codehaus.org
+ * sonarqube@googlegroups.com
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,7 +19,7 @@
  */
 package org.sonar.plugins.ldap;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.sun.jna.platform.win32.Advapi32Util;
 import com.sun.jna.platform.win32.WinNT.PSID;
 
@@ -65,8 +65,8 @@ public class LdapGroupMapping {
       memberAttribute = StringUtils.defaultString(memberAttribute, DEFAULT_MEMBER_ATTRIBUTE);
       req = "(&(objectClass=" + objectClass + ")(" + memberAttribute + "=" + "{dn}))";
       LoggerFactory.getLogger(LdapGroupMapping.class)
-          .warn("Properties '" + settingsPrefix + ".group.objectClass' and '" + settingsPrefix + ".group.memberAttribute' are deprecated" +
-            " and should be replaced by single property '" + settingsPrefix + ".group.request' with value: " + req);
+        .warn("Properties '" + settingsPrefix + ".group.objectClass' and '" + settingsPrefix + ".group.memberAttribute' are deprecated" +
+          " and should be replaced by single property '" + settingsPrefix + ".group.request' with value: " + req);
     } else {
       req = StringUtils.defaultString(settings.getString(settingsPrefix + ".group.request"), DEFAULT_REQUEST);
     }
@@ -102,10 +102,10 @@ public class LdapGroupMapping {
       }
     }
     return new LdapSearch(contextFactory)
-        .setBaseDn(getBaseDn())
-        .setRequest(getRequest())
-        .setParameters(parameters)
-        .returns(getIdAttribute());
+      .setBaseDn(getBaseDn())
+      .setRequest(getRequest())
+      .setParameters(parameters)
+      .returns(getIdAttribute());
   }
 
   private static String getAttributeValue(SearchResult user, String attributeId) {
@@ -116,7 +116,7 @@ public class LdapGroupMapping {
     try {
       return (String) attribute.get();
     } catch (NamingException e) {
-      throw new SonarException(e);
+      throw new IllegalArgumentException(e);
     }
   }
 
@@ -155,11 +155,11 @@ public class LdapGroupMapping {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-        .add("baseDn", getBaseDn())
-        .add("idAttribute", getIdAttribute())
-        .add("requiredUserAttributes", Arrays.toString(getRequiredUserAttributes()))
-        .add("request", getRequest())
-        .toString();
+    return MoreObjects.toStringHelper(this)
+      .add("baseDn", getBaseDn())
+      .add("idAttribute", getIdAttribute())
+      .add("requiredUserAttributes", Arrays.toString(getRequiredUserAttributes()))
+      .add("request", getRequest())
+      .toString();
   }
 }
