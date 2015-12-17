@@ -96,10 +96,3 @@ objectclass: top
 cn: linux-users
 gidNumber: 10000
 memberUid: robby
-
-# infosupport-cross-users
-dn: cn=infosupport-cross-users,ou=groups,dc=infosupport,dc=com
-objectclass: groupOfUniqueNames
-cn: infosupport-cross-users
-uniqueMember: cn=Tester Testerovich,ou=users,dc=example,dc=org
-uniqueMember: cn=Tester Testerovich,ou=users,dc=infosupport,dc=com

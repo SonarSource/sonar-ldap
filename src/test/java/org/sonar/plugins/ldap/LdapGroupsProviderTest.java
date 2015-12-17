@@ -52,7 +52,7 @@ public class LdapGroupsProviderTest {
     Collection<String> groups;
 
     groups = groupsProvider.doGetGroups("tester");
-    assertThat(groups).containsOnly("sonar-users", "example-cross-users");
+    assertThat(groups).containsOnly("sonar-users");
 
     groups = groupsProvider.doGetGroups("godin");
     assertThat(groups).containsOnly("sonar-users", "sonar-developers");
@@ -71,7 +71,7 @@ public class LdapGroupsProviderTest {
     Collection<String> groups;
 
     groups = groupsProvider.doGetGroups("tester");
-    assertThat(groups).containsOnly("sonar-users", "example-cross-users");
+    assertThat(groups).containsOnly("sonar-users");
 
     groups = groupsProvider.doGetGroups("godin");
     assertThat(groups).containsOnly("sonar-users", "sonar-developers");
@@ -80,7 +80,7 @@ public class LdapGroupsProviderTest {
     assertThat(groups).isEmpty();
 
     groups = groupsProvider.doGetGroups("testerInfo");
-    assertThat(groups).containsOnly("sonar-users", "infosupport-cross-users");
+    assertThat(groups).containsOnly("sonar-users");
 
     groups = groupsProvider.doGetGroups("robby");
     assertThat(groups).containsOnly("sonar-users", "sonar-developers");
@@ -145,53 +145,4 @@ public class LdapGroupsProviderTest {
     groups = groupsProvider.doGetGroups("robby");
     assertThat(groups).containsOnly("sonar-users", "sonar-developers", "linux-users");
   }
-  
-  @Test
-  public void multipleLdapWithExternalGroupsDefaultBehavior() {
-    Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer, infosupportServer);
-    LdapSettingsManager settingsManager = new LdapSettingsManager(settings, new LdapAutodiscovery());
-    LdapGroupsProvider groupsProvider = new LdapGroupsProvider(settingsManager.getContextFactories(), settingsManager.getUserMappings(), settingsManager.getGroupMappings());
-
-    Collection<String> groups;
-
-    groups = groupsProvider.doGetGroups("tester");
-    assertThat(groups).containsOnly("sonar-users", "example-cross-users");
-
-    groups = groupsProvider.doGetGroups("testerinfo");
-    assertThat(groups).containsOnly("sonar-users", "infosupport-cross-users");
-  }
-  
-  @Test
-  public void multipleLdapWithExternalGroupsSpecificServer() {
-    Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer, infosupportServer);
-    settings.setProperty("ldap.example.group.searchServers", "infosupport");
-    LdapSettingsManager settingsManager = new LdapSettingsManager(settings, new LdapAutodiscovery());
-    LdapGroupsProvider groupsProvider = new LdapGroupsProvider(settingsManager.getContextFactories(), settingsManager.getUserMappings(), settingsManager.getGroupMappings());
-
-    Collection<String> groups;
-
-    groups = groupsProvider.doGetGroups("tester");
-    assertThat(groups).containsOnly("infosupport-cross-users");
-
-    groups = groupsProvider.doGetGroups("testerinfo");
-    assertThat(groups).containsOnly("sonar-users", "infosupport-cross-users");
-  }
-  
-  @Test
-  public void multipleLdapWithExternalGroupsSpecificListOfServer() {
-    Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer, infosupportServer);
-    settings.setProperty("ldap.example.group.searchServers", "example,infosupport");
-    LdapSettingsManager settingsManager = new LdapSettingsManager(settings, new LdapAutodiscovery());
-    LdapGroupsProvider groupsProvider = new LdapGroupsProvider(settingsManager.getContextFactories(), settingsManager.getUserMappings(), settingsManager.getGroupMappings());
-
-    Collection<String> groups;
-
-    groups = groupsProvider.doGetGroups("tester");
-    assertThat(groups).containsOnly("sonar-users", "infosupport-cross-users", "example-cross-users");
-
-    groups = groupsProvider.doGetGroups("testerinfo");
-    assertThat(groups).containsOnly("sonar-users", "infosupport-cross-users");
-  }
-  
-  
 }
