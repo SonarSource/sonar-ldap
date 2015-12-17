@@ -79,8 +79,8 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
       if (contextFactories.get(ldapKey).isGssapi()) {
         passwordValid = checkPasswordUsingGssapi(principal, password, ldapKey);
       } else {
-		passwordValid = checkPasswordUsingBind(principal, password, ldapKey);
-	  }
+        passwordValid = checkPasswordUsingBind(principal, password, ldapKey);
+      }
       if (passwordValid) {
         return true;
       }
@@ -97,7 +97,7 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
     InitialDirContext context = null;
     try {
       context = contextFactories.get(ldapKey).createUserContext(principal, password);
-    LOG.debug("Password valid for user {} in server {}!", principal, ldapKey);
+      LOG.debug("Password valid for user {} in server {}!", principal, ldapKey);
       return true;
     } catch (NamingException e) {
       LOG.debug("Password not valid for user {} in server {}: {}", principal, ldapKey, e.getMessage());
