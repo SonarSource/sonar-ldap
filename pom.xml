@@ -120,7 +120,7 @@
     <dependency>
       <groupId>com.github.dblock.waffle</groupId>
       <artifactId>waffle-jna</artifactId>
-      <version>1.8.0</version>
+      <version>1.8.1</version>
     </dependency>
 
     <dependency>
