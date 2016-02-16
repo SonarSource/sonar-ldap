@@ -56,6 +56,7 @@ public class LdapTest extends AbstractTest {
 
     // Start Sonar with LDAP plugin
     OrchestratorBuilder orchestratorBuilder = Orchestrator.builderEnv()
+      .setContext("/")
       .addPlugin(ldapPluginLocation())
       .setMainPluginKey("ldap")
       .setServerProperty("sonar.security.savePassword", Boolean.toString(savePasswords))
@@ -224,7 +225,7 @@ public class LdapTest extends AbstractTest {
   }
 
   private static void executeSelenese(String name) {
-    orchestrator.executeSelenese(Selenese.builder().setHtmlTestsInClasspath("ldap", format("/selenium/%s.html", name)).build());
+    orchestrator.executeSelenese(Selenese.builder().setHtmlTestsInClasspath("ldap-" + name, format("/selenium/%s.html", name)).build());
   }
 
   private static String AUTHORIZED = "authorized";
