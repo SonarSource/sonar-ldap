@@ -6,16 +6,13 @@ jdk:
   - oraclejdk7
 
 script: ./travis.sh
-env:
-  - TESTS=CI
-  - TESTS=IT-DEV
 
 matrix:
   fast_finish: true
 
 cache:
   directories:
-    - '$HOME/.m2/repository'
+    - $HOME/.m2/repository
 
 notifications:
   email: false

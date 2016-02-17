@@ -9,19 +9,12 @@ function configureTravis {
 }
 configureTravis
 
-case "$TESTS" in
+# for Selenium tests
+start_xvfb
 
-CI)
-  mvn verify -B -e -V
-  ;;
+# CI
+mvn verify -B -e -V
 
-IT-DEV)
-  start_xvfb
-
-  mvn install -Dsource.skip=true -Denforcer.skip=true -Danimal.sniffer.skip=true -Dmaven.test.skip=true
-
-  cd it
-  mvn -DldapVersion="DEV" -Dsonar.runtimeVersion="DEV" -Dmaven.test.redirectTestOutputToFile=false install
-  ;;
-
-esac
+# integration tests
+cd it
+mvn -DldapVersion="DEV" -Dsonar.runtimeVersion="DEV" -Dmaven.test.redirectTestOutputToFile=false verify -B -e -V
