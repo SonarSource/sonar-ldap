@@ -105,7 +105,12 @@ public class LdapTest extends AbstractTest {
     // Then can login because admin is technical account by default
     assertThat(loginAttempt("admin", "admin")).as("admin available in Sonar, even if not available in LDAP").isEqualTo(AUTHORIZED);
     executeSelenese("admin-available");
-    if (orchestrator.getServer().version().isGreaterThanOrEquals("4.2")) {
+
+    // Since 5.5. property 'sonar.security.localUsers' has been removed and replace by a property in DB (an set to tru for user created from the server)
+    if (orchestrator.getServer().version().isGreaterThanOrEquals("5.5")) {
+      orchestrator.getServer().adminWsClient().userClient().create(UserParameters.create().login("admin2").name("Admin2").password("foobar").passwordConfirmation("foobar"));
+      assertThat(loginAttempt("admin2", "foobar")).as("admin2 available in Sonar, not available in LDAP but is a local user").isEqualTo(AUTHORIZED);
+    } else if (!orchestrator.getServer().version().isGreaterThan("5.5")) {
       orchestrator.getServer().adminWsClient().userClient().create(UserParameters.create().login("admin2").name("Admin2").password("foobar").passwordConfirmation("foobar"));
       assertThat(loginAttempt("admin2", "foobar")).as("admin2 available in Sonar, but not available in LDAP and not a local user").isEqualTo(NOT_AUTHORIZED);
       // Add admin2 to the list of local users
