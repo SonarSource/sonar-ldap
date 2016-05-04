@@ -48,7 +48,7 @@ public class LdapUserMapping {
     if (usersBaseDn == null) {
       String realm = settings.getString(settingsPrefix + ".realm");
       if (realm != null) {
-        usersBaseDn = LdapAutodiscovery.getDnsDomainDn(realm);
+        usersBaseDn = LdapAutoDiscovery.getDnsDomainDn(realm);
       }
     }
 

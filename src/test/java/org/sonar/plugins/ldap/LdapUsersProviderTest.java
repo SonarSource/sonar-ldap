@@ -45,7 +45,7 @@ public class LdapUsersProviderTest {
   @Test
   public void test() throws Exception {
     Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer, infosupportServer);
-    LdapSettingsManager settingsManager = new LdapSettingsManager(settings, new LdapAutodiscovery());
+    LdapSettingsManager settingsManager = new LdapSettingsManager(settings, new LdapAutoDiscovery());
     LdapUsersProvider usersProvider = new LdapUsersProvider(settingsManager.getContextFactories(), settingsManager.getUserMappings());
 
     UserDetails details;

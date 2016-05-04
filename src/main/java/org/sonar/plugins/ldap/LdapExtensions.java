@@ -86,6 +86,6 @@ public class LdapExtensions extends ExtensionProvider implements ServerExtension
   }
 
   private List<Class<?>> getLdapExtensions() {
-    return Arrays.asList(LdapRealm.class, LdapSettingsManager.class, LdapAutodiscovery.class);
+    return Arrays.asList(LdapRealm.class, LdapSettingsManager.class, LdapAutoDiscovery.class);
   }
 }
