@@ -70,10 +70,20 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
 
       if (searchResult != null) {
         try {
-          NamingEnumeration<SearchResult> result = groupMappings
-            .get(serverKey)
-            .createSearch(contextFactories.get(serverKey), searchResult).find();
-          groups.addAll(mapGroups(serverKey, result));
+          String[] serverKeysForGroup = groupMappings
+              .get(serverKey)
+              .getGroupRequestServersOverride();
+          if (serverKeysForGroup == null) {
+            serverKeysForGroup = new String[] { serverKey };
+          }
+          for(String serverKeyForGroup : serverKeysForGroup)
+          {
+            NamingEnumeration<SearchResult> result = groupMappings
+                .get(serverKeyForGroup)
+                .createSearch(contextFactories.get(serverKeyForGroup), searchResult)
+                .find();
+              groups.addAll(mapGroups(serverKey, result));
+          }
           // if no exceptions occur, we found the user and his groups and mapped his details.
           break;
         } catch (NamingException e) {

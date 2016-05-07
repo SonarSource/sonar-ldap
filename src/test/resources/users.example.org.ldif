@@ -96,3 +96,10 @@ objectclass: top
 cn: linux-users
 gidNumber: 10000
 memberUid: godin
+
+# example-cross-users
+dn: cn=example-cross-users,ou=groups,dc=example,dc=org
+objectclass: groupOfUniqueNames
+cn: example-cross-users
+uniqueMember: cn=Tester Testerovich,ou=users,dc=example,dc=org
+uniqueMember: cn=Tester Testerovich,ou=users,dc=infosupport,dc=com
