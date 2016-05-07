@@ -63,7 +63,7 @@
   <properties>
     <sonar.pluginName>LDAP</sonar.pluginName>
     <sonar.pluginClass>org.sonar.plugins.ldap.LdapPlugin</sonar.pluginClass>
-
+    <jna.version>4.1.0</jna.version>
     <version.com4j>2.1</version.com4j>
     <version.org.jvnet.com4j.typelibs>1.0</version.org.jvnet.com4j.typelibs>
     <version.javax.servlet>3.0.1</version.javax.servlet>
@@ -85,6 +85,16 @@
       <artifactId>javax.servlet-api</artifactId>
       <version>${version.javax.servlet}</version>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>net.java.dev.jna</groupId>
+      <artifactId>jna</artifactId>
+      <version>${jna.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>net.java.dev.jna</groupId>
+      <artifactId>jna-platform</artifactId>
+      <version>${jna.version}</version>
     </dependency>
     <dependency>
       <groupId>org.jvnet.com4j</groupId>

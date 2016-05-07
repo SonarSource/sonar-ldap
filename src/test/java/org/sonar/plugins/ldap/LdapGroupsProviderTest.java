@@ -145,5 +145,4 @@ public class LdapGroupsProviderTest {
     groups = groupsProvider.doGetGroups("robby");
     assertThat(groups).containsOnly("sonar-users", "sonar-developers", "linux-users");
   }
-
 }
