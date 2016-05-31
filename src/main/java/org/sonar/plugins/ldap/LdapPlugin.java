@@ -27,7 +27,7 @@ public class LdapPlugin extends SonarPlugin {
 
   @Override
   public List getExtensions() {
-    return Arrays.asList(LdapExtensions.class);
+    return Arrays.asList(LdapRealm.class, LdapSettingsManager.class, LdapAutodiscovery.class);
   }
 
 }
