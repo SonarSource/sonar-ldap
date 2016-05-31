@@ -46,9 +46,9 @@
     </contributor>
   </contributors>
   <scm>
-    <connection>scm:git:git@github.com:SonarCommunity/sonar-ldap.git</connection>
-    <developerConnection>scm:git:git@github.com:SonarCommunity/sonar-ldap.git</developerConnection>
-    <url>https://github.com/SonarCommunity/sonar-ldap</url>
+    <connection>scm:git:git@github.com:SonarSource/sonar-ldap.git</connection>
+    <developerConnection>scm:git:git@github.com:SonarSource/sonar-ldap.git</developerConnection>
+    <url>https://github.com/SonarSource/sonar-ldap</url>
     <tag>HEAD</tag>
   </scm>
   <issueManagement>
@@ -57,7 +57,7 @@
   </issueManagement>
   <ciManagement>
     <system>Travis</system>
-    <url>https://travis-ci.org/SonarCommunity/sonar-ldap</url>
+    <url>https://travis-ci.org/SonarSource/sonar-ldap</url>
   </ciManagement>
 
   <properties>
