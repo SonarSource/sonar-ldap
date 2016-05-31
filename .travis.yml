@@ -3,7 +3,7 @@ sudo: false
 install: true
 
 jdk:
-  - oraclejdk7
+  - oraclejdk8
 
 script: ./travis.sh
 
@@ -13,6 +13,18 @@ matrix:
 cache:
   directories:
     - $HOME/.m2/repository
+    - $HOME/.sonar
 
 notifications:
   email: false
+  webhooks:
+    urls:
+      - secure: "HBvQZrZJoFTn4tEi41Cg+lXsIxS0y+i5DiMSoQGQIuXdNgbDcvguHTuj3FGQ9ELOJ5bB9YwBoL/sBSWiSrRM/ust4b8LxP7Ki27oZgmuOT6tUF6o90GROzmKhMqUxeBa6f/exLqRKiTjDLAgYvSPKS28B1GLAYZSYHw2IaVb+pk="
+  on_start: always
+
+addons:
+  apt:
+    packages:
+      # upgrade java 8 as the default version 1.8.0_31 prevents from compile sources
+      # https://github.com/travis-ci/travis-ci/issues/4042
+      - oracle-java8-installer
