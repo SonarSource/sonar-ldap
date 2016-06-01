@@ -16,7 +16,5 @@ export DEPLOY_PULL_REQUEST=true
 
 regular_mvn_build_deploy_analyze
 
-MIN_SQ_VERSION="5.6-RC2"
-echo '======= Run integration tests on minimal supported version of SonarQube ($MIN_SQ_VERSION)'
-./run-integration-tests.sh "$MIN_SQ_VERSION"
+./run-integration-tests.sh "DEV"
 # all other versions of SQ are tested by the QA pipeline at SonarSource
