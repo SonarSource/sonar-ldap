@@ -50,6 +50,7 @@ public class WindowsAuthenticationHelper {
   public static final String BASIC_AUTH_PRINCIPAL_KEY = "ldap.windows.Principal";
 
   private static final Logger LOG = Loggers.get(WindowsAuthenticationHelper.class);
+  private static final String REQUEST_IS_NULL_STRING = "request is null";
 
   private final AdConnectionHelper adConnectionHelper;
   private final IWindowsAuthProvider windowsAuthProvider;
@@ -70,7 +71,7 @@ public class WindowsAuthenticationHelper {
    * Checks if the request has valid {@link WindowsPrincipal}
    */
   public boolean isUserSsoAuthenticated(HttpServletRequest request) {
-    checkNotNull(request, "request is null");
+    checkNotNull(request, REQUEST_IS_NULL_STRING);
 
     return getWindowsPrincipal(request, WindowsAuthenticationHelper.SSO_PRINCIPAL_KEY) != null;
   }
@@ -79,7 +80,7 @@ public class WindowsAuthenticationHelper {
    * Returns {@link WindowsPrincipal} from given {@link HttpServletRequest}
    */
   public WindowsPrincipal getWindowsPrincipal(HttpServletRequest request, String windowsPrincipalKey) {
-    checkNotNull(request, "request is null");
+    checkNotNull(request, REQUEST_IS_NULL_STRING);
     checkNotNull(windowsPrincipalKey, "windowsPrincipalKey is null");
 
     WindowsPrincipal windowsPrincipal = null;
@@ -98,7 +99,7 @@ public class WindowsAuthenticationHelper {
    * Sets {@link WindowsPrincipal} in {@link HttpSession} of given {@link HttpServletRequest}
    */
   public void setWindowsPrincipalForBasicAuth(HttpServletRequest request, WindowsPrincipal windowsPrincipal) {
-    checkNotNull(request, "request is null");
+    checkNotNull(request, REQUEST_IS_NULL_STRING);
     checkNotNull(windowsPrincipal, "windowsPrincipal is null");
 
     HttpSession session = request.getSession();
@@ -111,7 +112,7 @@ public class WindowsAuthenticationHelper {
    * Removes basic auth principal key from{@link HttpSession} of given {@link HttpServletRequest}
    */
   public void removeWindowsPrincipalForBasicAuth(HttpServletRequest request) {
-    checkNotNull(request, "request is null");
+    checkNotNull(request, REQUEST_IS_NULL_STRING);
 
     HttpSession session = request.getSession();
     if (session != null) {
@@ -123,7 +124,7 @@ public class WindowsAuthenticationHelper {
    * Removes sso principal key from {@link HttpSession} of given {@link HttpServletRequest}
    */
   public void removeWindowsPrincipalForSso(HttpServletRequest request) {
-    checkNotNull(request, "request is null");
+    checkNotNull(request, REQUEST_IS_NULL_STRING);
 
     HttpSession session = request.getSession();
     if (session != null) {
@@ -166,7 +167,7 @@ public class WindowsAuthenticationHelper {
    */
   @CheckForNull
   public UserDetails getSsoUserDetails(HttpServletRequest request) {
-    checkNotNull(request, "request is null");
+    checkNotNull(request, REQUEST_IS_NULL_STRING);
 
     WindowsPrincipal windowsPrincipal = getWindowsPrincipal(request, WindowsAuthenticationHelper.SSO_PRINCIPAL_KEY);
     return windowsPrincipal != null ? getUserDetails(windowsPrincipal.getName()) : null;
@@ -235,7 +236,7 @@ public class WindowsAuthenticationHelper {
 
     Map<String, String> adUserDetails = getAdUserDetails(windowsAccount.getDomain(), windowsAccount.getName());
     if (!adUserDetails.isEmpty()) {
-      userDetails.setName(adUserDetails.get(settings.getLdapUserRealNameAttribute()));
+      userDetails.setName(adUserDetails.get(AdConnectionHelper.COMMON_NAME_ATTRIBUTE));
       userDetails.setEmail(adUserDetails.get(AdConnectionHelper.MAIL_ATTRIBUTE));
     } else {
       LOG.debug("Unable to get name and email for user: {}", windowsAccount.getFqn());
@@ -272,9 +273,9 @@ public class WindowsAuthenticationHelper {
     return windowsAccount;
   }
 
-  private Map<String, String> getAdUserDetails(String domainName, String name) {      
+  private Map<String, String> getAdUserDetails(String domainName, String name) {
     Collection<String> requestedDetails = new ArrayList<>();
-    requestedDetails.add(settings.getLdapUserRealNameAttribute());
+    requestedDetails.add(AdConnectionHelper.COMMON_NAME_ATTRIBUTE);
     requestedDetails.add(AdConnectionHelper.MAIL_ATTRIBUTE);
     return adConnectionHelper.getUserDetails(domainName, name, requestedDetails);
   }

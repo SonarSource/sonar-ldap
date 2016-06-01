@@ -107,7 +107,7 @@ public class LdapExtensionsTest {
   }
 
   private List<Class<?>> getExpectedLdapExtensions() {
-    return Arrays.asList(LdapRealm.class, LdapSettingsManager.class, LdapAutodiscovery.class);
+    return Arrays.asList(LdapRealm.class, LdapSettingsManager.class, LdapAutodiscovery.class, LdapSettings.class);
   }
 
   private List<Class<?>> getExpectedWindowsExtensions() {

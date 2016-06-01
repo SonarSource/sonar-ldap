@@ -28,6 +28,7 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.sonar.api.config.Settings;
 import org.sonar.plugins.ldap.server.LdapServer;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -44,7 +45,8 @@ public class LdapSearchTest {
 
   @BeforeClass
   public static void init() {
-    contextFactories = new LdapSettingsManager(LdapSettingsFactory.generateSimpleAnonymousAccessSettings(server, null), new LdapAutodiscovery()).getContextFactories();
+    Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(server, null);
+    contextFactories = new LdapSettingsManager(new LdapSettings(settings), new LdapAutodiscovery()).getContextFactories();
   }
 
   @Test

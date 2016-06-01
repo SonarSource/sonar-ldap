@@ -19,8 +19,10 @@
  */
 package org.sonar.plugins.ldap;
 
+import javax.servlet.http.HttpServletRequest;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.sonar.api.config.Settings;
 import org.sonar.api.security.UserDetails;
 import org.sonar.plugins.ldap.server.LdapServer;
@@ -45,33 +47,38 @@ public class LdapUsersProviderTest {
   @Test
   public void test() throws Exception {
     Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer, infosupportServer);
-    LdapSettingsManager settingsManager = new LdapSettingsManager(settings, new LdapAutodiscovery());
+    LdapSettingsManager settingsManager = new LdapSettingsManager(new LdapSettings(settings), new LdapAutodiscovery());
     LdapUsersProvider usersProvider = new LdapUsersProvider(settingsManager.getContextFactories(), settingsManager.getUserMappings());
 
     UserDetails details;
 
-    details = usersProvider.doGetUserDetails("godin");
+    details = doGetUserDetails(usersProvider, "godin");
     assertThat(details.getName()).isEqualTo("Evgeny Mandrikov");
     assertThat(details.getEmail()).isEqualTo("godin@example.org");
 
-    details = usersProvider.doGetUserDetails("tester");
+    details = doGetUserDetails(usersProvider, "tester");
     assertThat(details.getName()).isEqualTo("Tester Testerovich");
     assertThat(details.getEmail()).isEqualTo("tester@example.org");
 
-    details = usersProvider.doGetUserDetails("without_email");
+    details = doGetUserDetails(usersProvider, "without_email");
     assertThat(details.getName()).isEqualTo("Without Email");
     assertThat(details.getEmail()).isEqualTo("");
 
-    details = usersProvider.doGetUserDetails("notfound");
+    details = doGetUserDetails(usersProvider, "notfound");
     assertThat(details).isNull();
 
-    details = usersProvider.doGetUserDetails("robby");
+    details = doGetUserDetails(usersProvider, "robby");
     assertThat(details.getName()).isEqualTo("Robby Developer");
     assertThat(details.getEmail()).isEqualTo("rd@infosupport.com");
 
-    details = usersProvider.doGetUserDetails("testerInfo");
+    details = doGetUserDetails(usersProvider, "testerInfo");
     assertThat(details.getName()).isEqualTo("Tester Testerovich");
     assertThat(details.getEmail()).isEqualTo("tester@infosupport.com");
+  }
+
+  private static UserDetails doGetUserDetails(LdapUsersProvider usersProvider, String userName) {
+    LdapUsersProvider.Context context = new LdapUsersProvider.Context(userName, Mockito.mock(HttpServletRequest.class));
+    return usersProvider.doGetUserDetails(context);
   }
 
 }

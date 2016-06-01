@@ -57,21 +57,24 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
   /**
    * @throws SonarException if unable to retrieve groups
    */
-  public Collection<String> doGetGroups(String username) {
+  @Override
+  public Collection<String> doGetGroups(Context context) {
+    String username = context.getUsername();
     checkPrerequisites(username);
     Set<String> groups = Sets.newHashSet();
     List<SonarException> sonarExceptions = new ArrayList<>();
-    for (String serverKey : userMappings.keySet()) {
+    for (Map.Entry<String, LdapUserMapping> userMappingEntry : userMappings.entrySet()) {
+      String serverKey = userMappingEntry.getKey();
+
       if (!groupMappings.containsKey(serverKey)) {
         // No group mapping for this ldap instance.
         continue;
       }
-      SearchResult searchResult = searchUserGroups(username, sonarExceptions, serverKey);
 
+      SearchResult searchResult = searchUserGroups(username, sonarExceptions, serverKey);
       if (searchResult != null) {
         try {
-          NamingEnumeration<SearchResult> result = groupMappings
-            .get(serverKey)
+          NamingEnumeration<SearchResult> result = groupMappings.get(serverKey)
             .createSearch(contextFactories.get(serverKey), searchResult).find();
           groups.addAll(mapGroups(serverKey, result));
           // if no exceptions occur, we found the user and his groups and mapped his details.
@@ -81,16 +84,13 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
           LOG.debug(e.getMessage(), e);
           sonarExceptions.add(new SonarException(format("Unable to retrieve groups for user %s in %s", username, serverKey), e));
         }
-      } else {
-        // user not found
-        continue;
       }
     }
     checkResults(groups, sonarExceptions);
     return groups;
   }
 
-  private void checkResults(Set<String> groups, List<SonarException> sonarExceptions) {
+  private static void checkResults(Set<String> groups, List<SonarException> sonarExceptions) {
     if (groups.isEmpty() && !sonarExceptions.isEmpty()) {
       // No groups found and there is an exception so there is a reason the user could not be found.
       throw sonarExceptions.iterator().next();

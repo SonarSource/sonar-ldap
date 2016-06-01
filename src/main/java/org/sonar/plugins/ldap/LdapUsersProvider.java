@@ -59,7 +59,8 @@ public class LdapUsersProvider extends ExternalUsersProvider {
    * @throws SonarException if unable to retrieve details
    */
   @Override
-  public UserDetails doGetUserDetails(@Nullable String username) {
+  public UserDetails doGetUserDetails(Context context) {
+    String username = context.getUsername();
     LOG.debug("Requesting details for user {}", username);
     // If there are no userMappings available, we can not retrieve user details.
     if (userMappings.isEmpty()) {
@@ -69,11 +70,13 @@ public class LdapUsersProvider extends ExternalUsersProvider {
     }
     UserDetails details = null;
     SonarException sonarException = null;
-    for (String serverKey : userMappings.keySet()) {
+    for (Map.Entry<String, LdapUserMapping> userMappingEntry : userMappings.entrySet()) {
+      String serverKey = userMappingEntry.getKey();
+      LdapUserMapping userMapping = userMappingEntry.getValue();
       SearchResult searchResult = null;
       try {
-        searchResult = userMappings.get(serverKey).createSearch(contextFactories.get(serverKey), username)
-          .returns(userMappings.get(serverKey).getEmailAttribute(), userMappings.get(serverKey).getRealNameAttribute())
+        searchResult = userMapping.createSearch(contextFactories.get(serverKey), username)
+          .returns(userMapping.getEmailAttribute(), userMapping.getRealNameAttribute())
           .findUnique();
       } catch (NamingException e) {
         // just in case if Sonar silently swallowed exception
@@ -82,7 +85,7 @@ public class LdapUsersProvider extends ExternalUsersProvider {
       }
       if (searchResult != null) {
         try {
-          details = mapUserDetails(serverKey, searchResult);
+          details = mapUserDetails(userMapping, searchResult);
           // if no exceptions occur, we found the user and mapped his details.
           break;
         } catch (NamingException e) {
@@ -106,16 +109,16 @@ public class LdapUsersProvider extends ExternalUsersProvider {
   /**
    * Map the properties from LDAP to the {@link UserDetails}
    *
-   * @param serverKey the LDAP index so we use the correct {@link LdapUserMapping}
+   * @param userMapping {@link LdapUserMapping}
    * @return If no exceptions are thrown, a {@link UserDetails} object containing the values from LDAP.
    * @throws NamingException In case the communication or mapping to the LDAP server fails.
    */
-  private UserDetails mapUserDetails(String serverKey, SearchResult searchResult) throws NamingException {
+  private static UserDetails mapUserDetails(LdapUserMapping userMapping, SearchResult searchResult) throws NamingException {
     Attributes attributes = searchResult.getAttributes();
-    UserDetails details;
-    details = new UserDetails();
-    details.setName(getAttributeValue(attributes.get(userMappings.get(serverKey).getRealNameAttribute())));
-    details.setEmail(getAttributeValue(attributes.get(userMappings.get(serverKey).getEmailAttribute())));
+    UserDetails details = new UserDetails();
+    details.setName(getAttributeValue(attributes.get(userMapping.getRealNameAttribute())));
+    details.setEmail(getAttributeValue(attributes.get(userMapping.getEmailAttribute())));
+
     return details;
   }
 

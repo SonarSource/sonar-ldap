@@ -27,14 +27,14 @@ import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
 import org.apache.commons.lang.StringUtils;
-import org.sonar.api.security.LoginPasswordAuthenticator;
+import org.sonar.api.security.Authenticator;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 
 /**
  * @author Evgeny Mandrikov
  */
-public class LdapAuthenticator implements LoginPasswordAuthenticator {
+public class LdapAuthenticator extends Authenticator {
 
   private static final Logger LOG = Loggers.get(LdapAuthenticator.class);
   private final Map<String, LdapContextFactory> contextFactories;
@@ -45,25 +45,27 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
     this.userMappings = userMappings;
   }
 
-  public void init() {
-    // nothing to do
-  }
-
   /**
    * Authenticate the user against LDAP servers until first success.
-   * @param login The login to use.
-   * @param password The password to use.
    * @return false if specified user cannot be authenticated with specified password on any LDAP server
    */
-  public boolean authenticate(String login, String password) {
-    for (String ldapKey : userMappings.keySet()) {
+  @Override
+  public boolean doAuthenticate(Context context) {
+    String login = context.getUsername();
+    String password = context.getPassword();
+
+    for (Map.Entry<String, LdapUserMapping> userMappingEntry : userMappings.entrySet()) {
+      String ldapKey = userMappingEntry.getKey();
+      LdapUserMapping userMapping = userMappingEntry.getValue();
+      LdapContextFactory ldapContextFactory = contextFactories.get(ldapKey);
+
       final String principal;
-      if (contextFactories.get(ldapKey).isSasl()) {
+      if (ldapContextFactory.isSasl()) {
         principal = login;
       } else {
         final SearchResult result;
         try {
-          result = userMappings.get(ldapKey).createSearch(contextFactories.get(ldapKey), login).findUnique();
+          result = userMapping.createSearch(ldapContextFactory, login).findUnique();
         } catch (NamingException e) {
           LOG.debug("User {} not found in server {}: {}", login, ldapKey, e.getMessage());
           continue;
@@ -75,10 +77,12 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
         principal = result.getNameInNamespace();
       }
       boolean passwordValid;
-      if (contextFactories.get(ldapKey).isGssapi()) {
-        passwordValid = checkPasswordUsingGssapi(principal, password, ldapKey);
+      if (ldapContextFactory.isGssapi()) {
+        passwordValid = checkPasswordUsingGssApi(principal, password, ldapKey);
+      } else {
+        passwordValid = checkPasswordUsingBind(principal, password, ldapKey);
       }
-      passwordValid = checkPasswordUsingBind(principal, password, ldapKey);
+
       if (passwordValid) {
         return true;
       }
@@ -104,7 +108,7 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
     }
   }
 
-  private boolean checkPasswordUsingGssapi(String principal, String password, String ldapKey) {
+  private boolean checkPasswordUsingGssApi(String principal, String password, String ldapKey) {
     // Use our custom configuration to avoid reliance on external config
     Configuration.setConfiguration(new Krb5LoginConfiguration());
     LoginContext lc;

@@ -20,9 +20,9 @@
 package org.sonar.plugins.ldap;
 
 import java.util.Map;
+import org.sonar.api.security.Authenticator;
 import org.sonar.api.security.ExternalGroupsProvider;
 import org.sonar.api.security.ExternalUsersProvider;
-import org.sonar.api.security.LoginPasswordAuthenticator;
 import org.sonar.api.security.SecurityRealm;
 
 /**
@@ -66,7 +66,7 @@ public class LdapRealm extends SecurityRealm {
   }
 
   @Override
-  public LoginPasswordAuthenticator getLoginPasswordAuthenticator() {
+  public Authenticator doGetAuthenticator() {
     return authenticator;
   }
 

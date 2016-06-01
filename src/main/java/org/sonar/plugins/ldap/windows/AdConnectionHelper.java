@@ -160,7 +160,7 @@ public class AdConnectionHelper {
         return userGroups;
       }
 
-      Collection<String> adUserGroups = getUserGroupsFromAd(connection, activeDirectoryBindString, domainName, userNameDn,
+      Collection<String> adUserGroups = getUserGroupsFromAd(connection, activeDirectoryBindString, userNameDn,
         requestedGroupIdAttribute);
       userGroups.addAll(adUserGroups);
 
@@ -256,7 +256,7 @@ public class AdConnectionHelper {
     return attributeValue;
   }
 
-  private Object getRootDseAttribute(IADs rootDse, String attributeName) {
+  private static Object getRootDseAttribute(IADs rootDse, String attributeName) {
     Object attributeValue = null;
     try {
       LOG.trace("Getting value of {} from {}", attributeName, ROOT_DSE);
@@ -310,7 +310,7 @@ public class AdConnectionHelper {
     return userAttributes.get(DISTINGUISHED_NAME_STR);
   }
 
-  private Collection<String> getUserGroupsFromAd(final _Connection connection, final String connectionUrl, String domainName,
+  private Collection<String> getUserGroupsFromAd(final _Connection connection, final String connectionUrl,
     final String userNameDn, final String requestedGroupIdAttribute) {
     Collection<String> adUserGroups = new ArrayList<>();
 
@@ -397,7 +397,7 @@ public class AdConnectionHelper {
    * User Details Command Text format <LDAP://domain/root>;(filter);requestedAttributes;scope
    * e.g.<LDAP://domain/DC=domain, dc=com>;(sAMAccountName=userName);cn,mail;SubTree
    */
-  private String getUserDetailsCommandText(final String bindString, final String userName,
+  private static String getUserDetailsCommandText(final String bindString, final String userName,
     final Collection<String> requestedDetails) {
     /* Filter on sAMAccountName attribute */
     String filter = String.format("(%s=%s)", SAMACCOUNTNAME_STR, userName);
@@ -410,7 +410,7 @@ public class AdConnectionHelper {
   /*
    * User Groups Command Text format <LDAP://domain/root>;(filter);requestedAttributes;scope
    */
-  private String getUserGroupsCommandText(final String bindString, final String userDn,
+  private static String getUserGroupsCommandText(final String bindString, final String userDn,
     final String requestedDetail) {
     /* Filter on user dn attribute */
     String filter = String.format("(&(objectClass=group)(member=%s))", userDn);
