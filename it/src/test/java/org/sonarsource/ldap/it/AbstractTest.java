@@ -26,7 +26,7 @@ import java.io.File;
 public abstract class AbstractTest {
 
   public static Location ldapPluginLocation() {
-    return FileLocation.byWildcardMavenFilename(new File("../target/"), "sonar-ldap-plugin-*.jar");
+    return FileLocation.byWildcardMavenFilename(new File("../sonar-ldap-plugin/target/"), "sonar-ldap-plugin-*.jar");
   }
 
 }
