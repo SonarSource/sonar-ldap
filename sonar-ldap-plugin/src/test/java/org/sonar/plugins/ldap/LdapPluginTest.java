@@ -20,8 +20,11 @@
 package org.sonar.plugins.ldap;
 
 import org.junit.Test;
+import org.sonar.api.Plugin;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 /**
  * @author Evgeny Mandrikov
@@ -30,7 +33,9 @@ public class LdapPluginTest {
 
   @Test
   public void testGetExtensions() throws Exception {
-    assertThat(new LdapPlugin().getExtensions()).hasSize(3);
+    Plugin.Context context = mock(Plugin.Context.class);
+    new LdapPlugin().define(context);
+    verify(context).addExtensions(LdapRealm.class, LdapSettingsManager.class, LdapAutodiscovery.class);
   }
 
 }

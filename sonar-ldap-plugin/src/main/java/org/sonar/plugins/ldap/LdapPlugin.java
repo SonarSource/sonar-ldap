@@ -19,15 +19,12 @@
  */
 package org.sonar.plugins.ldap;
 
-import java.util.Arrays;
-import java.util.List;
-import org.sonar.api.SonarPlugin;
+import org.sonar.api.Plugin;
 
-public class LdapPlugin extends SonarPlugin {
+public class LdapPlugin implements Plugin {
 
   @Override
-  public List getExtensions() {
-    return Arrays.asList(LdapRealm.class, LdapSettingsManager.class, LdapAutodiscovery.class);
+  public void define(Context context) {
+    context.addExtensions(LdapRealm.class, LdapSettingsManager.class, LdapAutodiscovery.class);
   }
-
 }
