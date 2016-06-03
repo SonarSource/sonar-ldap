@@ -2,6 +2,5 @@ TEST:
   - run-integration-tests
  
 SQ_VERSION:
-  - LTS
   - LATEST_RELEASE
   - DEV
