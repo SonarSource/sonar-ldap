@@ -55,6 +55,7 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
    * @param password The password to use.
    * @return false if specified user cannot be authenticated with specified password on any LDAP server
    */
+  @Override
   public boolean authenticate(String login, String password) {
     for (String ldapKey : userMappings.keySet()) {
       final String principal;
@@ -77,8 +78,9 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
       boolean passwordValid;
       if (contextFactories.get(ldapKey).isGssapi()) {
         passwordValid = checkPasswordUsingGssapi(principal, password, ldapKey);
+      } else {
+        passwordValid = checkPasswordUsingBind(principal, password, ldapKey);
       }
-      passwordValid = checkPasswordUsingBind(principal, password, ldapKey);
       if (passwordValid) {
         return true;
       }

@@ -20,7 +20,9 @@
 package org.sonarsource.ldap.server;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,6 +30,7 @@ import org.apache.directory.api.ldap.model.constants.SupportedSaslMechanisms;
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.DefaultModification;
 import org.apache.directory.api.ldap.model.entry.ModificationOperation;
+import org.apache.directory.api.ldap.model.exception.LdapOperationException;
 import org.apache.directory.api.ldap.model.ldif.ChangeType;
 import org.apache.directory.api.ldap.model.ldif.LdifEntry;
 import org.apache.directory.api.ldap.model.ldif.LdifReader;
@@ -37,7 +40,10 @@ import org.apache.directory.server.core.api.CoreSession;
 import org.apache.directory.server.core.api.DirectoryService;
 import org.apache.directory.server.core.api.InstanceLayout;
 import org.apache.directory.server.core.factory.DefaultDirectoryServiceFactory;
+import org.apache.directory.server.core.kerberos.KeyDerivationInterceptor;
 import org.apache.directory.server.core.partition.impl.avl.AvlPartition;
+import org.apache.directory.server.kerberos.KerberosConfig;
+import org.apache.directory.server.kerberos.kdc.KdcServer;
 import org.apache.directory.server.ldap.LdapServer;
 import org.apache.directory.server.ldap.handlers.sasl.MechanismHandler;
 import org.apache.directory.server.ldap.handlers.sasl.cramMD5.CramMd5MechanismHandler;
@@ -45,6 +51,7 @@ import org.apache.directory.server.ldap.handlers.sasl.digestMD5.DigestMd5Mechani
 import org.apache.directory.server.ldap.handlers.sasl.gssapi.GssapiMechanismHandler;
 import org.apache.directory.server.ldap.handlers.sasl.plain.PlainMechanismHandler;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
+import org.apache.directory.server.protocol.shared.transport.UdpTransport;
 import org.apache.directory.server.xdbm.impl.avl.AvlIndex;
 import org.apache.mina.util.AvailablePortFinder;
 import org.slf4j.Logger;
@@ -59,10 +66,12 @@ public final class ApacheDS {
 
   private DirectoryService directoryService;
   private LdapServer ldapServer;
+  private KdcServer kdcServer;
 
   public static ApacheDS start(String realm, String baseDn, String workDir) throws Exception {
     return new ApacheDS(realm, baseDn)
       .startDirectoryService(workDir)
+      .startKdcServer()
       .startLdapServer()
       .activateNis();
   }
@@ -72,6 +81,8 @@ public final class ApacheDS {
   }
 
   public void stop() throws Exception {
+    kdcServer.stop();
+    kdcServer = null;
     ldapServer.stop();
     ldapServer = null;
     directoryService.shutdown();
@@ -145,6 +156,7 @@ public final class ApacheDS {
     );
     partition.initialize();
     directoryService.addPartition(partition);
+    directoryService.addLast(new KeyDerivationInterceptor());
 
     directoryService.shutdown();
     directoryService.startup();
@@ -172,6 +184,37 @@ public final class ApacheDS {
     ldapServer.setSearchBaseDn(baseDn);
 
     ldapServer.start();
+
+    return this;
+  }
+
+  private ApacheDS startKdcServer() throws IOException, LdapOperationException {
+    int port = AvailablePortFinder.getNextAvailable(6088);
+
+    KerberosConfig kdcConfig = new KerberosConfig();
+    kdcConfig.setServicePrincipal("krbtgt/EXAMPLE.ORG@EXAMPLE.ORG");
+    kdcConfig.setPrimaryRealm("EXAMPLE.ORG");
+    kdcConfig.setPaEncTimestampRequired(false);
+
+    kdcServer = new KdcServer(kdcConfig);
+    kdcServer.setSearchBaseDn("dc=example,dc=org");
+    kdcServer.addTransports(new UdpTransport("localhost", port));
+    kdcServer.setDirectoryService(directoryService);
+    kdcServer.start();
+
+    FileUtils.writeStringToFile(new File("target/krb5.conf"), ""
+        + "[libdefaults]\n"
+        + "    default_realm = EXAMPLE.ORG\n"
+        + "\n"
+        + "[realms]\n"
+        + "    EXAMPLE.ORG = {\n"
+        + "        kdc = localhost:" + port + "\n"
+        + "    }\n"
+        + "\n"
+        + "[domain_realm]\n"
+        + "    .example.org = EXAMPLE.ORG\n"
+        + "    example.org = EXAMPLE.ORG\n",
+      StandardCharsets.UTF_8.name());
 
     return this;
   }

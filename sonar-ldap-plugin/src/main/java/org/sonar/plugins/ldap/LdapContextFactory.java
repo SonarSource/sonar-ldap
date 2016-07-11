@@ -21,12 +21,18 @@ package org.sonar.plugins.ldap;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
-import java.util.Properties;
 import javax.annotation.Nullable;
 import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.ldap.InitialLdapContext;
+import javax.security.auth.Subject;
+import javax.security.auth.login.Configuration;
+import javax.security.auth.login.LoginContext;
+import javax.security.auth.login.LoginException;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
+import java.util.Properties;
 import org.apache.commons.lang.StringUtils;
 import org.sonar.api.config.Settings;
 import org.sonar.api.utils.log.Logger;
@@ -80,7 +86,11 @@ public class LdapContextFactory {
    * Returns {@code InitialDirContext} for Bind user.
    */
   public InitialDirContext createBindContext() throws NamingException {
-    return createInitialDirContext(username, password, true);
+    if (isGssapi()) {
+      return createInitialDirContextUsingGssapi(username, password);
+    } else {
+      return createInitialDirContext(username, password, true);
+    }
   }
 
   /**
@@ -93,6 +103,30 @@ public class LdapContextFactory {
 
   private InitialDirContext createInitialDirContext(String principal, String credentials, boolean pooling) throws NamingException {
     return new InitialLdapContext(getEnvironment(principal, credentials, pooling), null);
+  }
+
+  private InitialDirContext createInitialDirContextUsingGssapi(String principal, String credentials) throws NamingException {
+    Configuration.setConfiguration(new Krb5LoginConfiguration());
+    InitialDirContext initialDirContext;
+    try {
+      LoginContext lc = new LoginContext(getClass().getName(), new CallbackHandlerImpl(principal, credentials));
+      lc.login();
+      initialDirContext = Subject.doAs(lc.getSubject(), new PrivilegedExceptionAction<InitialDirContext>() {
+        @Override
+        public InitialDirContext run() throws NamingException {
+          Properties env = new Properties();
+          env.put(Context.INITIAL_CONTEXT_FACTORY, factory);
+          env.put(Context.PROVIDER_URL, providerUrl);
+          env.put(Context.REFERRAL, DEFAULT_REFERRAL);
+          return new InitialLdapContext(env, null);
+        }
+      });
+    } catch (LoginException | PrivilegedActionException e) {
+      NamingException namingException = new NamingException(e.getMessage());
+      namingException.initCause(e);
+      throw namingException;
+    }
+    return initialDirContext;
   }
 
   private Properties getEnvironment(@Nullable String principal, @Nullable String credentials, boolean pooling) {
