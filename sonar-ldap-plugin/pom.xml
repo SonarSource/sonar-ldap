@@ -12,6 +12,10 @@
   <name>SonarQube LDAP Plugin</name>
   <description>Delegates authentication to LDAP</description>
 
+  <scm>
+    <url>https://github.com/SonarSource/sonar-ldap</url>
+  </scm>
+
   <properties>
     <sonar.pluginName>LDAP</sonar.pluginName>
     <sonar.pluginClass>org.sonar.plugins.ldap.LdapPlugin</sonar.pluginClass>
