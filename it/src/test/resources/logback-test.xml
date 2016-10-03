@@ -9,10 +9,6 @@
     </encoder>
   </appender>
 
-  <logger name="org.sonar">
-    <level value="DEBUG" />
-  </logger>
-
   <logger name="org.apache.directory">
     <level value="ERROR" />
   </logger>

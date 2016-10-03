@@ -25,9 +25,13 @@ public class ApacheDSTest {
 
   @Test
   public void test() throws Exception {
-    ApacheDS
-      .start("example.org", "dc=example,dc=org")
-      .stop();
+    ApacheDS apacheDS = ApacheDS.start("example.org", "dc=example,dc=org");
+    apacheDS.importLdif(ApacheDS.class.getResourceAsStream("/init.ldif"));
+    apacheDS.importLdif(ApacheDS.class.getResourceAsStream("/change.ldif"));
+    apacheDS.importLdif(ApacheDS.class.getResourceAsStream("/delete.ldif"));
+    apacheDS.disableAnonymousAccess();
+    apacheDS.enableAnonymousAccess();
+    apacheDS.stop();
   }
 
 }

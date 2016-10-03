@@ -13,23 +13,27 @@
   <dependencies>
     <dependency>
       <groupId>org.apache.directory.server</groupId>
-      <artifactId>apacheds-server-jndi</artifactId>
+      <artifactId>apacheds-all</artifactId>
       <version>${version.org.apache.directory.server}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.directory.server</groupId>
-      <artifactId>apacheds-protocol-kerberos</artifactId>
-      <version>${version.org.apache.directory.server}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.directory.shared</groupId>
+          <artifactId>shared-ldap-schema</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.directory.api</groupId>
+          <artifactId>api-ldap-schema-data</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.directory.jdbm</groupId>
+          <artifactId>apacheds-jdbm1</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>1.7.12</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>18.0</version>
     </dependency>
 
     <dependency>
