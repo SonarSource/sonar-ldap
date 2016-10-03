@@ -17,16 +17,37 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonarsource.ldap.it;
+package org.sonarsource.ldap.it.utils;
 
-import com.sonar.orchestrator.locator.FileLocation;
-import com.sonar.orchestrator.locator.Location;
-import java.io.File;
+import com.google.gson.Gson;
+import java.util.List;
 
-public abstract class AbstractTest {
+public class Groups {
 
-  public static Location ldapPluginLocation() {
-    return FileLocation.byWildcardMavenFilename(new File("../sonar-ldap-plugin/target/"), "sonar-ldap-plugin-*.jar");
+  private List<Group> groups;
+
+  private Groups(List<Group> groups) {
+    this.groups = groups;
   }
 
+  public List<Group> getGroups() {
+    return groups;
+  }
+
+  public static Groups parse(String json) {
+    Gson gson = new Gson();
+    return gson.fromJson(json, Groups.class);
+  }
+
+  public static class Group {
+    private final String name;
+
+    private Group(String name) {
+      this.name = name;
+    }
+
+    public String getName() {
+      return name;
+    }
+  }
 }

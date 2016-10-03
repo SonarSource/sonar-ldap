@@ -61,6 +61,7 @@
   </ciManagement>
 
   <properties>
+    <sonar.buildVersion>5.6</sonar.buildVersion>
     <version.org.apache.directory.server>1.5.5</version.org.apache.directory.server>
 
     <gitRepositoryName>sonar-ldap</gitRepositoryName>
@@ -84,7 +85,7 @@
       <dependency>
         <groupId>org.assertj</groupId>
         <artifactId>assertj-core</artifactId>
-        <version>2.0.0</version>
+        <version>3.4.1</version>
       </dependency>
       <dependency>
         <groupId>org.apache.directory.server</groupId>

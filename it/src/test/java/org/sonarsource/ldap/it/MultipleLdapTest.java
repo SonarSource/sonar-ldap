@@ -19,23 +19,19 @@
  */
 package org.sonarsource.ldap.it;
 
-import com.google.common.base.Objects;
-import com.google.common.base.Preconditions;
 import com.sonar.orchestrator.Orchestrator;
 import com.sonar.orchestrator.OrchestratorBuilder;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.sonar.wsclient.Host;
-import org.sonar.wsclient.Sonar;
-import org.sonar.wsclient.connectors.ConnectionException;
-import org.sonar.wsclient.connectors.HttpClient4Connector;
-import org.sonar.wsclient.services.UserPropertyCreateQuery;
-import org.sonar.wsclient.services.UserPropertyQuery;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.sonarsource.ldap.it.utils.ItUtils.AUTHORIZED;
+import static org.sonarsource.ldap.it.utils.ItUtils.NOT_AUTHORIZED;
+import static org.sonarsource.ldap.it.utils.ItUtils.ldapPluginLocation;
+import static org.sonarsource.ldap.it.utils.ItUtils.loginAttempt;
 
-public class MultipleLdapTest extends AbstractTest {
+public class MultipleLdapTest {
 
   private static final String BASE_DN1 = "dc=example,dc=org";
   private static final String BASE_DN2 = "dc=infosupport,dc=com";
@@ -110,13 +106,13 @@ public class MultipleLdapTest extends AbstractTest {
    */
   @Test
   public void testLoginOnMultipleServers() throws Exception {
-    assertThat(loginAttempt("godin", "secret1")).as("Unable to login with user in first server").isEqualTo(AUTHORIZED);
-    assertThat(loginAttempt("robby", "secret1")).as("Unable to login with user in second server").isEqualTo(AUTHORIZED);
+    assertThat(loginAttempt(orchestrator, "godin", "secret1")).as("Unable to login with user in first server").isEqualTo(AUTHORIZED);
+    assertThat(loginAttempt(orchestrator, "robby", "secret1")).as("Unable to login with user in second server").isEqualTo(AUTHORIZED);
     // Same user with different password in server 2
-    assertThat(loginAttempt("godin", "secret2")).as("Unable to login with user in second server").isEqualTo(AUTHORIZED);
+    assertThat(loginAttempt(orchestrator, "godin", "secret2")).as("Unable to login with user in second server").isEqualTo(AUTHORIZED);
 
-    assertThat(loginAttempt("godin", "12345")).as("Should not allow login with wrong password").isEqualTo(NOT_AUTHORIZED);
-    assertThat(loginAttempt("foo", "12345")).as("Should not allow login with unknow user").isEqualTo(NOT_AUTHORIZED);
+    assertThat(loginAttempt(orchestrator, "godin", "12345")).as("Should not allow login with wrong password").isEqualTo(NOT_AUTHORIZED);
+    assertThat(loginAttempt(orchestrator, "foo", "12345")).as("Should not allow login with unknow user").isEqualTo(NOT_AUTHORIZED);
   }
 
   private static void importLdif(ApacheDS server, String ldifName) {
@@ -126,45 +122,6 @@ public class MultipleLdapTest extends AbstractTest {
     } catch (Exception e) {
       throw new RuntimeException("Unable to import LDIF(" + resourceName + "): " + e.getMessage(), e);
     }
-  }
-
-  private static String AUTHORIZED = "authorized";
-  private static String NOT_AUTHORIZED = "not authorized";
-
-  /**
-   * Utility method to check that user can be authorized.
-   *
-   * @throws IllegalStateException
-   */
-  private String loginAttempt(String username, String password) {
-    String expectedValue = Long.toString(System.currentTimeMillis());
-    Sonar wsClient = createWsClient(username, password);
-    try {
-      wsClient.create(new UserPropertyCreateQuery("auth", expectedValue));
-    } catch (ConnectionException e) {
-      return NOT_AUTHORIZED;
-    }
-    try {
-      String value = wsClient.find(new UserPropertyQuery("auth")).getValue();
-      if (!Objects.equal(value, expectedValue)) {
-        // exceptional case - update+retrieval were successful, but value doesn't match
-        throw new IllegalStateException("Expected " + expectedValue + " , but got " + value);
-      }
-    } catch (ConnectionException e) {
-      // exceptional case - update was successful, but not retrieval
-      throw new IllegalStateException(e);
-    }
-    return AUTHORIZED;
-  }
-
-  /**
-   * Utility method to create {@link org.sonar.wsclient.Sonar} with specified {@code username} and {@code password}.
-   * Orchestrator does not provide such method.
-   */
-  private Sonar createWsClient(String username, String password) {
-    Preconditions.checkNotNull(username);
-    Preconditions.checkNotNull(password);
-    return new Sonar(new HttpClient4Connector(new Host(orchestrator.getServer().getUrl(), username, password)));
   }
 
 }

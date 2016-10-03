@@ -19,31 +19,26 @@
  */
 package org.sonarsource.ldap.it;
 
-import com.google.common.base.Objects;
-import com.google.common.base.Preconditions;
 import com.sonar.orchestrator.Orchestrator;
 import com.sonar.orchestrator.OrchestratorBuilder;
-import com.sonar.orchestrator.selenium.Selenese;
 import org.junit.After;
 import org.junit.Test;
-import org.sonar.wsclient.Host;
-import org.sonar.wsclient.Sonar;
-import org.sonar.wsclient.connectors.ConnectionException;
-import org.sonar.wsclient.connectors.HttpClient4Connector;
-import org.sonar.wsclient.services.PropertyUpdateQuery;
-import org.sonar.wsclient.services.UserPropertyCreateQuery;
-import org.sonar.wsclient.services.UserPropertyQuery;
-import org.sonar.wsclient.user.UserParameters;
+import org.sonarsource.ldap.it.utils.UserRule;
 
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.sonarsource.ldap.it.utils.ItUtils.AUTHORIZED;
+import static org.sonarsource.ldap.it.utils.ItUtils.NOT_AUTHORIZED;
+import static org.sonarsource.ldap.it.utils.ItUtils.ldapPluginLocation;
+import static org.sonarsource.ldap.it.utils.ItUtils.loginAttempt;
 
-public class LdapTest extends AbstractTest {
+public class LdapTest {
 
   private static final String BASE_DN = "dc=sonarsource,dc=com";
 
   private static ApacheDS ldapServer;
   private static Orchestrator orchestrator;
+  private static UserRule userRule;
 
   private static void start(boolean syncGroups) {
     // Start LDAP server
@@ -75,6 +70,7 @@ public class LdapTest extends AbstractTest {
 
     orchestrator = orchestratorBuilder.build();
     orchestrator.start();
+    userRule = UserRule.from(orchestrator);
   }
 
   @After
@@ -82,6 +78,7 @@ public class LdapTest extends AbstractTest {
     if (orchestrator != null) {
       orchestrator.stop();
       orchestrator = null;
+      userRule = null;
     }
     if (ldapServer != null) {
       try {
@@ -102,40 +99,31 @@ public class LdapTest extends AbstractTest {
 
     // When user exists in Sonar, but not in LDAP (technical account)
     // Then can login because admin is technical account by default
-    assertThat(loginAttempt("admin", "admin")).as("admin available in Sonar, even if not available in LDAP").isEqualTo(AUTHORIZED);
-    executeSelenese("admin-available");
+    checkAdminUserIsAvailable();
 
-    // Since 5.5. property 'sonar.security.localUsers' has been removed and replace by a property in DB (an set to tru for user created from the server)
-    if (orchestrator.getServer().version().isGreaterThanOrEquals("5.5")) {
-      orchestrator.getServer().adminWsClient().userClient().create(UserParameters.create().login("admin2").name("Admin2").password("foobar").passwordConfirmation("foobar"));
-      assertThat(loginAttempt("admin2", "foobar")).as("admin2 available in Sonar, not available in LDAP but is a local user").isEqualTo(AUTHORIZED);
-    } else if (!orchestrator.getServer().version().isGreaterThan("5.5")) {
-      orchestrator.getServer().adminWsClient().userClient().create(UserParameters.create().login("admin2").name("Admin2").password("foobar").passwordConfirmation("foobar"));
-      assertThat(loginAttempt("admin2", "foobar")).as("admin2 available in Sonar, but not available in LDAP and not a local user").isEqualTo(NOT_AUTHORIZED);
-      // Add admin2 to the list of local users
-      orchestrator.getServer().getAdminWsClient().update(new PropertyUpdateQuery("sonar.security.localUsers", "admin,admin2"));
-      assertThat(loginAttempt("admin2", "foobar")).as("admin2 available in Sonar, not available in LDAP but is a local user").isEqualTo(AUTHORIZED);
-    }
+    // orchestrator.getServer().adminWsClient().userClient().create(UserParameters.create().login("admin2").name("Admin2").password("foobar").passwordConfirmation("foobar"));
+    userRule.createUser("admin2", "Admin2", null, "foobar");
+    assertThat(loginAttempt(orchestrator, "admin2", "foobar")).as("admin2 available in Sonar, not available in LDAP but is a local user").isEqualTo(AUTHORIZED);
 
     // When user not exists in Sonar and in LDAP
     // Then can not login
-    assertThat(loginAttempt("godin", "12345")).as("User not created in Sonar").isEqualTo(NOT_AUTHORIZED);
+    assertThat(loginAttempt(orchestrator, "godin", "12345")).as("User not created in Sonar").isEqualTo(NOT_AUTHORIZED);
 
     // Verify that we can't login with blank password (SONARPLUGINS-2493)
-    assertThat(loginAttempt("godin", "")).as("Blank password doens't allow to login").isEqualTo(NOT_AUTHORIZED);
+    assertThat(loginAttempt(orchestrator, "godin", "")).as("Blank password doens't allow to login").isEqualTo(NOT_AUTHORIZED);
 
     // When user created in LDAP
     importLdif("add-user");
     // Then user created in Sonar with details from LDAP
-    assertThat(loginAttempt("godin", "12345")).as("User created in Sonar").isEqualTo(AUTHORIZED);
-    executeSelenese("user-created");
+    assertThat(loginAttempt(orchestrator, "godin", "12345")).as("User created in Sonar").isEqualTo(AUTHORIZED);
+    checkUserDetails();
 
     // When new password set in LDAP
     importLdif("change-password");
     // Then new password works in Sonar, but not old password
-    assertThat(loginAttempt("godin", "54321")).as("New password works in Sonar").isEqualTo(AUTHORIZED);
-    assertThat(loginAttempt("godin", "12345")).as("Old password does not work in Sonar").isEqualTo(NOT_AUTHORIZED);
-    executeSelenese("password-changed");
+    assertThat(loginAttempt(orchestrator, "godin", "54321")).as("New password works in Sonar").isEqualTo(AUTHORIZED);
+    assertThat(loginAttempt(orchestrator, "godin", "12345")).as("Old password does not work in Sonar").isEqualTo(NOT_AUTHORIZED);
+    checkUserDetails();
   }
 
   /**
@@ -147,7 +135,7 @@ public class LdapTest extends AbstractTest {
 
     importLdif("add-user-without-password");
 
-    assertThat(loginAttempt("gerard", "")).as("Blank password doens't allow to login").isEqualTo(NOT_AUTHORIZED);
+    assertThat(loginAttempt(orchestrator, "gerard", "")).as("Blank password doens't allow to login").isEqualTo(NOT_AUTHORIZED);
   }
 
   /**
@@ -159,25 +147,24 @@ public class LdapTest extends AbstractTest {
 
     // When user exists in Sonar, but not in LDAP
     // Then can login
-    assertThat(loginAttempt("admin", "admin")).as("admin available in Sonar, even if not available in LDAP").isEqualTo(AUTHORIZED);
-    executeSelenese("admin-available");
+    checkAdminUserIsAvailable();
 
     // When user not exists in Sonar and in LDAP
     // Then can not login
-    assertThat(loginAttempt("godin", "12345")).as("User not created in Sonar").isEqualTo(NOT_AUTHORIZED);
+    assertThat(loginAttempt(orchestrator, "godin", "12345")).as("User not created in Sonar").isEqualTo(NOT_AUTHORIZED);
 
     // When user created in LDAP
     importLdif("add-user");
     // Then user created in Sonar with details from LDAP
-    assertThat(loginAttempt("godin", "12345")).as("User created in Sonar").isEqualTo(AUTHORIZED);
-    executeSelenese("user-created");
+    assertThat(loginAttempt(orchestrator, "godin", "12345")).as("User created in Sonar").isEqualTo(AUTHORIZED);
+    checkUserDetails();
 
     // When new password set in LDAP
     importLdif("change-password");
     // Then new password works in Sonar, but not old password
-    assertThat(loginAttempt("godin", "54321")).as("New password works in Sonar").isEqualTo(AUTHORIZED);
-    assertThat(loginAttempt("godin", "12345")).as("Old password does not work in Sonar").isEqualTo(NOT_AUTHORIZED);
-    executeSelenese("password-changed");
+    assertThat(loginAttempt(orchestrator, "godin", "54321")).as("New password works in Sonar").isEqualTo(AUTHORIZED);
+    assertThat(loginAttempt(orchestrator, "godin", "12345")).as("Old password does not work in Sonar").isEqualTo(NOT_AUTHORIZED);
+    checkUserDetails();
   }
 
   /**
@@ -190,9 +177,10 @@ public class LdapTest extends AbstractTest {
     // When user created in LDAP
     importLdif("add-user");
     // Then user created in Sonar with details from LDAP
-    assertThat(loginAttempt("godin", "12345")).as("User created in Sonar").isEqualTo(AUTHORIZED);
+    assertThat(loginAttempt(orchestrator, "godin", "12345")).as("User created in Sonar").isEqualTo(AUTHORIZED);
+    userRule.verifyUserExists("godin", "Evgeny Mandrikov", "test@example.org", false);
     // But without synchronization of groups
-    executeSelenese("user-created-without-groups-sync");
+    userRule.verifyUserGroupMembership("godin", "sonar-users");
   }
 
   private static void importLdif(String ldifName) {
@@ -204,47 +192,15 @@ public class LdapTest extends AbstractTest {
     }
   }
 
-  private static void executeSelenese(String name) {
-    orchestrator.executeSelenese(Selenese.builder().setHtmlTestsInClasspath("ldap-" + name, format("/selenium/%s.html", name)).build());
+  private void checkAdminUserIsAvailable() {
+    assertThat(loginAttempt(orchestrator, "admin", "admin")).as("admin available in Sonar, even if not available in LDAP").isEqualTo(AUTHORIZED);
+    userRule.verifyUserExists("admin", "Administrator", null, true);
+    userRule.verifyUserGroupMembership("admin", "sonar-administrators", "sonar-users");
   }
 
-  private static String AUTHORIZED = "authorized";
-  private static String NOT_AUTHORIZED = "not authorized";
-
-  /**
-   * Utility method to check that user can be authorized.
-   *
-   * @throws IllegalStateException
-   */
-  private static String loginAttempt(String username, String password) {
-    String expectedValue = Long.toString(System.currentTimeMillis());
-    Sonar wsClient = createWsClient(username, password);
-    try {
-      wsClient.create(new UserPropertyCreateQuery("auth", expectedValue));
-    } catch (ConnectionException e) {
-      return NOT_AUTHORIZED;
-    }
-    try {
-      String value = wsClient.find(new UserPropertyQuery("auth")).getValue();
-      if (!Objects.equal(value, expectedValue)) {
-        // exceptional case - update+retrieval were successful, but value doesn't match
-        throw new IllegalStateException("Expected " + expectedValue + " , but got " + value);
-      }
-    } catch (ConnectionException e) {
-      // exceptional case - update was successful, but not retrieval
-      throw new IllegalStateException(e);
-    }
-    return AUTHORIZED;
-  }
-
-  /**
-   * Utility method to create {@link org.sonar.wsclient.Sonar} with specified {@code username} and {@code password}.
-   * Orchestrator does not provide such method.
-   */
-  private static Sonar createWsClient(String username, String password) {
-    Preconditions.checkNotNull(username);
-    Preconditions.checkNotNull(password);
-    return new Sonar(new HttpClient4Connector(new Host(orchestrator.getServer().getUrl(), username, password)));
+  private void checkUserDetails() {
+    userRule.verifyUserExists("godin", "Evgeny Mandrikov", "test@example.org", false);
+    userRule.verifyUserGroupMembership("godin", "sonar-administrators", "sonar-users");
   }
 
 }
