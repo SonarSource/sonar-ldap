@@ -14,5 +14,4 @@ set -euo pipefail
 SONARQUBE_VERSION=$1
 shift 1
 
-cd it
-mvn verify -B -e -V -Dsonar.runtimeVersion="$SONARQUBE_VERSION" -Dmaven.test.redirectTestOutputToFile=false $*
+mvn verify -B -e -V -Pits -pl server,it -Dsonar.runtimeVersion="$SONARQUBE_VERSION" -Dmaven.test.redirectTestOutputToFile=false $*

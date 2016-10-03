@@ -31,10 +31,9 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- ApacheDS -->
     <dependency>
-      <groupId>org.apache.directory.server</groupId>
-      <artifactId>apacheds-server-jndi</artifactId>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>server</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -71,7 +70,7 @@
                       <overWrite>true</overWrite>
                     </artifactItem>
                   </artifactItems>
-                  <outputDirectory>../sonar-ldap-plugin/target</outputDirectory>
+                  <outputDirectory>${project.basedir}/../sonar-ldap-plugin/target</outputDirectory>
                   <overWriteReleases>true</overWriteReleases>
                   <overWriteSnapshots>true</overWriteSnapshots>
                 </configuration>

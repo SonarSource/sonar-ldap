@@ -68,6 +68,7 @@
   </properties>
 
   <modules>
+    <module>server</module>
     <module>sonar-ldap-plugin</module>
   </modules>
 
@@ -83,14 +84,15 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>server</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
         <groupId>org.assertj</groupId>
         <artifactId>assertj-core</artifactId>
         <version>3.4.1</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.directory.server</groupId>
-        <artifactId>apacheds-server-jndi</artifactId>
-        <version>${version.org.apache.directory.server}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

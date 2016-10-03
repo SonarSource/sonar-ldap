@@ -24,6 +24,7 @@ import com.sonar.orchestrator.OrchestratorBuilder;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.sonarsource.ldap.server.ApacheDS;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonarsource.ldap.it.utils.ItUtils.AUTHORIZED;
@@ -49,8 +50,8 @@ public class MultipleLdapTest {
 
     // Start LDAP server
     try {
-      ldapServer1 = ApacheDS.start(BASE_DN1, "target/ldap1-work");
-      ldapServer2 = ApacheDS.start(BASE_DN2, "target/ldap2-work");
+      ldapServer1 = ApacheDS.start("sonarsource.com", BASE_DN1, "target/ldap1-work");
+      ldapServer2 = ApacheDS.start("sonarsource.com", BASE_DN2, "target/ldap2-work");
     } catch (Exception e) {
       throw new RuntimeException("Unable to start LDAP server", e);
     }

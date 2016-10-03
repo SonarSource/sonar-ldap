@@ -77,22 +77,9 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- ApacheDS -->
     <dependency>
-      <groupId>org.apache.directory.server</groupId>
-      <artifactId>apacheds-core</artifactId>
-      <version>${version.org.apache.directory.server}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.directory.server</groupId>
-      <artifactId>apacheds-server-jndi</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.directory.server</groupId>
-      <artifactId>apacheds-protocol-kerberos</artifactId>
-      <version>${version.org.apache.directory.server}</version>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>server</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

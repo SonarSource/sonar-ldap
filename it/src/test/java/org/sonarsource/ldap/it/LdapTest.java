@@ -24,6 +24,7 @@ import com.sonar.orchestrator.OrchestratorBuilder;
 import org.junit.After;
 import org.junit.Test;
 import org.sonarsource.ldap.it.utils.UserRule;
+import org.sonarsource.ldap.server.ApacheDS;
 
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,7 +44,7 @@ public class LdapTest {
   private static void start(boolean syncGroups) {
     // Start LDAP server
     try {
-      ldapServer = ApacheDS.start(BASE_DN, "target/ldap-work");
+      ldapServer = ApacheDS.start("sonarsource.com", BASE_DN, "target/ldap-work");
     } catch (Exception e) {
       throw new RuntimeException("Unable to start LDAP server", e);
     }
