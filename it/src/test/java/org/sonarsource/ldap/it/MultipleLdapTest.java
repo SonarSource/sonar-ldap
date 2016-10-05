@@ -68,9 +68,10 @@ public class MultipleLdapTest {
       // users mapping
       .setServerProperty("ldap.example.user.baseDn", "ou=users," + BASE_DN1)
       .setServerProperty("ldap.infosupport.user.baseDn", "ou=users," + BASE_DN2)
+      // FIXME: why unused?
       // groups mapping
-      .setServerProperty("ldap.example.group.baseDn", "ou=groups," + BASE_DN1)
-      .setServerProperty("ldap.infosupport.group.baseDn", "ou=groups," + BASE_DN2)
+//      .setServerProperty("ldap.example.group.baseDn", "ou=groups," + BASE_DN1)
+//      .setServerProperty("ldap.infosupport.group.baseDn", "ou=groups," + BASE_DN2)
       .build();
 
     orchestrator = orchestratorBuilder.build();
@@ -113,6 +114,7 @@ public class MultipleLdapTest {
     assertThat(loginAttempt(orchestrator, "godin", "secret2")).as("Unable to login with user in second server").isEqualTo(AUTHORIZED);
 
     assertThat(loginAttempt(orchestrator, "godin", "12345")).as("Should not allow login with wrong password").isEqualTo(NOT_AUTHORIZED);
+    // FIXME: typo "unknow"
     assertThat(loginAttempt(orchestrator, "foo", "12345")).as("Should not allow login with unknow user").isEqualTo(NOT_AUTHORIZED);
   }
 

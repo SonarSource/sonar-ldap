@@ -65,7 +65,8 @@ public class LdapTest {
       orchestratorBuilder
         // groups mapping
         .setServerProperty("ldap.group.baseDn", "ou=groups," + BASE_DN)
-        .setServerProperty("ldap.group.memberFormat", "uid=$username,ou=people," + BASE_DN)
+        // FIXME: why unused?
+//        .setServerProperty("ldap.group.memberFormat", "uid=$username,ou=people," + BASE_DN)
         .build();
     }
 
