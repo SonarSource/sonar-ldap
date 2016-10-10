@@ -27,14 +27,14 @@ import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
 import org.apache.commons.lang.StringUtils;
-import org.sonar.api.security.LoginPasswordAuthenticator;
+import org.sonar.api.security.Authenticator;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 
 /**
  * @author Evgeny Mandrikov
  */
-public class LdapAuthenticator implements LoginPasswordAuthenticator {
+public class LdapAuthenticator extends Authenticator {
 
   private static final Logger LOG = Loggers.get(LdapAuthenticator.class);
   private final Map<String, LdapContextFactory> contextFactories;
@@ -45,8 +45,9 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
     this.userMappings = userMappings;
   }
 
-  public void init() {
-    // nothing to do
+  @Override
+  public boolean doAuthenticate(Context context) {
+    return authenticate(context.getUsername(), context.getPassword());
   }
 
   /**
@@ -55,7 +56,6 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
    * @param password The password to use.
    * @return false if specified user cannot be authenticated with specified password on any LDAP server
    */
-  @Override
   public boolean authenticate(String login, String password) {
     for (String ldapKey : userMappings.keySet()) {
       final String principal;

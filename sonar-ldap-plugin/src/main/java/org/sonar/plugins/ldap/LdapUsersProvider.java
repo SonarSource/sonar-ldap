@@ -53,12 +53,16 @@ public class LdapUsersProvider extends ExternalUsersProvider {
     return (String) attribute.get();
   }
 
+  @Override
+  public UserDetails doGetUserDetails(Context context) {
+    return getUserDetails(context.getUsername());
+  }
+
   /**
    * @return details for specified user, or null if such user doesn't exist
    * @throws LdapException if unable to retrieve details
    */
-  @Override
-  public UserDetails doGetUserDetails(@Nullable String username) {
+  public UserDetails getUserDetails(String username) {
     LOG.debug("Requesting details for user {}", username);
     // If there are no userMappings available, we can not retrieve user details.
     if (userMappings.isEmpty()) {

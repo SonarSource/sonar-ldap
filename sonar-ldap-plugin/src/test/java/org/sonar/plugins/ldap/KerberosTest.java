@@ -22,9 +22,13 @@ package org.sonar.plugins.ldap;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.sonar.api.config.Settings;
+import org.sonar.api.security.Authenticator;
+import org.sonar.api.security.ExternalGroupsProvider;
 import org.sonar.plugins.ldap.server.LdapServer;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,12 +49,12 @@ public class KerberosTest {
 
     ldapRealm.init();
 
-    assertThat(ldapRealm.getLoginPasswordAuthenticator().authenticate("Godin@EXAMPLE.ORG", "wrong_user_password")).isFalse();
-    assertThat(ldapRealm.getLoginPasswordAuthenticator().authenticate("Godin@EXAMPLE.ORG", "user_password")).isTrue();
+    assertThat(ldapRealm.doGetAuthenticator().doAuthenticate(new Authenticator.Context("Godin@EXAMPLE.ORG", "wrong_user_password", Mockito.mock(HttpServletRequest.class)))).isFalse();
+    assertThat(ldapRealm.doGetAuthenticator().doAuthenticate(new Authenticator.Context("Godin@EXAMPLE.ORG", "user_password", Mockito.mock(HttpServletRequest.class)))).isTrue();
     // Using default realm from krb5.conf:
-    assertThat(ldapRealm.getLoginPasswordAuthenticator().authenticate("Godin", "user_password")).isTrue();
+    assertThat(ldapRealm.doGetAuthenticator().doAuthenticate(new Authenticator.Context("Godin", "user_password", Mockito.mock(HttpServletRequest.class)))).isTrue();
 
-    assertThat(ldapRealm.getGroupsProvider().doGetGroups("godin")).containsOnly("sonar-users");
+    assertThat(ldapRealm.getGroupsProvider().doGetGroups(new ExternalGroupsProvider.Context("godin", Mockito.mock(HttpServletRequest.class)))).containsOnly("sonar-users");
   }
 
   @Test

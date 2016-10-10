@@ -50,26 +50,26 @@ public class LdapUsersProviderTest {
 
     UserDetails details;
 
-    details = usersProvider.doGetUserDetails("godin");
+    details = usersProvider.getUserDetails("godin");
     assertThat(details.getName()).isEqualTo("Evgeny Mandrikov");
     assertThat(details.getEmail()).isEqualTo("godin@example.org");
 
-    details = usersProvider.doGetUserDetails("tester");
+    details = usersProvider.getUserDetails("tester");
     assertThat(details.getName()).isEqualTo("Tester Testerovich");
     assertThat(details.getEmail()).isEqualTo("tester@example.org");
 
-    details = usersProvider.doGetUserDetails("without_email");
+    details = usersProvider.getUserDetails("without_email");
     assertThat(details.getName()).isEqualTo("Without Email");
     assertThat(details.getEmail()).isEqualTo("");
 
-    details = usersProvider.doGetUserDetails("notfound");
+    details = usersProvider.getUserDetails("notfound");
     assertThat(details).isNull();
 
-    details = usersProvider.doGetUserDetails("robby");
+    details = usersProvider.getUserDetails("robby");
     assertThat(details.getName()).isEqualTo("Robby Developer");
     assertThat(details.getEmail()).isEqualTo("rd@infosupport.com");
 
-    details = usersProvider.doGetUserDetails("testerInfo");
+    details = usersProvider.getUserDetails("testerInfo");
     assertThat(details.getName()).isEqualTo("Tester Testerovich");
     assertThat(details.getEmail()).isEqualTo("tester@infosupport.com");
   }

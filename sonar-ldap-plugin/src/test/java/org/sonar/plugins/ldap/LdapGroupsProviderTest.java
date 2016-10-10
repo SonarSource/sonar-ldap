@@ -51,13 +51,13 @@ public class LdapGroupsProviderTest {
     LdapGroupsProvider groupsProvider = new LdapGroupsProvider(settingsManager.getContextFactories(), settingsManager.getUserMappings(), settingsManager.getGroupMappings());
     Collection<String> groups;
 
-    groups = groupsProvider.doGetGroups("tester");
+    groups = groupsProvider.getGroups("tester");
     assertThat(groups).containsOnly("sonar-users");
 
-    groups = groupsProvider.doGetGroups("godin");
+    groups = groupsProvider.getGroups("godin");
     assertThat(groups).containsOnly("sonar-users", "sonar-developers");
 
-    groups = groupsProvider.doGetGroups("notfound");
+    groups = groupsProvider.getGroups("notfound");
     assertThat(groups).isEmpty();
   }
 
@@ -70,19 +70,19 @@ public class LdapGroupsProviderTest {
 
     Collection<String> groups;
 
-    groups = groupsProvider.doGetGroups("tester");
+    groups = groupsProvider.getGroups("tester");
     assertThat(groups).containsOnly("sonar-users");
 
-    groups = groupsProvider.doGetGroups("godin");
+    groups = groupsProvider.getGroups("godin");
     assertThat(groups).containsOnly("sonar-users", "sonar-developers");
 
-    groups = groupsProvider.doGetGroups("notfound");
+    groups = groupsProvider.getGroups("notfound");
     assertThat(groups).isEmpty();
 
-    groups = groupsProvider.doGetGroups("testerInfo");
+    groups = groupsProvider.getGroups("testerInfo");
     assertThat(groups).containsOnly("sonar-users");
 
-    groups = groupsProvider.doGetGroups("robby");
+    groups = groupsProvider.getGroups("robby");
     assertThat(groups).containsOnly("sonar-users", "sonar-developers");
   }
 
@@ -95,7 +95,7 @@ public class LdapGroupsProviderTest {
 
     Collection<String> groups;
 
-    groups = groupsProvider.doGetGroups("godin");
+    groups = groupsProvider.getGroups("godin");
     assertThat(groups).containsOnly("linux-users");
   }
 
@@ -109,10 +109,10 @@ public class LdapGroupsProviderTest {
 
     Collection<String> groups;
 
-    groups = groupsProvider.doGetGroups("godin");
+    groups = groupsProvider.getGroups("godin");
     assertThat(groups).containsOnly("linux-users");
 
-    groups = groupsProvider.doGetGroups("robby");
+    groups = groupsProvider.getGroups("robby");
     assertThat(groups).containsOnly("linux-users");
   }
 
@@ -125,7 +125,7 @@ public class LdapGroupsProviderTest {
 
     Collection<String> groups;
 
-    groups = groupsProvider.doGetGroups("godin");
+    groups = groupsProvider.getGroups("godin");
     assertThat(groups).containsOnly("sonar-users", "sonar-developers", "linux-users");
   }
 
@@ -139,10 +139,10 @@ public class LdapGroupsProviderTest {
 
     Collection<String> groups;
 
-    groups = groupsProvider.doGetGroups("godin");
+    groups = groupsProvider.getGroups("godin");
     assertThat(groups).containsOnly("sonar-users", "sonar-developers", "linux-users");
 
-    groups = groupsProvider.doGetGroups("robby");
+    groups = groupsProvider.getGroups("robby");
     assertThat(groups).containsOnly("sonar-users", "sonar-developers", "linux-users");
   }
 

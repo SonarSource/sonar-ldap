@@ -52,11 +52,15 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
     this.groupMappings = groupMapping;
   }
 
+  @Override
+  public Collection<String> doGetGroups(Context context) {
+    return getGroups(context.getUsername());
+  }
+
   /**
    * @throws LdapException if unable to retrieve groups
    */
-  @Override
-  public Collection<String> doGetGroups(String username) {
+  public Collection<String> getGroups(String username) {
     checkPrerequisites(username);
     Set<String> groups = new HashSet<>();
     List<LdapException> exceptions = new ArrayList<>();
