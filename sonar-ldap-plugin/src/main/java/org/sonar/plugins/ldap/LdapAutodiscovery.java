@@ -19,7 +19,6 @@
  */
 package org.sonar.plugins.ldap;
 
-import com.google.common.annotations.VisibleForTesting;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -123,7 +122,6 @@ public class LdapAutodiscovery {
     return new ArrayList<>(result);
   }
 
-  @VisibleForTesting
   public static class LdapSrvRecord implements Comparable<LdapSrvRecord> {
     private final String serverUrl;
     private final int priority;

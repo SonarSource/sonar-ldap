@@ -19,7 +19,8 @@
  */
 package org.sonar.plugins.ldap;
 
-import com.google.common.collect.Iterators;
+import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.Map;
 import javax.naming.NamingException;
 import javax.naming.directory.SearchControls;
@@ -61,7 +62,7 @@ public class LdapSearchTest {
     assertThat(search.getParameters()).isEqualTo(new String[] {"inetOrgPerson"});
     assertThat(search.getReturningAttributes()).isEqualTo(new String[] {"objectClass"});
     assertThat(search.toString()).isEqualTo("LdapSearch{baseDn=dc=example,dc=org, scope=subtree, request=(objectClass={0}), parameters=[inetOrgPerson], attributes=[objectClass]}");
-    assertThat(Iterators.size(Iterators.forEnumeration(search.find()))).isEqualTo(3);
+    assertThat(enumerationToArrayList(search.find()).size()).isEqualTo(3);
     thrown.expect(NamingException.class);
     thrown.expectMessage("Non unique result for " + search.toString());
     search.findUnique();
@@ -82,7 +83,7 @@ public class LdapSearchTest {
     assertThat(search.getParameters()).isEqualTo(new String[] {"inetOrgPerson"});
     assertThat(search.getReturningAttributes()).isEqualTo(new String[] {"cn"});
     assertThat(search.toString()).isEqualTo("LdapSearch{baseDn=dc=example,dc=org, scope=onelevel, request=(objectClass={0}), parameters=[inetOrgPerson], attributes=[cn]}");
-    assertThat(Iterators.size(Iterators.forEnumeration(search.find()))).isEqualTo(0);
+    assertThat(enumerationToArrayList(search.find()).size()).isEqualTo(0);
     assertThat(search.findUnique()).isNull();
   }
 
@@ -102,8 +103,16 @@ public class LdapSearchTest {
     assertThat(search.getReturningAttributes()).isEqualTo(new String[] {"uid"});
     assertThat(search.toString()).isEqualTo(
       "LdapSearch{baseDn=cn=bind,ou=users,dc=example,dc=org, scope=object, request=(objectClass={0}), parameters=[uidObject], attributes=[uid]}");
-    assertThat(Iterators.size(Iterators.forEnumeration(search.find()))).isEqualTo(1);
+    assertThat(enumerationToArrayList(search.find()).size()).isEqualTo(1);
     assertThat(search.findUnique()).isNotNull();
+  }
+
+  private static <E> ArrayList<E> enumerationToArrayList(Enumeration<E> enumeration) {
+    ArrayList<E> result = new ArrayList<>();
+    while (enumeration.hasMoreElements()) {
+      result.add(enumeration.nextElement());
+    }
+    return result;
   }
 
 }

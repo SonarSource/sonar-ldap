@@ -19,7 +19,6 @@
  */
 package org.sonar.plugins.ldap;
 
-import com.google.common.base.MoreObjects;
 import org.apache.commons.lang.StringUtils;
 import org.sonar.api.config.Settings;
 import org.sonar.api.utils.log.Loggers;
@@ -120,12 +119,12 @@ public class LdapUserMapping {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-      .add("baseDn", getBaseDn())
-      .add("request", getRequest())
-      .add("realNameAttribute", getRealNameAttribute())
-      .add("emailAttribute", getEmailAttribute())
-      .toString();
+    return getClass().getSimpleName() + "{" +
+      "baseDn=" + getBaseDn() +
+      ", request=" + getRequest() +
+      ", realNameAttribute=" + getRealNameAttribute() +
+      ", emailAttribute=" + getEmailAttribute() +
+      "}";
   }
 
 }

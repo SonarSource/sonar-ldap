@@ -19,8 +19,6 @@
  */
 package org.sonar.plugins.ldap;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.MoreObjects;
 import javax.annotation.Nullable;
 import javax.naming.Context;
 import javax.naming.NamingException;
@@ -49,13 +47,13 @@ public class LdapContextFactory {
   private static final String DEFAULT_FACTORY = "com.sun.jndi.ldap.LdapCtxFactory";
   private static final String DEFAULT_REFERRAL = "follow";
 
-  @VisibleForTesting
+  // visible for testing
   static final String GSSAPI_METHOD = "GSSAPI";
 
-  @VisibleForTesting
+  // visible for testing
   static final String DIGEST_MD5_METHOD = "DIGEST-MD5";
 
-  @VisibleForTesting
+  // visible for testing
   static final String CRAM_MD5_METHOD = "CRAM-MD5";
 
   /**
@@ -187,13 +185,13 @@ public class LdapContextFactory {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-      .add("url", providerUrl)
-      .add("authentication", authentication)
-      .add("factory", factory)
-      .add("bindDn", username)
-      .add("realm", realm)
-      .toString();
+    return getClass().getSimpleName() + "{" +
+      "url=" + providerUrl +
+      ", authentication=" + authentication +
+      ", factory=" + factory +
+      ", bindDn=" + username +
+      ", realm=" + realm +
+      "}";
   }
 
 }

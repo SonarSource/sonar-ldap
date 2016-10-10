@@ -19,7 +19,6 @@
  */
 package org.sonar.plugins.ldap;
 
-import com.google.common.base.MoreObjects;
 import java.util.Arrays;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -153,13 +152,13 @@ public class LdapSearch {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("baseDn", baseDn)
-        .add("scope", scopeToString())
-        .add("request", request)
-        .add("parameters", Arrays.toString(parameters))
-        .add("attributes", Arrays.toString(returningAttributes))
-        .toString();
+    return getClass().getSimpleName() + "{" +
+      "baseDn=" + baseDn +
+      ", scope=" + scopeToString() +
+      ", request=" + request +
+      ", parameters=" + Arrays.toString(parameters) +
+      ", attributes=" + Arrays.toString(returningAttributes) +
+      "}";
   }
 
   private String scopeToString() {

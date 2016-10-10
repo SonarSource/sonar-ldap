@@ -19,7 +19,6 @@
  */
 package org.sonar.plugins.ldap;
 
-import com.google.common.base.MoreObjects;
 import java.util.Arrays;
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
@@ -142,12 +141,12 @@ public class LdapGroupMapping {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-      .add("baseDn", getBaseDn())
-      .add("idAttribute", getIdAttribute())
-      .add("requiredUserAttributes", Arrays.toString(getRequiredUserAttributes()))
-      .add("request", getRequest())
-      .toString();
+    return getClass().getSimpleName() + "{" +
+      "baseDn=" + getBaseDn() +
+      ", idAttribute=" + getIdAttribute() +
+      ", requiredUserAttributes=" + Arrays.toString(getRequiredUserAttributes()) +
+      ", request=" + getRequest() +
+      "}";
   }
 
 }
