@@ -25,14 +25,16 @@ import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.SearchResult;
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.LoggerFactory;
 import org.sonar.api.config.Settings;
-import org.sonar.api.utils.SonarException;
+import org.sonar.api.utils.log.Logger;
+import org.sonar.api.utils.log.Loggers;
 
 /**
  * @author Evgeny Mandrikov
  */
 public class LdapGroupMapping {
+
+  private static final Logger LOG = Loggers.get(LdapGroupMapping.class);
 
   private static final String DEFAULT_OBJECT_CLASS = "groupOfUniqueNames";
   private static final String DEFAULT_ID_ATTRIBUTE = "cn";
@@ -60,8 +62,7 @@ public class LdapGroupMapping {
       objectClass = StringUtils.defaultString(objectClass, DEFAULT_OBJECT_CLASS);
       memberAttribute = StringUtils.defaultString(memberAttribute, DEFAULT_MEMBER_ATTRIBUTE);
       req = "(&(objectClass=" + objectClass + ")(" + memberAttribute + "=" + "{dn}))";
-      LoggerFactory.getLogger(LdapGroupMapping.class)
-        .warn("Properties '" + settingsPrefix + ".group.objectClass' and '" + settingsPrefix + ".group.memberAttribute' are deprecated" +
+      LOG.warn("Properties '" + settingsPrefix + ".group.objectClass' and '" + settingsPrefix + ".group.memberAttribute' are deprecated" +
           " and should be replaced by single property '" + settingsPrefix + ".group.request' with value: " + req);
     } else {
       req = StringUtils.defaultString(settings.getString(settingsPrefix + ".group.request"), DEFAULT_REQUEST);

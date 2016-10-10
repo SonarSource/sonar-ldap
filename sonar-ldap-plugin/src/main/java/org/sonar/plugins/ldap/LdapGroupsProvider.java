@@ -19,7 +19,6 @@
  */
 package org.sonar.plugins.ldap;
 
-import com.google.common.collect.Sets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -57,9 +56,10 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
   /**
    * @throws SonarException if unable to retrieve groups
    */
+  @Override
   public Collection<String> doGetGroups(String username) {
     checkPrerequisites(username);
-    Set<String> groups = Sets.newHashSet();
+    Set<String> groups = new HashSet<>();
     List<SonarException> sonarExceptions = new ArrayList<>();
     for (String serverKey : userMappings.keySet()) {
       if (!groupMappings.containsKey(serverKey)) {
