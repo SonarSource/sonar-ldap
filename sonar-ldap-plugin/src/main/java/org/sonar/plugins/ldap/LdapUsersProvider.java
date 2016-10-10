@@ -27,7 +27,6 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.SearchResult;
 import org.sonar.api.security.ExternalUsersProvider;
 import org.sonar.api.security.UserDetails;
-import org.sonar.api.utils.SonarException;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 
@@ -56,7 +55,7 @@ public class LdapUsersProvider extends ExternalUsersProvider {
 
   /**
    * @return details for specified user, or null if such user doesn't exist
-   * @throws SonarException if unable to retrieve details
+   * @throws LdapException if unable to retrieve details
    */
   @Override
   public UserDetails doGetUserDetails(@Nullable String username) {
@@ -65,10 +64,10 @@ public class LdapUsersProvider extends ExternalUsersProvider {
     if (userMappings.isEmpty()) {
       String errorMessage = format("Unable to retrieve details for user %s: No user mapping found.", username);
       LOG.debug(errorMessage);
-      throw new SonarException(errorMessage);
+      throw new LdapException(errorMessage);
     }
     UserDetails details = null;
-    SonarException sonarException = null;
+    LdapException exception = null;
     for (String serverKey : userMappings.keySet()) {
       SearchResult searchResult = null;
       try {
@@ -78,7 +77,7 @@ public class LdapUsersProvider extends ExternalUsersProvider {
       } catch (NamingException e) {
         // just in case if Sonar silently swallowed exception
         LOG.debug(e.getMessage(), e);
-        sonarException = new SonarException("Unable to retrieve details for user " + username + " in " + serverKey, e);
+        exception = new LdapException("Unable to retrieve details for user " + username + " in " + serverKey, e);
       }
       if (searchResult != null) {
         try {
@@ -88,7 +87,7 @@ public class LdapUsersProvider extends ExternalUsersProvider {
         } catch (NamingException e) {
           // just in case if Sonar silently swallowed exception
           LOG.debug(e.getMessage(), e);
-          sonarException = new SonarException("Unable to retrieve details for user " + username + " in " + serverKey, e);
+          exception = new LdapException("Unable to retrieve details for user " + username + " in " + serverKey, e);
         }
       } else {
         // user not found
@@ -96,9 +95,9 @@ public class LdapUsersProvider extends ExternalUsersProvider {
         continue;
       }
     }
-    if (details == null && sonarException != null) {
+    if (details == null && exception != null) {
       // No user found and there is an exception so there is a reason the user could not be found.
-      throw sonarException;
+      throw exception;
     }
     return details;
   }

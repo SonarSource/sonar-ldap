@@ -47,11 +47,10 @@ public class LdapRealm extends SecurityRealm {
   /**
    * Initializes LDAP realm and tests connection.
    *
-   * @throws org.sonar.api.utils.SonarException if a NamingException was thrown during test
+   * @throws LdapException if a NamingException was thrown during test
    */
   @Override
   public void init() {
-
     Map<String, LdapContextFactory> contextFactories = settingsManager.getContextFactories();
     Map<String, LdapUserMapping> userMappings = settingsManager.getUserMappings();
     usersProvider = new LdapUsersProvider(contextFactories, userMappings);

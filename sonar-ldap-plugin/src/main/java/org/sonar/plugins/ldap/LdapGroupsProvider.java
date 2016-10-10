@@ -30,7 +30,6 @@ import javax.naming.NamingException;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.SearchResult;
 import org.sonar.api.security.ExternalGroupsProvider;
-import org.sonar.api.utils.SonarException;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 
@@ -54,19 +53,19 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
   }
 
   /**
-   * @throws SonarException if unable to retrieve groups
+   * @throws LdapException if unable to retrieve groups
    */
   @Override
   public Collection<String> doGetGroups(String username) {
     checkPrerequisites(username);
     Set<String> groups = new HashSet<>();
-    List<SonarException> sonarExceptions = new ArrayList<>();
+    List<LdapException> exceptions = new ArrayList<>();
     for (String serverKey : userMappings.keySet()) {
       if (!groupMappings.containsKey(serverKey)) {
         // No group mapping for this ldap instance.
         continue;
       }
-      SearchResult searchResult = searchUserGroups(username, sonarExceptions, serverKey);
+      SearchResult searchResult = searchUserGroups(username, exceptions, serverKey);
 
       if (searchResult != null) {
         try {
@@ -79,31 +78,31 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
         } catch (NamingException e) {
           // just in case if Sonar silently swallowed exception
           LOG.debug(e.getMessage(), e);
-          sonarExceptions.add(new SonarException(format("Unable to retrieve groups for user %s in %s", username, serverKey), e));
+          exceptions.add(new LdapException(format("Unable to retrieve groups for user %s in %s", username, serverKey), e));
         }
       } else {
         // user not found
         continue;
       }
     }
-    checkResults(groups, sonarExceptions);
+    checkResults(groups, exceptions);
     return groups;
   }
 
-  private void checkResults(Set<String> groups, List<SonarException> sonarExceptions) {
-    if (groups.isEmpty() && !sonarExceptions.isEmpty()) {
+  private static void checkResults(Set<String> groups, List<LdapException> exceptions) {
+    if (groups.isEmpty() && !exceptions.isEmpty()) {
       // No groups found and there is an exception so there is a reason the user could not be found.
-      throw sonarExceptions.iterator().next();
+      throw exceptions.iterator().next();
     }
   }
 
   private void checkPrerequisites(String username) {
     if (userMappings.isEmpty() || groupMappings.isEmpty()) {
-      throw new SonarException(format("Unable to retrieve details for user %s: No user or group mapping found.", username));
+      throw new LdapException(format("Unable to retrieve details for user %s: No user or group mapping found.", username));
     }
   }
 
-  private SearchResult searchUserGroups(String username, List<SonarException> sonarExceptions, String serverKey) {
+  private SearchResult searchUserGroups(String username, List<LdapException> exceptions, String serverKey) {
     SearchResult searchResult = null;
     try {
       LOG.debug("Requesting groups for user {}", username);
@@ -114,7 +113,7 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
     } catch (NamingException e) {
       // just in case if Sonar silently swallowed exception
       LOG.debug(e.getMessage(), e);
-      sonarExceptions.add(new SonarException(format("Unable to retrieve groups for user %s in %s", username, serverKey), e));
+      exceptions.add(new LdapException(format("Unable to retrieve groups for user %s in %s", username, serverKey), e));
     }
     return searchResult;
   }

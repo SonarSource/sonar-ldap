@@ -164,7 +164,7 @@ public class LdapContextFactory {
   /**
    * Tests connection.
    *
-   * @throws IllegalStateException if unable to open connection
+   * @throws LdapException if unable to open connection
    */
   public void testConnection() {
     if (StringUtils.isBlank(username) && isSasl()) {
@@ -175,7 +175,7 @@ public class LdapContextFactory {
       LOG.info("Test LDAP connection on {}: OK", providerUrl);
     } catch (NamingException e) {
       LOG.info("Test LDAP connection: FAIL");
-      throw new IllegalStateException("Unable to open LDAP connection", e);
+      throw new LdapException("Unable to open LDAP connection", e);
     }
   }
 

@@ -25,7 +25,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.sonar.api.config.Settings;
-import org.sonar.api.utils.SonarException;
 import org.sonar.plugins.ldap.LdapAutodiscovery.LdapSrvRecord;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,7 +42,7 @@ public class LdapSettingsManagerTest {
     settings.removeProperty("ldap.example.url");
     LdapSettingsManager settingsManager = new LdapSettingsManager(settings, new LdapAutodiscovery());
 
-    thrown.expect(SonarException.class);
+    thrown.expect(LdapException.class);
     thrown.expectMessage("The property 'ldap.example.url' property is empty while it is mandatory.");
     settingsManager.getContextFactories();
   }
@@ -54,7 +53,7 @@ public class LdapSettingsManagerTest {
     settings.setProperty("ldap.url", "ldap://foo");
     LdapSettingsManager settingsManager = new LdapSettingsManager(settings, new LdapAutodiscovery());
 
-    thrown.expect(SonarException.class);
+    thrown.expect(LdapException.class);
     thrown
       .expectMessage("When defining multiple LDAP servers with the property 'ldap.servers', all LDAP properties must be linked to one of those servers. Please remove properties like 'ldap.url', 'ldap.realm', ...");
     settingsManager.getContextFactories();
@@ -100,7 +99,7 @@ public class LdapSettingsManagerTest {
     LdapSettingsManager settingsManager = new LdapSettingsManager(
       generateAutodiscoverSettings(), ldapAutodiscovery);
 
-    thrown.expect(SonarException.class);
+    thrown.expect(LdapException.class);
     thrown.expectMessage("The property 'ldap.url' is empty and SonarQube is not able to auto-discover any LDAP server.");
 
     settingsManager.getContextFactories();
@@ -146,7 +145,7 @@ public class LdapSettingsManagerTest {
     LdapSettingsManager settingsManager = new LdapSettingsManager(
       new Settings(), new LdapAutodiscovery());
 
-    thrown.expect(SonarException.class);
+    thrown.expect(LdapException.class);
     thrown.expectMessage("The property 'ldap.url' is empty and no realm configured to try auto-discovery.");
     settingsManager.getContextFactories();
   }

@@ -61,7 +61,7 @@ public class KerberosTest {
     try {
       ldapRealm.init();
       Assert.fail();
-    } catch (IllegalStateException e) {
+    } catch (LdapException e) {
       assertThat(e.getMessage()).isEqualTo("Unable to open LDAP connection");
     }
   }

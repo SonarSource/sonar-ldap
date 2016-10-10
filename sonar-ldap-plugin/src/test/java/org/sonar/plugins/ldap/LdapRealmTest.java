@@ -25,7 +25,6 @@ import org.sonar.api.config.Settings;
 import org.sonar.api.security.ExternalGroupsProvider;
 import org.sonar.api.security.ExternalUsersProvider;
 import org.sonar.api.security.LoginPasswordAuthenticator;
-import org.sonar.api.utils.SonarException;
 import org.sonar.plugins.ldap.server.LdapServer;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -58,7 +57,7 @@ public class LdapRealmTest {
     try {
       realm.init();
       fail("Since there is no connection, the init method has to throw an exception.");
-    } catch (IllegalStateException e) {
+    } catch (LdapException e) {
       assertThat(e).hasMessage("Unable to open LDAP connection");
     }
     assertThat(realm.getLoginPasswordAuthenticator()).isInstanceOf(LoginPasswordAuthenticator.class).isInstanceOf(LdapAuthenticator.class);
@@ -68,13 +67,13 @@ public class LdapRealmTest {
     try {
       realm.getUsersProvider().doGetUserDetails("tester");
       fail("Since there is no connection, the doGetUserDetails method has to throw an exception.");
-    } catch (SonarException e) {
+    } catch (LdapException e) {
       assertThat(e.getMessage()).contains("Unable to retrieve details for user tester");
     }
     try {
       realm.getGroupsProvider().doGetGroups("tester");
       fail("Since there is no connection, the doGetGroups method has to throw an exception.");
-    } catch (SonarException e) {
+    } catch (LdapException e) {
       assertThat(e.getMessage()).contains("Unable to retrieve details for user tester");
     }
   }
