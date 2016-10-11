@@ -73,7 +73,7 @@ public class KerberosTest {
   private static Settings configure() {
     return new Settings()
       .setProperty("ldap.url", server.getUrl())
-      .setProperty("ldap.authentication", LdapContextFactory.GSSAPI_METHOD)
+      .setProperty("ldap.authentication", LdapContextFactory.AUTH_METHOD_GSSAPI)
       .setProperty("ldap.bindDn", "SonarQube@EXAMPLE.ORG")
       .setProperty("ldap.bindPassword", "bind_password")
       .setProperty("ldap.user.baseDn", "ou=users,dc=example,dc=org")

@@ -43,18 +43,15 @@ public class LdapContextFactory {
 
   private static final Logger LOG = Loggers.get(LdapContextFactory.class);
 
-  private static final String DEFAULT_AUTHENTICATION = "simple";
+  // visible for testing
+  static final String AUTH_METHOD_SIMPLE = "simple";
+  static final String AUTH_METHOD_GSSAPI = "GSSAPI";
+  static final String AUTH_METHOD_DIGEST_MD5 = "DIGEST-MD5";
+  static final String AUTH_METHOD_CRAM_MD5 = "CRAM-MD5";
+
+  private static final String DEFAULT_AUTHENTICATION = AUTH_METHOD_SIMPLE;
   private static final String DEFAULT_FACTORY = "com.sun.jndi.ldap.LdapCtxFactory";
   private static final String DEFAULT_REFERRAL = "follow";
-
-  // visible for testing
-  static final String GSSAPI_METHOD = "GSSAPI";
-
-  // visible for testing
-  static final String DIGEST_MD5_METHOD = "DIGEST-MD5";
-
-  // visible for testing
-  static final String CRAM_MD5_METHOD = "CRAM-MD5";
 
   /**
    * The Sun LDAP property used to enable connection pooling. This is used in the default implementation to enable
@@ -152,13 +149,13 @@ public class LdapContextFactory {
   }
 
   public boolean isSasl() {
-    return DIGEST_MD5_METHOD.equals(authentication) ||
-      CRAM_MD5_METHOD.equals(authentication) ||
-      GSSAPI_METHOD.equals(authentication);
+    return AUTH_METHOD_DIGEST_MD5.equals(authentication) ||
+      AUTH_METHOD_CRAM_MD5.equals(authentication) ||
+      AUTH_METHOD_GSSAPI.equals(authentication);
   }
 
   public boolean isGssapi() {
-    return GSSAPI_METHOD.equals(authentication);
+    return AUTH_METHOD_GSSAPI.equals(authentication);
   }
 
   /**
