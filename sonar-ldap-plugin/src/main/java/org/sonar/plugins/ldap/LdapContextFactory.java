@@ -20,6 +20,7 @@
 package org.sonar.plugins.ldap;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
 import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.directory.InitialDirContext;
@@ -31,6 +32,8 @@ import javax.security.auth.login.LoginException;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Properties;
+import javax.naming.ldap.StartTlsRequest;
+import javax.naming.ldap.StartTlsResponse;
 import org.apache.commons.lang.StringUtils;
 import org.sonar.api.config.Settings;
 import org.sonar.api.utils.log.Logger;
@@ -62,6 +65,7 @@ public class LdapContextFactory {
   private static final String SASL_REALM_PROPERTY = "java.naming.security.sasl.realm";
 
   private final String providerUrl;
+  private final boolean startTLS;
   private final String authentication;
   private final String factory;
   private final String username;
@@ -73,6 +77,7 @@ public class LdapContextFactory {
     this.factory = StringUtils.defaultString(settings.getString(settingsPrefix + ".contextFactoryClass"), DEFAULT_FACTORY);
     this.realm = settings.getString(settingsPrefix + ".realm");
     this.providerUrl = ldapUrl;
+    this.startTLS = settings.getBoolean(settingsPrefix + ".StartTLS");
     this.username = settings.getString(settingsPrefix + ".bindDn");
     this.password = settings.getString(settingsPrefix + ".bindPassword");
   }
@@ -97,7 +102,33 @@ public class LdapContextFactory {
   }
 
   private InitialDirContext createInitialDirContext(String principal, String credentials, boolean pooling) throws NamingException {
-    return new InitialLdapContext(getEnvironment(principal, credentials, pooling), null);
+    final InitialLdapContext ctx;
+    if (startTLS) {
+      // Note that pooling is not enabled for such connections, because "Stop TLS" is not performed.
+      Properties env = new Properties();
+      env.put(Context.INITIAL_CONTEXT_FACTORY, factory);
+      env.put(Context.PROVIDER_URL, providerUrl);
+      env.put(Context.REFERRAL, DEFAULT_REFERRAL);
+      // At this point env should not contain properties SECURITY_AUTHENTICATION, SECURITY_PRINCIPAL and SECURITY_CREDENTIALS to avoid "bind" operation prior to StartTLS:
+      ctx = new InitialLdapContext(env, null);
+      // http://docs.oracle.com/javase/jndi/tutorial/ldap/ext/starttls.html
+      StartTlsResponse tls = (StartTlsResponse) ctx.extendedOperation(new StartTlsRequest());
+      try {
+        tls.negotiate();
+      } catch (IOException e) {
+        NamingException ex = new NamingException("StartTLS failed");
+        ex.initCause(e);
+        throw ex;
+      }
+      // Explicitly initiate "bind" operation:
+      ctx.addToEnvironment(Context.SECURITY_AUTHENTICATION, authentication);
+      ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, principal);
+      ctx.addToEnvironment(Context.SECURITY_CREDENTIALS, credentials);
+      ctx.reconnect(null);
+    } else {
+      ctx = new InitialLdapContext(getEnvironment(principal, credentials, pooling), null);
+    }
+    return ctx;
   }
 
   private InitialDirContext createInitialDirContextUsingGssapi(String principal, String credentials) throws NamingException {
