@@ -65,6 +65,8 @@
     <version.org.apache.directory.server>2.0.0-M23</version.org.apache.directory.server>
 
     <gitRepositoryName>sonar-ldap</gitRepositoryName>
+    <!-- Release: enable publication to Bintray -->
+    <artifactsToPublish>${project.groupId}:sonar-ldap-plugin:jar</artifactsToPublish>
   </properties>
 
   <modules>
