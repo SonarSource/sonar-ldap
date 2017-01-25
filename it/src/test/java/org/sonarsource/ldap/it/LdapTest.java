@@ -52,7 +52,6 @@ public class LdapTest {
     OrchestratorBuilder orchestratorBuilder = Orchestrator.builderEnv()
       .setContext("/")
       .addPlugin(ldapPluginLocation())
-      .setMainPluginKey("ldap")
       // enable ldap
       .setServerProperty("sonar.security.realm", "LDAP")
       .setServerProperty("ldap.url", ldapServer.getUrl())

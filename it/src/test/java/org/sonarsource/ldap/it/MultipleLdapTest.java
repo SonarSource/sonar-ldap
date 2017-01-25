@@ -43,7 +43,6 @@ public class MultipleLdapTest {
   public void start() {
     OrchestratorBuilder orchestratorBuilder = Orchestrator.builderEnv()
       .addPlugin(ldapPluginLocation())
-      .setMainPluginKey("ldap")
       .setContext("/");
 
     // Start LDAP server
