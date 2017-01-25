@@ -27,11 +27,9 @@ import org.sonarsource.ldap.it.utils.UserRule;
 import org.sonarsource.ldap.server.ApacheDS;
 
 import static java.lang.String.format;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.sonarsource.ldap.it.utils.ItUtils.AUTHORIZED;
-import static org.sonarsource.ldap.it.utils.ItUtils.NOT_AUTHORIZED;
 import static org.sonarsource.ldap.it.utils.ItUtils.ldapPluginLocation;
-import static org.sonarsource.ldap.it.utils.ItUtils.loginAttempt;
+import static org.sonarsource.ldap.it.utils.ItUtils.verifyAuthenticationIsNotOk;
+import static org.sonarsource.ldap.it.utils.ItUtils.verifyAuthenticationIsOk;
 
 public class LdapTest {
 
@@ -104,26 +102,26 @@ public class LdapTest {
 
     // orchestrator.getServer().adminWsClient().userClient().create(UserParameters.create().login("admin2").name("Admin2").password("foobar").passwordConfirmation("foobar"));
     userRule.createUser("admin2", "Admin2", null, "foobar");
-    assertThat(loginAttempt(orchestrator, "admin2", "foobar")).as("admin2 available in Sonar, not available in LDAP but is a local user").isEqualTo(AUTHORIZED);
+    verifyAuthenticationIsOk(orchestrator, "admin2", "foobar");
 
     // When user not exists in Sonar and in LDAP
     // Then can not login
-    assertThat(loginAttempt(orchestrator, "godin", "12345")).as("User not created in Sonar").isEqualTo(NOT_AUTHORIZED);
+    verifyAuthenticationIsNotOk(orchestrator, "godin", "12345");
 
     // Verify that we can't login with blank password (SONARPLUGINS-2493)
-    assertThat(loginAttempt(orchestrator, "godin", "")).as("Blank password doens't allow to login").isEqualTo(NOT_AUTHORIZED);
+    verifyAuthenticationIsNotOk(orchestrator, "godin", "");
 
     // When user created in LDAP
     importLdif("add-user");
     // Then user created in Sonar with details from LDAP
-    assertThat(loginAttempt(orchestrator, "godin", "12345")).as("User created in Sonar").isEqualTo(AUTHORIZED);
+    verifyAuthenticationIsOk(orchestrator, "godin", "12345");
     checkUserDetails();
 
     // When new password set in LDAP
     importLdif("change-password");
     // Then new password works in Sonar, but not old password
-    assertThat(loginAttempt(orchestrator, "godin", "54321")).as("New password works in Sonar").isEqualTo(AUTHORIZED);
-    assertThat(loginAttempt(orchestrator, "godin", "12345")).as("Old password does not work in Sonar").isEqualTo(NOT_AUTHORIZED);
+    verifyAuthenticationIsOk(orchestrator, "godin", "54321");
+    verifyAuthenticationIsNotOk(orchestrator, "godin", "12345");
     checkUserDetails();
   }
 
@@ -136,7 +134,7 @@ public class LdapTest {
 
     importLdif("add-user-without-password");
 
-    assertThat(loginAttempt(orchestrator, "gerard", "")).as("Blank password doens't allow to login").isEqualTo(NOT_AUTHORIZED);
+    verifyAuthenticationIsNotOk(orchestrator, "gerard", "");
   }
 
   /**
@@ -152,19 +150,19 @@ public class LdapTest {
 
     // When user not exists in Sonar and in LDAP
     // Then can not login
-    assertThat(loginAttempt(orchestrator, "godin", "12345")).as("User not created in Sonar").isEqualTo(NOT_AUTHORIZED);
+    verifyAuthenticationIsNotOk(orchestrator, "godin", "12345");
 
     // When user created in LDAP
     importLdif("add-user");
     // Then user created in Sonar with details from LDAP
-    assertThat(loginAttempt(orchestrator, "godin", "12345")).as("User created in Sonar").isEqualTo(AUTHORIZED);
+    verifyAuthenticationIsOk(orchestrator, "godin", "12345");
     checkUserDetails();
 
     // When new password set in LDAP
     importLdif("change-password");
     // Then new password works in Sonar, but not old password
-    assertThat(loginAttempt(orchestrator, "godin", "54321")).as("New password works in Sonar").isEqualTo(AUTHORIZED);
-    assertThat(loginAttempt(orchestrator, "godin", "12345")).as("Old password does not work in Sonar").isEqualTo(NOT_AUTHORIZED);
+    verifyAuthenticationIsOk(orchestrator, "godin", "54321");
+    verifyAuthenticationIsNotOk(orchestrator, "godin", "12345");
     checkUserDetails();
   }
 
@@ -178,7 +176,7 @@ public class LdapTest {
     // When user created in LDAP
     importLdif("add-user");
     // Then user created in Sonar with details from LDAP
-    assertThat(loginAttempt(orchestrator, "godin", "12345")).as("User created in Sonar").isEqualTo(AUTHORIZED);
+    verifyAuthenticationIsOk(orchestrator, "godin", "12345");
     userRule.verifyUserExists("godin", "Evgeny Mandrikov", "test@example.org", false);
     // But without synchronization of groups
     userRule.verifyUserGroupMembership("godin", "sonar-users");
@@ -194,7 +192,7 @@ public class LdapTest {
   }
 
   private void checkAdminUserIsAvailable() {
-    assertThat(loginAttempt(orchestrator, "admin", "admin")).as("admin available in Sonar, even if not available in LDAP").isEqualTo(AUTHORIZED);
+    verifyAuthenticationIsOk(orchestrator, "admin", "admin");
     userRule.verifyUserExists("admin", "Administrator", null, true);
     userRule.verifyUserGroupMembership("admin", "sonar-administrators", "sonar-users");
   }

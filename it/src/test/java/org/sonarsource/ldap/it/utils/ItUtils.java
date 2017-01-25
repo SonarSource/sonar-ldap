@@ -19,26 +19,23 @@
  */
 package org.sonarsource.ldap.it.utils;
 
-import com.google.common.base.Objects;
-import com.google.common.base.Preconditions;
 import com.sonar.orchestrator.Orchestrator;
 import com.sonar.orchestrator.container.Server;
 import com.sonar.orchestrator.locator.FileLocation;
 import com.sonar.orchestrator.locator.Location;
 import java.io.File;
 import javax.annotation.Nullable;
-import org.sonar.wsclient.Host;
-import org.sonar.wsclient.Sonar;
-import org.sonar.wsclient.connectors.ConnectionException;
-import org.sonar.wsclient.connectors.HttpClient4Connector;
-import org.sonar.wsclient.services.UserPropertyCreateQuery;
-import org.sonar.wsclient.services.UserPropertyQuery;
+import org.sonarqube.ws.client.GetRequest;
 import org.sonarqube.ws.client.HttpConnector;
 import org.sonarqube.ws.client.WsClient;
 import org.sonarqube.ws.client.WsClientFactories;
+import org.sonarqube.ws.client.WsResponse;
 
 import static com.sonar.orchestrator.container.Server.ADMIN_LOGIN;
 import static com.sonar.orchestrator.container.Server.ADMIN_PASSWORD;
+import static java.net.HttpURLConnection.HTTP_OK;
+import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ItUtils {
 
@@ -64,39 +61,17 @@ public class ItUtils {
       .build());
   }
 
-  /**
-   * Utility method to check that user can be authorized.
-   *
-   * @throws IllegalStateException
-   */
-  public static String loginAttempt(Orchestrator orchestrator, String username, String password) {
-    String expectedValue = Long.toString(System.currentTimeMillis());
-    Sonar wsClient = createWsClient(orchestrator, username, password);
-    try {
-      wsClient.create(new UserPropertyCreateQuery("auth", expectedValue));
-    } catch (ConnectionException e) {
-      return NOT_AUTHORIZED;
-    }
-    try {
-      String value = wsClient.find(new UserPropertyQuery("auth")).getValue();
-      if (!Objects.equal(value, expectedValue)) {
-        // exceptional case - update+retrieval were successful, but value doesn't match
-        throw new IllegalStateException("Expected " + expectedValue + " , but got " + value);
-      }
-    } catch (ConnectionException e) {
-      // exceptional case - update was successful, but not retrieval
-      throw new IllegalStateException(e);
-    }
-    return AUTHORIZED;
+  public static void verifyAuthenticationIsOk(Orchestrator orchestrator, String login, String password) {
+    assertThat(checkAuthenticationWithWebService(orchestrator, login, password).code()).isEqualTo(HTTP_OK);
   }
 
-  /**
-   * Utility method to create {@link org.sonar.wsclient.Sonar} with specified {@code username} and {@code password}.
-   * Orchestrator does not provide such method.
-   */
-  private static Sonar createWsClient(Orchestrator orchestrator, String username, String password) {
-    Preconditions.checkNotNull(username);
-    Preconditions.checkNotNull(password);
-    return new Sonar(new HttpClient4Connector(new Host(orchestrator.getServer().getUrl(), username, password)));
+  public static void verifyAuthenticationIsNotOk(Orchestrator orchestrator, String login, String password) {
+    assertThat(checkAuthenticationWithWebService(orchestrator, login, password).code()).isEqualTo(HTTP_UNAUTHORIZED);
+  }
+
+  private static WsResponse checkAuthenticationWithWebService(Orchestrator orchestrator, String login, String password) {
+    WsClient wsClient = newUserWsClient(orchestrator, login, password);
+    // Call any WS
+    return wsClient.wsConnector().call(new GetRequest("api/rules/search"));
   }
 }

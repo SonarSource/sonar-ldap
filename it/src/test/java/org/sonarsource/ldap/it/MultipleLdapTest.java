@@ -26,11 +26,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.sonarsource.ldap.server.ApacheDS;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.sonarsource.ldap.it.utils.ItUtils.AUTHORIZED;
-import static org.sonarsource.ldap.it.utils.ItUtils.NOT_AUTHORIZED;
 import static org.sonarsource.ldap.it.utils.ItUtils.ldapPluginLocation;
-import static org.sonarsource.ldap.it.utils.ItUtils.loginAttempt;
+import static org.sonarsource.ldap.it.utils.ItUtils.verifyAuthenticationIsNotOk;
+import static org.sonarsource.ldap.it.utils.ItUtils.verifyAuthenticationIsOk;
 
 public class MultipleLdapTest {
 
@@ -107,13 +105,13 @@ public class MultipleLdapTest {
    */
   @Test
   public void testLoginOnMultipleServers() throws Exception {
-    assertThat(loginAttempt(orchestrator, "godin", "secret1")).as("Unable to login with user in first server").isEqualTo(AUTHORIZED);
-    assertThat(loginAttempt(orchestrator, "robby", "secret1")).as("Unable to login with user in second server").isEqualTo(AUTHORIZED);
+    verifyAuthenticationIsOk(orchestrator, "godin", "secret1");
+    verifyAuthenticationIsOk(orchestrator, "robby", "secret1");
     // Same user with different password in server 2
-    assertThat(loginAttempt(orchestrator, "godin", "secret2")).as("Unable to login with user in second server").isEqualTo(AUTHORIZED);
+    verifyAuthenticationIsOk(orchestrator, "godin", "secret2");
 
-    assertThat(loginAttempt(orchestrator, "godin", "12345")).as("Should not allow login with wrong password").isEqualTo(NOT_AUTHORIZED);
-    assertThat(loginAttempt(orchestrator, "foo", "12345")).as("Should not allow login with unknow user").isEqualTo(NOT_AUTHORIZED);
+    verifyAuthenticationIsNotOk(orchestrator, "godin", "12345");
+    verifyAuthenticationIsNotOk(orchestrator, "foo", "12345");
   }
 
   private static void importLdif(ApacheDS server, String ldifName) {
