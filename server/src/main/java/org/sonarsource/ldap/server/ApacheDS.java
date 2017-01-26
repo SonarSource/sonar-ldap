@@ -68,6 +68,12 @@ public final class ApacheDS {
   private LdapServer ldapServer;
   private KdcServer kdcServer;
 
+  private ApacheDS(String realm, String baseDn) {
+    this.realm = realm;
+    this.baseDn = baseDn;
+    ldapServer = new LdapServer();
+  }
+
   public static ApacheDS start(String realm, String baseDn, String workDir) throws Exception {
     return new ApacheDS(realm, baseDn)
       .startDirectoryService(workDir)
@@ -101,7 +107,8 @@ public final class ApacheDS {
       CoreSession coreSession = directoryService.getAdminSession();
       // see LdifFileLoader
       for (LdifEntry ldifEntry : reader) {
-        LOG.info(ldifEntry.toString());
+        String ldif = ldifEntry.toString();
+        LOG.info(ldif);
         if (ChangeType.Add == ldifEntry.getChangeType() || /* assume "add" by default */ ChangeType.None == ldifEntry.getChangeType()) {
           coreSession.add(new DefaultEntry(coreSession.getDirectoryService().getSchemaManager(), ldifEntry.getEntry()));
         } else if (ChangeType.Modify == ldifEntry.getChangeType()) {
@@ -121,12 +128,6 @@ public final class ApacheDS {
 
   public void enableAnonymousAccess() {
     directoryService.setAllowAnonymousAccess(true);
-  }
-
-  private ApacheDS(String realm, String baseDn) {
-    this.realm = realm;
-    this.baseDn = baseDn;
-    ldapServer = new LdapServer();
   }
 
   private ApacheDS startDirectoryService(String workDirStr) throws Exception {
@@ -152,8 +153,7 @@ public final class ApacheDS {
       new AvlIndex<>("ou"),
       new AvlIndex<>("uid"),
       new AvlIndex<>("dc"),
-      new AvlIndex<>("objectClass")
-    );
+      new AvlIndex<>("objectClass"));
     partition.initialize();
     directoryService.addPartition(partition);
     directoryService.addLast(new KeyDerivationInterceptor());
@@ -203,17 +203,17 @@ public final class ApacheDS {
     kdcServer.start();
 
     FileUtils.writeStringToFile(new File("target/krb5.conf"), ""
-        + "[libdefaults]\n"
-        + "    default_realm = EXAMPLE.ORG\n"
-        + "\n"
-        + "[realms]\n"
-        + "    EXAMPLE.ORG = {\n"
-        + "        kdc = localhost:" + port + "\n"
-        + "    }\n"
-        + "\n"
-        + "[domain_realm]\n"
-        + "    .example.org = EXAMPLE.ORG\n"
-        + "    example.org = EXAMPLE.ORG\n",
+      + "[libdefaults]\n"
+      + "    default_realm = EXAMPLE.ORG\n"
+      + "\n"
+      + "[realms]\n"
+      + "    EXAMPLE.ORG = {\n"
+      + "        kdc = localhost:" + port + "\n"
+      + "    }\n"
+      + "\n"
+      + "[domain_realm]\n"
+      + "    .example.org = EXAMPLE.ORG\n"
+      + "    example.org = EXAMPLE.ORG\n",
       StandardCharsets.UTF_8.name());
 
     return this;
@@ -225,8 +225,7 @@ public final class ApacheDS {
   private ApacheDS activateNis() throws Exception {
     directoryService.getAdminSession().modify(
       new Dn("cn=nis,ou=schema"),
-      new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE, "m-disabled", "FALSE")
-    );
+      new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE, "m-disabled", "FALSE"));
     return this;
   }
 
