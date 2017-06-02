@@ -4,3 +4,4 @@ TEST:
 SQ_VERSION:
   - LATEST_RELEASE
   - DEV
+  - LTS
