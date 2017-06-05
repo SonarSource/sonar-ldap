@@ -19,21 +19,21 @@
  */
 package org.sonar.plugins.ldap;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
+import java.util.Properties;
+import javax.annotation.Nullable;
 import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.ldap.InitialLdapContext;
+import javax.naming.ldap.StartTlsRequest;
+import javax.naming.ldap.StartTlsResponse;
 import javax.security.auth.Subject;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
-import java.util.Properties;
-import javax.naming.ldap.StartTlsRequest;
-import javax.naming.ldap.StartTlsResponse;
 import org.apache.commons.lang.StringUtils;
 import org.sonar.api.config.Settings;
 import org.sonar.api.utils.log.Logger;
@@ -52,9 +52,11 @@ public class LdapContextFactory {
   static final String AUTH_METHOD_DIGEST_MD5 = "DIGEST-MD5";
   static final String AUTH_METHOD_CRAM_MD5 = "CRAM-MD5";
 
+  private static final String REFERRALS_FOLLOW_MODE = "follow";
+  private static final String REFERRALS_IGNORE_MODE = "ignore";
+
   private static final String DEFAULT_AUTHENTICATION = AUTH_METHOD_SIMPLE;
   private static final String DEFAULT_FACTORY = "com.sun.jndi.ldap.LdapCtxFactory";
-  private static final String DEFAULT_REFERRAL = "follow";
 
   /**
    * The Sun LDAP property used to enable connection pooling. This is used in the default implementation to enable
@@ -71,6 +73,7 @@ public class LdapContextFactory {
   private final String username;
   private final String password;
   private final String realm;
+  private final String referral;
 
   public LdapContextFactory(Settings settings, String settingsPrefix, String ldapUrl) {
     this.authentication = StringUtils.defaultString(settings.getString(settingsPrefix + ".authentication"), DEFAULT_AUTHENTICATION);
@@ -80,6 +83,7 @@ public class LdapContextFactory {
     this.startTLS = settings.getBoolean(settingsPrefix + ".StartTLS");
     this.username = settings.getString(settingsPrefix + ".bindDn");
     this.password = settings.getString(settingsPrefix + ".bindPassword");
+    this.referral = getReferralsMode(settings, settingsPrefix + ".followReferrals");
   }
 
   /**
@@ -108,8 +112,9 @@ public class LdapContextFactory {
       Properties env = new Properties();
       env.put(Context.INITIAL_CONTEXT_FACTORY, factory);
       env.put(Context.PROVIDER_URL, providerUrl);
-      env.put(Context.REFERRAL, DEFAULT_REFERRAL);
-      // At this point env should not contain properties SECURITY_AUTHENTICATION, SECURITY_PRINCIPAL and SECURITY_CREDENTIALS to avoid "bind" operation prior to StartTLS:
+      env.put(Context.REFERRAL, referral);
+      // At this point env should not contain properties SECURITY_AUTHENTICATION, SECURITY_PRINCIPAL and SECURITY_CREDENTIALS to avoid
+      // "bind" operation prior to StartTLS:
       ctx = new InitialLdapContext(env, null);
       // http://docs.oracle.com/javase/jndi/tutorial/ldap/ext/starttls.html
       StartTlsResponse tls = (StartTlsResponse) ctx.extendedOperation(new StartTlsRequest());
@@ -143,7 +148,7 @@ public class LdapContextFactory {
           Properties env = new Properties();
           env.put(Context.INITIAL_CONTEXT_FACTORY, factory);
           env.put(Context.PROVIDER_URL, providerUrl);
-          env.put(Context.REFERRAL, DEFAULT_REFERRAL);
+          env.put(Context.REFERRAL, referral);
           return new InitialLdapContext(env, null);
         }
       });
@@ -167,7 +172,7 @@ public class LdapContextFactory {
     }
     env.put(Context.INITIAL_CONTEXT_FACTORY, factory);
     env.put(Context.PROVIDER_URL, providerUrl);
-    env.put(Context.REFERRAL, DEFAULT_REFERRAL);
+    env.put(Context.REFERRAL, referral);
     if (principal != null) {
       env.put(Context.SECURITY_PRINCIPAL, principal);
     }
@@ -211,6 +216,18 @@ public class LdapContextFactory {
     return providerUrl;
   }
 
+  public String getReferral() {
+    return referral;
+  }
+
+  private static String getReferralsMode(Settings settings, String followReferralsSettingKey) {
+    if (settings.hasKey(followReferralsSettingKey)) {
+      return settings.getBoolean(followReferralsSettingKey) ? REFERRALS_FOLLOW_MODE : REFERRALS_IGNORE_MODE;
+    }
+    // By default follow referrals
+    return REFERRALS_FOLLOW_MODE;
+  }
+
   @Override
   public String toString() {
     return getClass().getSimpleName() + "{" +
@@ -219,6 +236,7 @@ public class LdapContextFactory {
       ", factory=" + factory +
       ", bindDn=" + username +
       ", realm=" + realm +
+      ", referral=" + referral +
       "}";
   }
 
