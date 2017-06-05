@@ -21,12 +21,15 @@ package org.sonar.plugins.ldap;
 
 import org.apache.commons.lang.StringUtils;
 import org.sonar.api.config.Settings;
+import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 
 /**
  * @author Evgeny Mandrikov
  */
 public class LdapUserMapping {
+
+  private static final Logger LOG = Loggers.get(LdapUserMapping.class);
 
   private static final String DEFAULT_OBJECT_CLASS = "inetOrgPerson";
   private static final String DEFAULT_LOGIN_ATTRIBUTE = "uid";
@@ -43,10 +46,12 @@ public class LdapUserMapping {
    * Constructs mapping from Sonar settings.
    */
   public LdapUserMapping(Settings settings, String settingsPrefix) {
-    String usersBaseDn = settings.getString(settingsPrefix + ".user.baseDn");
+    String usesrBaseDnSettingKey = settingsPrefix + ".user.baseDn";
+    String usersBaseDn = settings.getString(usesrBaseDnSettingKey);
     if (usersBaseDn == null) {
       String realm = settings.getString(settingsPrefix + ".realm");
       if (realm != null) {
+        LOG.warn("Auto-discovery feature is deprecated, please use '{}' to specify user search dn", usesrBaseDnSettingKey);
         usersBaseDn = LdapAutodiscovery.getDnsDomainDn(realm);
       }
     }
