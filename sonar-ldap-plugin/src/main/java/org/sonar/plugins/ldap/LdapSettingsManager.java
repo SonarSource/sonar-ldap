@@ -152,7 +152,7 @@ public class LdapSettingsManager {
     String ldapUrlKey = LDAP_PROPERTY_PREFIX + ".url";
     String ldapUrl = settings.getString(ldapUrlKey);
     if (ldapUrl == null && realm != null) {
-      LOG.info("Auto discovery mode");
+      LOG.warn("Auto-discovery feature is deprecated, please use '{}' to specify LDAP url", ldapUrlKey);
       List<LdapSrvRecord> ldapServers = ldapAutodiscovery.getLdapServers(realm);
       if (ldapServers.isEmpty()) {
         throw new LdapException(String.format("The property '%s' is empty and SonarQube is not able to auto-discover any LDAP server.", ldapUrlKey));
