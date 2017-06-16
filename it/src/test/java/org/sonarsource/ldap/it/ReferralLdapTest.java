@@ -21,6 +21,8 @@ package org.sonarsource.ldap.it;
 
 import com.sonar.orchestrator.Orchestrator;
 import com.sonar.orchestrator.OrchestratorBuilder;
+import com.sonar.orchestrator.version.Version;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.After;
@@ -62,7 +64,7 @@ public class ReferralLdapTest {
 
     checkAuthenticationWithWebService(orchestrator, "godin", "12345");
 
-    assertThat(readFileToString(orchestrator.getServer().getWebLogs()))
+    assertThat(readFileToString(getLogs()))
       .contains("java.naming.referral=follow")
       .contains("cn=Evgeny Mandrikov,ou=people,dc=sonarsource,dc=com");
   }
@@ -76,7 +78,7 @@ public class ReferralLdapTest {
 
     checkAuthenticationWithWebService(orchestrator, "godin", "12345");
 
-    assertThat(readFileToString(orchestrator.getServer().getWebLogs()))
+    assertThat(readFileToString(getLogs()))
       .contains("java.naming.referral=follow")
       .contains("javax.naming.CommunicationException: localhost:1026")
       .contains("User godin not found in <default>")
@@ -92,7 +94,7 @@ public class ReferralLdapTest {
 
     checkAuthenticationWithWebService(orchestrator, "godin", "12345");
 
-    assertThat(readFileToString(orchestrator.getServer().getWebLogs()))
+    assertThat(readFileToString(getLogs()))
       .contains("java.naming.referral=ignore")
       .contains("User godin not found in <default>")
       .doesNotContain("cn=Evgeny Mandrikov,ou=people,dc=sonarsource,dc=com")
@@ -133,6 +135,15 @@ public class ReferralLdapTest {
     }
     orchestrator = orchestratorBuilder.build();
     orchestrator.start();
+  }
+
+  private File getLogs() {
+    Version version = orchestrator.getDistribution().version().orElseThrow(() -> new IllegalStateException("Version is not available"));
+    if (version.isGreaterThanOrEquals("6.2")) {
+      return orchestrator.getServer().getWebLogs();
+    }
+    // TODO remove it when LDAP will be no more compatible with SonarQube 6.1
+    return orchestrator.getServer().getLogs();
   }
 
 }
