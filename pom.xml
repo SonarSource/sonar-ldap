@@ -62,7 +62,7 @@
 
   <properties>
     <sonar.buildVersion>5.6</sonar.buildVersion>
-    <version.org.apache.directory.server>2.0.0-M23</version.org.apache.directory.server>
+    <version.org.apache.directory.server>2.0.0-M24</version.org.apache.directory.server>
 
     <gitRepositoryName>sonar-ldap</gitRepositoryName>
     <!-- Release: enable publication to Bintray -->
