@@ -69,7 +69,7 @@ public class ItUtils {
     assertThat(checkAuthenticationWithWebService(orchestrator, login, password).code()).isEqualTo(HTTP_UNAUTHORIZED);
   }
 
-  private static WsResponse checkAuthenticationWithWebService(Orchestrator orchestrator, String login, String password) {
+  public static WsResponse checkAuthenticationWithWebService(Orchestrator orchestrator, String login, String password) {
     WsClient wsClient = newUserWsClient(orchestrator, login, password);
     // Call any WS
     return wsClient.wsConnector().call(new GetRequest("api/rules/search"));
