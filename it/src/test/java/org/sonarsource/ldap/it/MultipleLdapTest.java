@@ -46,10 +46,8 @@ public class MultipleLdapTest {
 
     // Start LDAP server
     try {
-      // Remote server
-      ldapServer2 = ApacheDS.start("sonarsource.com", BASE_DN2, "target/ldap2-work", null);
-      // Base server, using first one for the referral
-      ldapServer1 = ApacheDS.start("sonarsource.com", BASE_DN1, "target/ldap1-work", null);
+      ldapServer1 = ApacheDS.start("sonarsource.com", BASE_DN1, "target/ldap1-work");
+      ldapServer2 = ApacheDS.start("sonarsource.com", BASE_DN2, "target/ldap2-work");
     } catch (Exception e) {
       throw new RuntimeException("Unable to start LDAP server", e);
     }
@@ -60,6 +58,7 @@ public class MultipleLdapTest {
     orchestratorBuilder.setServerProperty("sonar.security.savePassword", "true")
       // enable ldap
       .setServerProperty("sonar.security.realm", "LDAP")
+      .setServerProperty("ldap.servers", "example,infosupport")
       .setServerProperty("ldap.example.url", ldapServer1.getUrl())
       .setServerProperty("ldap.infosupport.url", ldapServer2.getUrl())
       // users mapping
