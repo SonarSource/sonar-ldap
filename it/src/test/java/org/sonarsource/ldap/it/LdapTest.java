@@ -42,7 +42,7 @@ public class LdapTest {
   private static void start(boolean syncGroups) {
     // Start LDAP server
     try {
-      ldapServer = ApacheDS.start("sonarsource.com", BASE_DN, "target/ldap-work");
+      ldapServer = ApacheDS.start("sonarsource.com", BASE_DN, "target/ldap-work", null);
     } catch (Exception e) {
       throw new RuntimeException("Unable to start LDAP server", e);
     }
@@ -50,7 +50,6 @@ public class LdapTest {
 
     // Start Sonar with LDAP plugin
     OrchestratorBuilder orchestratorBuilder = Orchestrator.builderEnv()
-      .setContext("/")
       .addPlugin(ldapPluginLocation())
       // enable ldap
       .setServerProperty("sonar.security.realm", "LDAP")

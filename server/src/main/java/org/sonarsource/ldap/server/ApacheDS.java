@@ -74,16 +74,20 @@ public final class ApacheDS {
     ldapServer = new LdapServer();
   }
 
-  public static ApacheDS start(String realm, String baseDn, String workDir) throws Exception {
+  public static ApacheDS start(String realm, String baseDn, String workDir, Integer port) throws Exception {
     return new ApacheDS(realm, baseDn)
       .startDirectoryService(workDir)
       .startKdcServer()
-      .startLdapServer()
+      .startLdapServer(port == null ? AvailablePortFinder.getNextAvailable(1024) : port)
       .activateNis();
   }
 
+  public static ApacheDS start(String realm, String baseDn, String workDir) throws Exception {
+    return start(realm, baseDn, workDir + realm, null);
+  }
+
   public static ApacheDS start(String realm, String baseDn) throws Exception {
-    return start(realm, baseDn, "target/ldap-work/" + realm);
+    return start(realm, baseDn, "target/ldap-work/" + realm, null);
   }
 
   public void stop() throws Exception {
@@ -164,8 +168,7 @@ public final class ApacheDS {
     return this;
   }
 
-  private ApacheDS startLdapServer() throws Exception {
-    int port = AvailablePortFinder.getNextAvailable(1024);
+  private ApacheDS startLdapServer(int port) throws Exception {
     ldapServer.setTransports(new TcpTransport(port));
     ldapServer.setDirectoryService(directoryService);
 
