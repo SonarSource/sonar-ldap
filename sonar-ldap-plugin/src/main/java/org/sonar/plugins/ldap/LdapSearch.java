@@ -141,23 +141,28 @@ public class LdapSearch {
    */
   public SearchResult findUnique() throws NamingException {
     NamingEnumeration<SearchResult> result = find();
-    try {
-      if (result.hasMore()) {
-        SearchResult obj = result.next();
-        if (!result.hasMore()) {
-          return obj;
-        }
-        throw new NamingException("Non unique result for " + toString());
+    if (hasMore(result)) {
+      SearchResult obj = result.next();
+      if (!hasMore(result)) {
+        return obj;
       }
+      throw new NamingException("Non unique result for " + toString());
+    }
+    return null;
+  }
+
+  private static boolean hasMore(NamingEnumeration<SearchResult> result) throws NamingException {
+    try {
+      return result.hasMore();
     } catch (PartialResultException e) {
+      LOG.debug("More result might be forthcoming if the referral is followed", e);
       // See LDAP-62 and http://docs.oracle.com/javase/jndi/tutorial/ldap/referral/jndi.html :
       // When the LDAP service provider receives a referral despite your having set Context.REFERRAL to "ignore", it will throw a
       // PartialResultException(in the API reference documentation) to indicate that more results might be forthcoming if the referral is
       // followed. In this case, the server does not support the Manage Referral control and is supporting referral updates in some other
       // way.
-      return null;
+      return false;
     }
-    return null;
   }
 
   @Override
