@@ -15,6 +15,3 @@ start_xvfb
 export DEPLOY_PULL_REQUEST=true
 
 regular_mvn_build_deploy_analyze
-
-./run-integration-tests.sh "DEV"
-# all other versions of SQ are tested by the QA pipeline at SonarSource
