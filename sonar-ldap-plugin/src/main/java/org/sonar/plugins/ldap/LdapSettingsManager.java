@@ -83,7 +83,7 @@ public class LdapSettingsManager {
         LdapUserMapping userMapping = new LdapUserMapping(settings, LDAP_PROPERTY_PREFIX);
         if (StringUtils.isNotBlank(userMapping.getBaseDn())) {
           LOG.info("User mapping: {}", userMapping);
-          userMappings.put(DEFAULT_LDAP_SERVER_KEY, userMapping);
+          userMappings.put(contextFactories.keySet().iterator().next(), userMapping);
         } else {
           LOG.info("Users will not be synchronized, because property 'ldap.user.baseDn' is empty.");
         }
@@ -118,7 +118,7 @@ public class LdapSettingsManager {
         LdapGroupMapping groupMapping = new LdapGroupMapping(settings, LDAP_PROPERTY_PREFIX);
         if (StringUtils.isNotBlank(groupMapping.getBaseDn())) {
           LOG.info("Group mapping: {}", groupMapping);
-          groupMappings.put(DEFAULT_LDAP_SERVER_KEY, groupMapping);
+          groupMappings.put(contextFactories.keySet().iterator().next(), groupMapping);
         } else {
           LOG.info("Groups will not be synchronized, because property 'ldap.group.baseDn' is empty.");
         }
