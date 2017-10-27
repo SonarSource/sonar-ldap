@@ -118,7 +118,7 @@ public class LdapUsersProvider extends ExternalUsersProvider {
     UserDetails details;
     details = new UserDetails();
     details.setName(getAttributeValue(attributes.get(userMappings.get(serverKey).getRealNameAttribute())));
-    details.setEmail(getAttributeValue(attributes.get(userMappings.get(serverKey).getEmailAttribute())));
+    details.setEmail(getAttributeValue(attributes.get(userMappings.get(serverKey).getEmailAttribute())).toLowerCase());
     return details;
   }
 
