@@ -50,6 +50,7 @@ public class LdapTest {
 
     // Start Sonar with LDAP plugin
     OrchestratorBuilder orchestratorBuilder = Orchestrator.builderEnv()
+      .setSonarVersion(System.getProperty("sonar.runtimeVersion", "LATEST_RELEASE[6.7]"))
       .addPlugin(ldapPluginLocation())
       // enable ldap
       .setServerProperty("sonar.security.realm", "LDAP")
