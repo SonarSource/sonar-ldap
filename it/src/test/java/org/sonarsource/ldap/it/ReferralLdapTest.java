@@ -21,7 +21,6 @@ package org.sonarsource.ldap.it;
 
 import com.sonar.orchestrator.Orchestrator;
 import com.sonar.orchestrator.OrchestratorBuilder;
-import com.sonar.orchestrator.version.Version;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -123,6 +122,7 @@ public class ReferralLdapTest {
 
   private void startOrchestrator(String... properties) {
     OrchestratorBuilder orchestratorBuilder = Orchestrator.builderEnv()
+      .setSonarVersion(System.getProperty("sonar.runtimeVersion", "LATEST_RELEASE[6.7]"))
       .addPlugin(ldapPluginLocation())
       // enable ldap
       // .setServerProperty("ldap.followReferrals", "false")
@@ -138,12 +138,7 @@ public class ReferralLdapTest {
   }
 
   private File getLogs() {
-    Version version = orchestrator.getDistribution().version().orElseThrow(() -> new IllegalStateException("Version is not available"));
-    if (version.isGreaterThanOrEquals("6.2")) {
-      return orchestrator.getServer().getWebLogs();
-    }
-    // TODO remove it when LDAP will be no more compatible with SonarQube 6.1
-    return orchestrator.getServer().getLogs();
+    return orchestrator.getServer().getWebLogs();
   }
 
 }

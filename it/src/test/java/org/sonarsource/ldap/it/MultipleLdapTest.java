@@ -42,6 +42,7 @@ public class MultipleLdapTest {
   @Before
   public void start() {
     OrchestratorBuilder orchestratorBuilder = Orchestrator.builderEnv()
+      .setSonarVersion(System.getProperty("sonar.runtimeVersion", "LATEST_RELEASE[6.7]"))
       .addPlugin(ldapPluginLocation());
 
     // Start LDAP server
