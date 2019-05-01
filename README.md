@@ -1,6 +1,6 @@
 SonarQube LDAP Plugin
 =====================
-[![SonarQube Quality Gate status](https://next.sonarqube.com/sonarqube/api/badges/gate?key=org.sonarsource.ldap%3Asonar-ldap-plugin)](https://next.sonarqube.com/sonarqube/overview?id=org.sonarsource.ldap%3Asonar-ldap-plugin)
+[![SonarQube Quality Gate status](https://next.sonarqube.com/sonarqube/api/badges/gate?key=org.sonarsource.ldap%3Asonar-ldap)](https://next.sonarqube.com/sonarqube/overview?id=org.sonarsource.ldap%3Asonar-ldap)
 
 For more, see [the docs](http://docs.sonarqube.org/display/PLUG/LDAP+Plugin)
 
