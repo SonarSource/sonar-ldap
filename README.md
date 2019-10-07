@@ -1,4 +1,4 @@
-**This plugin is compatible with SonarQube up to 7.9.X, and won't be compatible with the next SonarQube versions as it's now built-in SonarQube 8 and later.**
+**This plugin is compatible with SonarQube up to 7.9.X, and won't be compatible with the next SonarQube versions as it's now a  built-in feature of SonarQube 8 and later.**
 
 
 SonarQube LDAP Plugin
