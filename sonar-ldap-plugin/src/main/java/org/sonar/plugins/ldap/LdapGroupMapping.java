@@ -42,6 +42,7 @@ public class LdapGroupMapping {
 
   private final String baseDn;
   private final String idAttribute;
+  private final String membershipAttribute;
   private final String request;
   private final String[] requiredUserAttributes;
 
@@ -51,6 +52,7 @@ public class LdapGroupMapping {
   public LdapGroupMapping(Settings settings, String settingsPrefix) {
     this.baseDn = settings.getString(settingsPrefix + ".group.baseDn");
     this.idAttribute = StringUtils.defaultString(settings.getString(settingsPrefix + ".group.idAttribute"), DEFAULT_ID_ATTRIBUTE);
+    this.membershipAttribute = StringUtils.defaultString(settings.getString(settingsPrefix + ".group.membershipAttribute"), null);
 
     String objectClass = settings.getString(settingsPrefix + ".group.objectClass");
     String memberAttribute = settings.getString(settingsPrefix + ".group.memberAttribute");
@@ -87,11 +89,11 @@ public class LdapGroupMapping {
         parameters[i] = getAttributeValue(user, attr);
       }
     }
-    return new LdapSearch(contextFactory)
-      .setBaseDn(getBaseDn())
-      .setRequest(getRequest())
-      .setParameters(parameters)
-      .returns(getIdAttribute());
+    LdapSearch ldapSearch= new LdapSearch(contextFactory)
+            .setBaseDn(getBaseDn())
+            .setRequest(getRequest())
+            .setParameters(parameters);
+          return (getMembershipAttribute() == null) ? ldapSearch.returns(getIdAttribute()) : ldapSearch.returns(getMembershipAttribute());
   }
 
   private static String getAttributeValue(SearchResult user, String attributeId) {
@@ -121,6 +123,13 @@ public class LdapGroupMapping {
   }
 
   /**
+   * MemberShip Attribute. Default is null.
+   */
+  public String getMembershipAttribute() {
+    return membershipAttribute;
+  }
+
+  /**
    * Request. For example:
    * <pre>
    * (&(objectClass=groupOfUniqueNames)(uniqueMember={0}))
@@ -144,6 +153,7 @@ public class LdapGroupMapping {
     return getClass().getSimpleName() + "{" +
       "baseDn=" + getBaseDn() +
       ", idAttribute=" + getIdAttribute() +
+      ", membershipAttribute=" + getMembershipAttribute() +
       ", requiredUserAttributes=" + Arrays.toString(getRequiredUserAttributes()) +
       ", request=" + getRequest() +
       "}";

@@ -27,8 +27,12 @@ import java.util.Map;
 import java.util.Set;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.SearchResult;
+import javax.naming.ldap.LdapName;
+import javax.naming.ldap.Rdn;
+
 import org.sonar.api.security.ExternalGroupsProvider;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
@@ -132,11 +136,28 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
    */
   private Collection<String> mapGroups(String serverKey, NamingEnumeration<SearchResult> searchResult) throws NamingException {
     Set<String> groups = new HashSet<>();
+
+    String idAttribute = groupMappings.get(serverKey).getIdAttribute();
     while (searchResult.hasMoreElements()) {
       SearchResult obj = searchResult.nextElement();
-      Attributes attributes = obj.getAttributes();
-      String groupId = (String) attributes.get(groupMappings.get(serverKey).getIdAttribute()).get();
-      groups.add(groupId);
+      if (groupMappings.get(serverKey).getMembershipAttribute() == null) {
+        Attributes attributes = obj.getAttributes();
+        String groupId = (String) attributes.get(idAttribute).get();
+        groups.add(groupId);
+      } else {
+        Attribute groupMembershipAttribute = obj.getAttributes().get(groupMappings.get(serverKey).getMembershipAttribute());
+        if (groupMembershipAttribute != null) {
+          NamingEnumeration<?> attributes = groupMembershipAttribute.getAll();
+          while (attributes.hasMore()) {
+            LdapName name = new LdapName((String) attributes.next());
+            Rdn lastRdn = name.getRdn(name.size() - 1);
+            if (idAttribute.equals(lastRdn.getType())) {
+              String groupId = (String) lastRdn.getValue();
+              groups.add(groupId);
+            }
+          }
+        }
+      }
     }
     return groups;
   }

@@ -32,12 +32,14 @@ public class LdapGroupMappingTest {
 
     assertThat(groupMapping.getBaseDn()).isNull();
     assertThat(groupMapping.getIdAttribute()).isEqualTo("cn");
+    assertThat(groupMapping.getMembershipAttribute()).isEqualTo(null);
     assertThat(groupMapping.getRequest()).isEqualTo("(&(objectClass=groupOfUniqueNames)(uniqueMember={0}))");
     assertThat(groupMapping.getRequiredUserAttributes()).isEqualTo(new String[] {"dn"});
 
     assertThat(groupMapping.toString()).isEqualTo("LdapGroupMapping{" +
       "baseDn=null," +
       " idAttribute=cn," +
+      " membershipAttribute=null," +
       " requiredUserAttributes=[dn]," +
       " request=(&(objectClass=groupOfUniqueNames)(uniqueMember={0}))}");
   }
