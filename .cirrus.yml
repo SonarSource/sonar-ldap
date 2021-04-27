@@ -1,5 +1,5 @@
 # content of service-account-credentials.json, used to access to Google Cloud Platform
-gcp_credentials: ENCRYPTED[0110e1537f9390180c5e8c513017ce2b5a4bc75d8444d2d1e7f8e0b7e4b63b950f215efc6deb8c634d29a995a70b61d2]
+gcp_credentials: ENCRYPTED[!e5f7207bd8d02d383733bef47e18296ac32e3b7d22eb480354e8dd8fdc0004be45a8a4e72c797bd66ee94eb3340fa363!]
 
 #
 # ENV VARIABLES
